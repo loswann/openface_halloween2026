@@ -419,45 +419,74 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 /* ================= version =================
    Bump on every release: MAJOR = booking process changes · MINOR = feature / wording / flow · PATCH = fix only.
    Keep CODE_VERSION in apps-script/Code.gs on the same MAJOR.MINOR.                                         */
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.1.1';
 const APP_DATE = '14 Oct 2026';
-/* ================= the croissant-ghost DJ (from the poster) =================
+/* ================= the croissant-mummy DJ (side-profile, trailing bandages) =================
    croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),
    'happy' (all good), 'oops' (something's wrong), 'chill' (idle bob)          */
 function croissant(mood, size) {
   const W = size || 120;
   const uid = 'c' + (croissant.n = (croissant.n || 0) + 1);
+  const BR = '#5a2e12', BW = '#efe9d6', GR = '#b9b29c';
+  const BODY = 'M100 27 C84 27 74 47 72 79 C70 111 76 145 84 172 L116 172 C124 145 130 111 128 79 C126 47 116 27 100 27 Z';
   const rolls = [[166, 19], [148, 23], [129, 26], [110, 28], [91, 28], [73, 25], [56, 20], [41, 14]]
     .map(([y, rx], k) => `<ellipse cx="100" cy="${y}" rx="${rx}" ry="11" fill="${k % 2 ? '#c4823d' : '#b3712f'}" stroke="#7d4419" stroke-width="1.6"/><path d="M${100 - rx * .72} ${y - 4} Q100 ${y - 13} ${100 + rx * .72} ${y - 4}" stroke="#f0c47c" stroke-width="3" fill="none" stroke-linecap="round" opacity=".85"/>`).join('');
-  const ridges = `<defs><clipPath id="${uid}"><path d="M100 27 C84 27 74 47 72 79 C70 111 76 145 84 172 L116 172 C124 145 130 111 128 79 C126 47 116 27 100 27 Z"/></clipPath></defs><g clip-path="url(#${uid})"><rect x="60" y="20" width="80" height="160" fill="#a5642a"/>${rolls}</g>`;
-  const hand = (x, flip) => `<g transform="translate(${x} 180) rotate(${flip ? 20 : -20})"><ellipse rx="15" ry="8" fill="#c4823d"/><path d="M-8 -6 Q-6 0 -8 6 M-2 -8 Q0 0 -2 8 M4 -7 Q6 0 4 7" stroke="#86491c" stroke-width="2" fill="none"/></g>`;
-  const deck = `<rect x="14" y="174" width="172" height="34" rx="7" fill="#232427"/><rect x="14" y="170" width="172" height="10" rx="4" fill="#3a3c41"/>
-    <g class="a spin"><circle cx="56" cy="190" r="14" fill="#0f0f10" stroke="#4a4c50" stroke-width="2"/><circle cx="56" cy="190" r="4.5" fill="#c98a3c"/><path d="M56 190 L56 177" stroke="#9a9a9a" stroke-width="1.6"/></g>
-    <g class="a spin"><circle cx="144" cy="190" r="14" fill="#0f0f10" stroke="#4a4c50" stroke-width="2"/><circle cx="144" cy="190" r="4.5" fill="#c98a3c"/><path d="M144 190 L144 177" stroke="#9a9a9a" stroke-width="1.6"/></g>
-    <rect x="86" y="180" width="28" height="20" rx="3" fill="#2b2d30"/><rect class="fader" x="92" y="184" width="4" height="8" rx="1" fill="#f2efc4"/><rect class="fader d2" x="104" y="186" width="4" height="8" rx="1" fill="#f2efc4"/>`;
-  const glasses = `<g class="glasses${mood === 'oops' ? ' tilt' : ''}"><ellipse cx="86" cy="72" rx="12" ry="8.5" fill="#18191b"/><ellipse cx="114" cy="72" rx="12" ry="8.5" fill="#18191b"/><path d="M97 70 Q100 67 103 70" stroke="#18191b" stroke-width="2.4" fill="none"/><path d="M74 70 L66 66 M126 70 L134 66" stroke="#18191b" stroke-width="2.2"/><ellipse cx="81" cy="69" rx="3.5" ry="1.6" fill="#fff" opacity=".45"/><ellipse cx="109" cy="69" rx="3.5" ry="1.6" fill="#fff" opacity=".45"/></g>`;
-  const mouth = { happy: '<path d="M90 90 Q100 100 110 90" stroke="#4a2a10" stroke-width="3" fill="#6e2a20" stroke-linecap="round"/>',
-    oops: '<path d="M91 95 Q95 91 100 95 Q105 99 109 95" stroke="#4a2a10" stroke-width="2.6" fill="none" stroke-linecap="round"/>',
-    look: '<ellipse cx="100" cy="94" rx="4" ry="3.5" fill="#4a2a10"/>' }[mood] || '';
-  const ghost = `
-    <path d="M100 8 C66 8 48 38 42 84 C37 122 28 156 16 186 C40 196 70 190 100 192 C130 190 160 196 184 186 C172 156 163 122 158 84 C152 38 134 8 100 8 Z" fill="#ecebe4"/>
-    <path d="M58 72 C54 112 47 150 36 184 M142 72 C146 112 153 150 164 184 M50 120 C46 150 40 170 30 188" stroke="#c9c9c1" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  const strip = (d, w1, w2) => `<path d="${d}" fill="none" stroke="${BR}" stroke-width="${w1}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${BW}" stroke-width="${w2}" stroke-linecap="round"/>`;
+  const wraps = ['M64 52 L136 44', 'M64 118 L136 108', 'M64 138 L136 148', 'M64 160 L136 150'].map(d => strip(d, 11.5, 8)).join('');
+  const trail = strip('M76 96 Q52 84 30 100 Q18 108 8 98', 10, 6) + strip('M78 128 Q54 126 34 144 Q24 152 12 146', 10, 6);
+  const arm = d => strip(d, 17, 12) ;
+  const hand = (cx, cy, rx, ry, f) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${BW}" stroke="${BR}" stroke-width="2.5"/><path d="${f}" fill="none" stroke="${GR}" stroke-width="2" stroke-linecap="round"/>`;
+  const fingers = (cx, cy) => `M${cx - 5} ${cy - 6} Q${cx - 3} ${cy} ${cx - 5} ${cy + 6} M${cx + 1} ${cy - 8} Q${cx + 3} ${cy} ${cx + 1} ${cy + 8} M${cx + 7} ${cy - 6} Q${cx + 9} ${cy} ${cx + 7} ${cy + 6}`;
+  const flat = (cx, cy) => `M${cx - 7} ${cy - 5} Q${cx - 5} ${cy} ${cx - 7} ${cy + 5} M${cx - 1} ${cy - 6} Q${cx + 1} ${cy} ${cx - 1} ${cy + 6} M${cx + 5} ${cy - 5} Q${cx + 7} ${cy} ${cx + 5} ${cy + 5}`;
+  const glasses = (tilt) => `<g${tilt ? ' transform="rotate(-14 120 72)"' : ''}><path d="M108 71 L88 66" stroke="#18191b" stroke-width="2.4" stroke-linecap="round"/><ellipse cx="120" cy="72" rx="13" ry="9.5" fill="#18191b"/><ellipse cx="115" cy="69" rx="3.5" ry="1.6" fill="#fff" opacity=".45"/></g>`;
+  const mouths = {
+    dj: '<path d="M121 94 Q129 102 135 92" stroke="#4a2a10" stroke-width="3" fill="none" stroke-linecap="round"/>',
+    happy: '<path d="M118 90 Q128 108 138 90 Z" fill="#6e2a20" stroke="#4a2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>',
+    look: '<ellipse cx="127" cy="95" rx="4" ry="3.5" fill="#4a2a10"/>',
+    oops: '<path d="M118 97 Q122 92 127 97 Q132 102 136 97" stroke="#4a2a10" stroke-width="2.6" fill="none" stroke-linecap="round"/>',
+    chill: '<path d="M122 95 Q129 100 135 94" stroke="#4a2a10" stroke-width="2.6" fill="none" stroke-linecap="round"/>' };
+  const rot = { dj: 10, happy: 8, look: 14, oops: -6, chill: 4 }[mood] || 4;
+  const phones = mood === 'dj' ? '<path d="M100 69 Q84 36 112 28" fill="none" stroke="#232427" stroke-width="6" stroke-linecap="round"/><ellipse cx="100" cy="84" rx="11" ry="15" fill="#232427" stroke="#4a4c50" stroke-width="2"/><circle cx="100" cy="84" r="4.5" fill="#c98a3c"/>' : '';
+  const sweat = mood === 'oops' ? '<path class="sweat" d="M124 38 Q131 52 124 58 Q117 52 124 38 Z" fill="#7fb6d9"/>' : '';
+  const body = `<g>${trail}<g transform="rotate(${rot} 100 176)">
     <path d="M100 22 C80 22 68 44 66 78 C64 112 70 146 78 174 L122 174 C130 146 136 112 134 78 C132 44 120 22 100 22 Z" fill="#4d3220"/>
-    <path d="M100 27 C84 27 74 47 72 79 C70 111 76 145 84 172 L116 172 C124 145 130 111 128 79 C126 47 116 27 100 27 Z" fill="#c4823d"/>
-    ${ridges}
+    <path d="${BODY}" fill="#c4823d"/>
+    <defs><clipPath id="${uid}"><path d="${BODY}"/></clipPath></defs>
+    <g clip-path="url(#${uid})"><rect x="60" y="20" width="80" height="160" fill="#a5642a"/>${rolls}${wraps}</g>
     <path d="M100 22 C80 22 68 44 66 78 C64 112 70 146 78 174 M100 22 C120 22 132 44 134 78 C136 112 130 146 122 174" stroke="#f8f7f1" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <path d="M108 18 C114 6 126 2 136 8" stroke="#7d4419" stroke-width="12" fill="none" stroke-linecap="round"/><path d="M108 18 C114 6 126 2 136 8" stroke="#c4823d" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M112 12 C117 6 124 4 130 6" stroke="#f0c47c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-    ${glasses}${mouth}`;
-  const extras = {
-    look: '<g class="search"><circle cx="150" cy="120" r="17" fill="#fff" fill-opacity=".35" stroke="#2f3640" stroke-width="6"/><path d="M162 133 L178 150" stroke="#2f3640" stroke-width="8" stroke-linecap="round"/></g>',
-    happy: '<g class="twinkle"><path d="M170 30 l4 10 10 4 -10 4 -4 10 -4 -10 -10 -4 10 -4z" fill="#c98a3c"/></g><g class="twinkle d2"><path d="M26 50 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#c98a3c"/></g>',
-    oops: '<path class="sweat" d="M150 40 Q157 54 150 60 Q143 54 150 40 Z" fill="#7fb6d9"/>'
-  }[mood] || '';
-  const body = mood === 'dj'
-    ? `<g class="nod">${ghost}</g>${deck}${hand(60, false)}${hand(140, true)}`
-    : `<g class="${mood === 'happy' ? 'hop' : mood === 'oops' ? 'a shake' : 'float'}">${ghost}${hand(64, false)}${hand(136, true)}</g>${extras}`;
-  const vb = mood === 'dj' ? '0 0 200 212' : '0 0 200 200';
-  return `<svg viewBox="${vb}" width="${W}" height="${Math.round(W * (mood === 'dj' ? 1.06 : 1))}" aria-hidden="true" style="overflow:visible">${body}</svg>`;
+    <path d="M98 24 C84 6 64 4 50 16" fill="none" stroke="#7d4419" stroke-width="12" stroke-linecap="round"/><path d="M98 24 C84 6 64 4 50 16" fill="none" stroke="#c4823d" stroke-width="8" stroke-linecap="round"/><path d="M92 16 C80 8 68 8 60 12" fill="none" stroke="#f0c47c" stroke-width="2.4" stroke-linecap="round"/>
+    ${glasses(mood === 'oops')}${mouths[mood] || ''}${phones}${sweat}</g></g>`;
+  const note = (x, y) => `<circle cx="${x}" cy="${y}" r="5.5" fill="#c98a3c"/><path d="M${x + 5.5} ${y} L${x + 5.5} ${y - 22} Q${x + 16} ${y - 19} ${x + 14} ${y - 8}" fill="none" stroke="#c98a3c" stroke-width="3" stroke-linecap="round"/>`;
+  const spark = (x, y, s) => `<path d="M${x} ${y} l${s * .4} ${s} ${s} ${s * .4} -${s} ${s * .4} -${s * .4} ${s} -${s * .4} -${s} -${s} -${s * .4} ${s} -${s * .4}z" fill="#c98a3c"/>`;
+  const shadow = (cy, rx) => `<ellipse cx="112" cy="${cy}" rx="${rx}" ry="6" fill="#232427" opacity=".12"/>`;
+  let g;
+  if (mood === 'dj') {
+    const deck = `<polygon points="16,186 196,174 212,218 32,230" fill="#232427"/><polygon points="16,186 196,174 200,184 20,196" fill="#3a3c41"/>
+      <ellipse cx="78" cy="212" rx="22" ry="8.5" fill="#0f0f10" stroke="#4a4c50" stroke-width="2"/><ellipse cx="78" cy="212" rx="6" ry="2.5" fill="#c98a3c"/>
+      <ellipse cx="160" cy="203" rx="22" ry="8.5" fill="#0f0f10" stroke="#4a4c50" stroke-width="2"/><ellipse cx="160" cy="203" rx="6" ry="2.5" fill="#c98a3c"/>
+      <rect class="fader" x="112" y="198" width="4" height="8" rx="1" fill="#f2efc4"/><rect class="fader d2" x="122" y="200" width="4" height="8" rx="1" fill="#f2efc4"/>`;
+    g = shadow(226, 104) + note(24, 66) + spark(214, 40, 10) + spark(30, 28, 7) +
+      `<g class="nod">${body}</g>` + arm('M88 126 Q54 110 48 64') + strip('M47 50 L47 30', 8, 5) + hand(47, 58, 11, 10, '') + deck +
+      arm('M136 128 Q156 146 154 170') + hand(154, 178, 14, 7.5, flat(154, 178));
+  } else if (mood === 'happy') {
+    g = shadow(214, 56) + spark(206, 36, 10) + spark(22, 60, 7) + spark(214, 130, 7) +
+      `<g class="hop"><g transform="translate(0 -10)">${body}` + arm('M88 124 Q58 104 52 54') + hand(50, 46, 11, 12, fingers(50, 46)) +
+      arm('M140 120 Q176 106 176 50') + hand(176, 42, 11, 12, fingers(176, 42)) + '</g></g>';
+  } else if (mood === 'look') {
+    g = shadow(214, 58) + `<g class="float">${body}` + arm('M88 132 Q74 150 78 170') + hand(78, 178, 14, 7.5, flat(78, 178)) +
+      '<g class="search"><path d="M214 118 L196 98" stroke="#2f3640" stroke-width="8" stroke-linecap="round"/><circle cx="186" cy="86" r="17" fill="#fff" fill-opacity=".35" stroke="#2f3640" stroke-width="6"/></g>' +
+      arm('M142 136 Q176 150 208 124') + hand(210, 120, 12, 9, '') + '</g>';
+  } else if (mood === 'oops') {
+    g = shadow(214, 58) + '<path d="M18 96 Q10 110 18 124 M8 90 Q-2 110 8 130 M214 100 Q222 114 214 128 M224 94 Q234 114 224 134" fill="none" stroke="#a59f8c" stroke-width="3" stroke-linecap="round"/>' +
+      `<g class="a shake">${body}` + arm('M90 130 Q64 116 80 88') + hand(82, 80, 11, 12, fingers(82, 80)) +
+      arm('M136 132 Q168 124 146 94') + hand(144, 86, 11, 12, fingers(144, 86)) + '</g>';
+  } else {
+    g = shadow(214, 58) + note(214, 170) +
+      `<g class="float">${body}` + arm('M88 130 Q76 152 80 172') + hand(80, 180, 14, 7.5, flat(80, 180)) +
+      arm('M140 128 Q172 118 176 80') + hand(176, 72, 11, 12, fingers(176, 72)) +
+      '<path d="M192 60 Q200 72 192 84 M200 54 Q212 72 200 90" fill="none" stroke="#a59f8c" stroke-width="3" stroke-linecap="round"/></g>';
+  }
+  return `<svg viewBox="0 0 240 232" width="${W}" height="${Math.round(W * .967)}" aria-hidden="true" style="overflow:visible">${g}</svg>`;
 }
 
 /* ================= setup ================= */

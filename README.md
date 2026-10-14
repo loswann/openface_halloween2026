@@ -82,6 +82,7 @@ The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`
 
 | Version | Change |
 |---|---|
+| v2.1.1 | Mascot redrawn as the side-profile mummy DJ (trailing bandages), all five moods |
 | v2.1.0 | Version footer, backend version check, "new version" notice |
 | v2.0.0 | Admin approval in the Sheet, emails, status check by phone |
 | v1.2.0 | Slip-check fix (shared K SHOP biller ID), demo only with `?demo=1` |

@@ -135,7 +135,7 @@ const CONFIG = {
 };
 
 // Must match APP_VERSION in index.html (major.minor). Bump both together, then Deploy → New version.
-const CODE_VERSION = '2.1.0';
+const CODE_VERSION = '2.1.1';
 
 const STATUS = { PENDING: 'Pending', APPROVED: 'Approved', PROBLEM: 'Problem', CANCELLED: 'Cancelled' };
 
