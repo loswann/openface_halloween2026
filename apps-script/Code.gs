@@ -142,7 +142,7 @@ const CONFIG = {
 };
 
 // Must match APP_VERSION in index.html (major.minor). Bump both together, then Deploy → New version.
-const CODE_VERSION = '2.9.0';
+const CODE_VERSION = '2.9.1';
 
 // "Email Status" column – the guest-email confirmation status (emails are sent by hand)
 const MAIL = { WAITING: 'Waiting – payment check',
@@ -850,16 +850,17 @@ function styleSheet_(sh) {
     SpreadsheetApp.newDataValidation().requireValueInList([MAIL.WAITING, MAIL.TO_APPROVED, MAIL.SENT_APPROVED, MAIL.TO_PROBLEM, MAIL.SENT_PROBLEM, MAIL.NOT_NEEDED], true).build());
   const rng = sh.getRange(2, COL('Payment Status'), N, 1);
   const mrng = sh.getRange(2, COL('Email Status'), N, 1);
-  const colors = [[STATUS.APPROVED, '#d4ecd1', '#1e5a2a'], [STATUS.PENDING, '#fbe6bf', '#7a4b0c'],
-                  [STATUS.PROBLEM, '#f7d2c8', '#8a2b1a'], [STATUS.CANCELLED, '#e1e1e1', '#666666']];
-  const mcolors = [['To send', '#fbe6bf', '#7a4b0c'], ['Sent', '#d4ecd1', '#1e5a2a'], ['Waiting', '#ececec', '#666666'], ['Not needed', '#e1e1e1', '#666666']];
+  // solid, high-contrast status colours (match the site badges)
+  const colors = [[STATUS.APPROVED, '#17a34a', '#ffffff'], [STATUS.PENDING, '#ffb81c', '#2b1d00'],
+                  [STATUS.PROBLEM, '#e0402b', '#ffffff'], [STATUS.CANCELLED, '#8a8f99', '#ffffff']];
+  const mcolors = [['To send', '#ffb81c', '#2b1d00'], ['Sent', '#17a34a', '#ffffff'], ['Waiting', '#d9dbe0', '#33363c'], ['Not needed', '#8a8f99', '#ffffff']];
   const keep = sh.getConditionalFormatRules().filter(rule =>
     !rule.getRanges().some(r => r.getColumn() === COL('Payment Status') || r.getColumn() === COL('Email Status')));
   sh.setConditionalFormatRules(keep
     .concat(colors.map(c => SpreadsheetApp.newConditionalFormatRule()
-      .whenTextEqualTo(c[0]).setBackground(c[1]).setFontColor(c[2]).setRanges([rng]).build()))
+      .whenTextEqualTo(c[0]).setBackground(c[1]).setFontColor(c[2]).setBold(true).setRanges([rng]).build()))
     .concat(mcolors.map(c => SpreadsheetApp.newConditionalFormatRule()
-      .whenTextStartsWith(c[0]).setBackground(c[1]).setFontColor(c[2]).setRanges([mrng]).build())));
+      .whenTextStartsWith(c[0]).setBackground(c[1]).setFontColor(c[2]).setBold(true).setRanges([mrng]).build())));
   sh.getRange(2, COL('Email Draft'), N, 1).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
   sh.setColumnWidth(COL('Email Status'), 190);
   sh.getRange(2, COL('Email Sent At'), N, 1).setNumberFormat('d/mm/yyyy hh:mm');

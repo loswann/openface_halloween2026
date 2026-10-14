@@ -208,8 +208,17 @@ input::placeholder,textarea::placeholder{color:#9a9785}
 .bubble{position:absolute;left:50%;top:6px;transform:translateX(-50%) rotate(-2deg);font-family:var(--display);font-size:clamp(26px,8.5vw,36px);white-space:nowrap;background:var(--ink);color:var(--cream);padding:2px 16px 4px;border-radius:12px}
 .bubble .kr{font-family:var(--kr);color:var(--gold);font-size:30px}
 .regid{padding:10px 20px;border-radius:12px;border:2.5px dashed var(--ink);background:var(--field);font-family:var(--display);font-size:32px;letter-spacing:2px}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;background:#efe2b8;border:1.5px solid var(--gold-d);font-size:13px;font-weight:600;color:#6b4318}
-.badge.ok{background:var(--okbg);border-color:var(--ok);color:#1f5236}
+/* status badges – solid, high-contrast, poster-style offset shadow */
+.badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;font-size:14px;font-weight:700;letter-spacing:.2px;
+  background:#ffb81c;color:#2b1d00;border:2.5px solid var(--ink);box-shadow:3px 3px 0 var(--ink)}
+.badge::before{content:"";width:10px;height:10px;border-radius:50%;background:currentColor;flex-shrink:0}
+.badge:not(.ok):not(.bad):not(.grey)::before{animation:pulse 1.2s ease-in-out infinite}
+.badge.ok{background:#17a34a;color:#fff}
+.badge.bad{background:#e0402b;color:#fff}
+.badge.grey{background:#8a8f99;color:#fff}
+.badge.ok::before,.badge.bad::before,.badge.grey::before{display:none}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.55);opacity:.45}}
+@media (prefers-reduced-motion:reduce){.badge::before{animation:none!important}}
 .summary{align-self:stretch;padding:14px 16px;border-radius:14px;background:var(--field);border:1.5px solid var(--line);display:flex;flex-direction:column;gap:6px;font-size:14px;text-align:left}
 .summary div{display:flex;justify-content:space-between;gap:10px}.summary span:first-child{color:var(--ink2)}
 /* footer band like the poster bottom */
@@ -224,8 +233,6 @@ footer .fine{font-size:11px;color:#b9bdc6;line-height:1.7}
 /* quick links + status check */
 .cta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .cta .btn{min-height:50px;font-size:15px}
-.badge.bad{background:var(--badbg);border-color:var(--bad);color:#7a2a1c}
-.badge.grey{background:#e6e4d2;border-color:#8a876f;color:#5b5d62}
 .bk{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:16px;background:var(--field);border:2px solid var(--ink);animation:rowin .35s ease-out both}
 .bk-top{display:flex;align-items:center;gap:12px}
 .bk-top .who{flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:4px}
@@ -443,7 +450,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 /* ================= version =================
    Bump on every release: MAJOR = booking process changes · MINOR = feature / wording / flow · PATCH = fix only.
    Keep CODE_VERSION in apps-script/Code.gs on the same MAJOR.MINOR.                                         */
-const APP_VERSION = '2.9.0';
+const APP_VERSION = '2.9.1';
 const APP_DATE = '14 Oct 2026';
 /* ================= the croissant DJ · crescent + record halo (from the poster) =================
    croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),

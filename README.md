@@ -26,7 +26,7 @@ Use **openface ▸ List emails still to send** for everything still marked `To s
 ### Sheet columns the admin edits
 | Column | Use |
 |---|---|
-| **Payment Status** | **The payment-approval status:** `Pending` (yellow) · `Approved` (green) · `Problem` (red) · `Cancelled` (grey) |
+| **Payment Status** | **The payment-approval status:** `Pending` (amber) · `Approved` (green) · `Problem` (red) · `Cancelled` (grey), solid fill with bold text |
 | **Problem Reason** | Dropdown, see below |
 | **Note to Guest** | ⚠️ The guest **sees** this in the Problem letter and on the status page |
 | **Email Status** | **The guest-email confirmation status:** `Waiting – payment check` (grey, new booking) → `To send – Approved` / `To send – Problem` (yellow, set by the script when the letter is ready) → `Sent – Approved` / `Sent – Problem` (green, **you** set it after sending) · `Not needed` (cancelled before any email) |
@@ -93,6 +93,7 @@ The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`
 
 | Version | Change |
 |---|---|
+| v2.9.1 | Bolder status colours on the site and in the Sheet (amber Pending with pulsing dot, green Approved, red Problem, grey Cancelled) |
 | v2.9.0 | Main contact everywhere is nojudgmentgathering@gmail.com (site, status page, slip hints, problem reasons, guest emails); LINE kept as a footer link |
 | v2.8.1 | Slip-problem help button emails nojudgmentgathering@gmail.com (prefilled) instead of LINE |
 | v2.8.0 | Animated "LET'S GET / FREE FLOW!" lines on the hero poster |
