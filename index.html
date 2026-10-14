@@ -153,6 +153,7 @@ input::placeholder,textarea::placeholder{color:#9a9785}
 .btn:disabled{background:#d9d4b3;border-color:#b9b494;color:#6f6c5b;box-shadow:none;cursor:default;transform:none}
 .btn.ghost{background:var(--field);color:var(--ink);font-weight:500;min-height:48px;font-size:15px;box-shadow:none}
 .btn.ghost:hover{color:var(--ink);box-shadow:3px 3px 0 var(--ink)}
+.btn.mailhelp{flex-direction:column;gap:0;line-height:1.25;padding:8px 16px}.btn.mailhelp small{font-size:12px;font-weight:500;opacity:.85;word-break:break-all}
 .btn.line{background:var(--line-green);border-color:#049a42;color:#fff;box-shadow:none}
 .err{color:var(--bad);font-size:14px;font-weight:500;min-height:1em}
 .form-wrap{position:relative;margin-top:84px}
@@ -441,7 +442,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 /* ================= version =================
    Bump on every release: MAJOR = booking process changes · MINOR = feature / wording / flow · PATCH = fix only.
    Keep CODE_VERSION in apps-script/Code.gs on the same MAJOR.MINOR.                                         */
-const APP_VERSION = '2.8.0';
+const APP_VERSION = '2.8.1';
 const APP_DATE = '14 Oct 2026';
 /* ================= the croissant DJ · crescent + record halo (from the poster) =================
    croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),
@@ -834,6 +835,16 @@ async function recheck() {
   if (DEMO) return setTimeout(() => renderResult(demoEvaluate(demoSlip, qty)), 700);
   try { renderResult(await api('recheckSlip', { token: vs.token, qty })); } catch (x) { runVerify(); }
 }
+/* "Email the team" button for slip problems – opens the guest's mail app with the details filled in */
+function helpMailBtn() {
+  const to = CFG.CONTACT_EMAIL || 'nojudgmentgathering@gmail.com';
+  const subject = 'ช่วยตรวจสลิป · ' + (CFG.EVENT_NAME || 'Halloween') + ' · ' + ($('name').value.trim() || 'ลงทะเบียน');
+  const body = 'สวัสดีค่ะ/ครับ ทีมงาน\n\nระบบแจ้งว่าสลิปของฉันไม่ตรง รบกวนช่วยตรวจให้หน่อย\n\n'
+    + 'ชื่อ: ' + $('name').value.trim() + '\nเบอร์โทร: ' + $('phone').value.trim() + '\nจำนวน: ' + qty + ' ท่าน ('
+    + fmt(qty * CFG.PRICE_PER_PERSON) + ' ฿)\n\n(กรุณาแนบรูปสลิปมากับอีเมลนี้ด้วย)';
+  const href = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  return `<a class="btn mailhelp" href="${esc(href)}"><span>อีเมลให้ทีมงานช่วย · Email us</span><small>${esc(to)}</small></a>`;
+}
 function renderResult(r) {
   if (r.status === 'unavailable') return attachedOnly('แนบสลิปแล้ว · ทีมงานจะตรวจให้');   // pre-check down → straight to the team
   vs = Object.assign({ manual: false }, r);
@@ -864,7 +875,7 @@ function renderResult(r) {
   if (!good) acts.push('<button type="button" class="btn ghost" data-act="new">แนบสลิปใบใหม่</button>');
   if (r.canManual) acts.push(`<button type="button" class="btn ghost" data-act="manual">${r.mode === 'ocr' ? 'สลิปถูกต้อง ส่งให้ทีมงานตรวจ · My slip is correct' : 'ส่งให้ทีมงานตรวจแทน'}</button>`);
   if (r.status === 'blocked') acts.push('<a class="btn ghost" href="#status">ตรวจสถานะการลงทะเบียนเดิม · Check status</a>');
-  if ((r.status === 'failed' || r.status === 'blocked') && !r.suggestQty) acts.push(`<a class="btn line" href="${esc(CFG.LINE_URL)}" target="_blank" rel="noopener">ทัก LINE ${esc(CFG.CONTACT_LINE)} ให้ทีมงานช่วย</a>`);
+  if ((r.status === 'failed' || r.status === 'blocked') && !r.suggestQty) acts.push(helpMailBtn());
   $('chkActions').innerHTML = acts.join('');
   updateSubmit();
   if (good) setTimeout(() => $('ageOk').scrollIntoView({ behavior: 'smooth', block: 'center' }), 1300);
