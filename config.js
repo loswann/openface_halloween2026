@@ -32,6 +32,9 @@ window.APP_CONFIG = {
     CONTACT_EMAIL: 'nojudgmentgathering@gmail.com',
     IG_URL: 'https://www.instagram.com/openfacebkk/',
     REFUND_POLICY: 'ไม่รับยกเลิกและไม่คืนเงินทุกกรณี · No cancellation, no refund',
-    SLIP_CHECK_ON: true
+    SLIP_CHECK_ON: false,
+    PRESCREEN_ON: true,
+    PRESCREEN: { SHOP_CODES: ['KB000002299567'], NAME_KEYWORDS: ['โอเพ่นเฟซ', 'โอเพ่นคิทเช่น', 'openface', 'openkitchen', 'open face', 'open kitchen'],
+                 NOT_BEFORE: '2026-09-28T00:00:00+07:00', MAX_AGE_HOURS: 48 }
   }
 };

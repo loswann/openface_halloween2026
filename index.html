@@ -13,7 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Black+Han+Sans&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+<script src="vendor/jsQR-1.4.0.js" defer></script>
+<script src="slipcheck.js?v=271" defer></script>
 <script src="config.js"></script>
 <style>
 /* Poster palette: cream paper, charcoal ink, slate band, croissant gold */
@@ -419,7 +420,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 /* ================= version =================
    Bump on every release: MAJOR = booking process changes · MINOR = feature / wording / flow · PATCH = fix only.
    Keep CODE_VERSION in apps-script/Code.gs on the same MAJOR.MINOR.                                         */
-const APP_VERSION = '2.6.0';
+const APP_VERSION = '2.7.0';
 const APP_DATE = '14 Oct 2026';
 /* ================= the croissant DJ · crescent + record halo (from the poster) =================
    croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),
@@ -576,7 +577,8 @@ function toPayment() {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('email').value.trim())) return e.textContent = 'อีเมลไม่ถูกต้อง';
   updatePay();
   go(2);
-  if (vs && vs.token && !vs.manual) recheck();
+  if (usePrescreen()) OCR.warm();
+  if (vs && (vs.token || vs.mode === 'ocr') && !vs.manual) recheck();
   updateSubmit();
 }
 function updatePay() {
@@ -674,14 +676,105 @@ $('slipInput').addEventListener('change', async e => {
   slip = null; vs = null; updateSubmit(); showChecking();
   try {
     const img = await loadImg(await readAsDataURL(f));
-    slip = { data: compress(img), mime: 'image/jpeg', qr: decodeQR(img) };
+    slip = { data: compress(img), mime: 'image/jpeg', qr: decodeQR(img), img };
     $('slipThumb').src = slip.data;
+    if (usePrescreen()) return runPrescreen();
     if (!DEMO && CFG.SLIP_CHECK_ON === false) return attachedOnly();
     runVerify();
   } catch (x) {
     renderResult({ status: 'noqr', title: 'เปิดรูปนี้ไม่ได้', message: 'ลองบันทึกสลิปจากแอปธนาคารใหม่ แล้วแนบอีกครั้งนะคะ' });
   }
 });
+
+/* ================= slip pre-screen on the guest's phone (OCR, Thai + English) =================
+   Reads the slip with Tesseract in a Web Worker, then SlipCheck checks amount / receiver / time,
+   and the server says whether the slip's bank reference was already used. It only HELPS the guest –
+   every payment is still approved by the team against the bank statement.                          */
+const OCR = {
+  w: null, seq: 0, wait: {}, stage: '',
+  supported() { return typeof Worker !== 'undefined' && typeof WebAssembly === 'object' && typeof DecompressionStream !== 'undefined'; },
+  start() {
+    if (this.w) return this.w;
+    this.w = new Worker('ocr/v7/worker.js');
+    this.w.onmessage = e => {
+      const d = e.data || {};
+      if (d.progress) { this.stage = d.progress; if (vs === null && slip) ocrStage(d.progress); return; }
+      const cb = this.wait[d.id]; if (!cb) return; delete this.wait[d.id];
+      d.ok ? cb.res(d.text) : cb.rej(new Error(d.error));
+    };
+    this.w.onerror = () => { Object.values(this.wait).forEach(cb => cb.rej(new Error('worker error'))); this.wait = {}; this.w = null; };
+    return this.w;
+  },
+  call(msg, transfer, ms) {
+    const id = ++this.seq, w = this.start();
+    return new Promise((res, rej) => {
+      const t = setTimeout(() => { delete this.wait[id]; rej(new Error('timeout')); }, ms || 60000);
+      this.wait[id] = { res: v => { clearTimeout(t); res(v); }, rej: e => { clearTimeout(t); rej(e); } };
+      w.postMessage(Object.assign({ id }, msg), transfer || []);
+    });
+  },
+  warm() { if (this.supported()) this.call({ cmd: 'init' }, [], 120000).catch(() => {}); },
+  read(buf) { return this.call({ cmd: 'read', image: buf }, [buf], 120000); }
+};
+function usePrescreen() {
+  return !DEMO && CFG.SLIP_CHECK_ON === false && CFG.PRESCREEN_ON !== false && typeof SlipCheck !== 'undefined' && OCR.supported();
+}
+function ocrStage(st) {
+  $('chkMsg').textContent = st === 'loading' ? 'กำลังเตรียมตัวอ่านสลิป… ครั้งแรกอาจใช้ 10–20 วินาที'
+    : st === 'reading' ? 'กำลังอ่านยอดเงิน ผู้รับ และวันเวลาโอน…' : 'ใช้เวลาไม่กี่วินาทีค่ะ';
+}
+function ocrImage(img) {               // sharper copy for reading (max 2200 px), separate from the upload copy
+  const max = 2200; let w = img.width, h = img.height;
+  if (Math.max(w, h) > max) { const k = max / Math.max(w, h); w = Math.round(w * k); h = Math.round(h * k); }
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.drawImage(img, 0, 0, w, h);
+  return new Promise(res => c.toBlob(b => b.arrayBuffer().then(res), 'image/jpeg', 0.92));
+}
+function prescreenCfg() {
+  return Object.assign({ SHOP_NAME: CFG.SHOP_NAME, CONTACT_LINE: CFG.CONTACT_LINE }, CFG.PRESCREEN || {});
+}
+async function runPrescreen() {
+  if (!slip) return;
+  const mine = slip;
+  showChecking(); $('slipThumb').src = slip.data;
+  $('chkTitle').textContent = 'กำลังอ่านสลิป…'; ocrStage(OCR.stage === 'ready' ? 'reading' : 'loading');
+  try {
+    const text = await OCR.read(await ocrImage(slip.img));
+    if (slip !== mine) return;                                   // guest picked another slip meanwhile
+    slip.ocr = { text };
+    const res = SlipCheck.analyze(text, slip.qr, { qty, price: CFG.PRICE_PER_PERSON, cfg: prescreenCfg() });
+    const dup = res.checks.find(c => c.key === 'duplicate');
+    if (res.transRef) {
+      try {
+        const r = await api('checkSlipRef', { transRef: res.transRef });
+        dup.ok = !r.used; dup.pending = false;
+        dup.label = r.used ? 'สลิปนี้ถูกใช้ลงทะเบียนไปแล้ว · Slip already used' : 'สลิปนี้ยังไม่เคยใช้ลงทะเบียน · Not used before';
+        dup.fix = r.used ? 'ถ้าคุณลงทะเบียนไปแล้ว ไม่ต้องทำซ้ำ ตรวจสถานะด้วยเบอร์โทรได้ที่ "ตรวจสถานะ" ด้านล่าง' : '';
+      } catch (x) { dup.ok = null; dup.pending = false; dup.label = 'ตรวจสลิปซ้ำไม่ได้ตอนนี้ · Duplicate check skipped'; dup.fix = 'ทีมงานจะตรวจให้'; }
+    }
+    if (slip !== mine) return;
+    slip.dup = { ok: dup.ok, label: dup.label, fix: dup.fix };
+    renderPrescreen(res);
+  } catch (x) {
+    if (slip !== mine) return;
+    attachedOnly('แนบสลิปแล้ว · ทีมงานจะตรวจให้');               // reader failed (old phone, offline…) → straight to the team
+    vs.mode = 'ocr-failed';
+  }
+}
+function renderPrescreen(res) {
+  const v = SlipCheck.verdict(res.checks);
+  const status = v === 'good' ? 'verified' : v === 'unsure' ? 'review' : v === 'blocked' ? 'blocked' : 'failed';
+  renderResult({
+    mode: 'ocr', status, checks: res.checks, suggestQty: res.suggestQty, canManual: v === 'bad', transRef: res.transRef,
+    summary: SlipCheck.summary(res, v), verdict: v,
+    title: { good: 'สลิปดูถูกต้องครบ!', unsure: 'อ่านสลิปได้บางส่วน', bad: 'สลิปนี้ดูไม่ตรง', blocked: 'สลิปนี้ถูกใช้ไปแล้ว' }[v],
+    message: { good: 'กดส่งลงทะเบียนได้เลย ทีมงานจะตรวจกับบัญชีธนาคารอีกครั้ง แล้วส่งรหัสเข้างานให้ค่ะ',
+               unsure: 'ส่งได้เลย ข้อที่มีเครื่องหมาย ! ทีมงานจะตรวจให้เอง',
+               bad: 'ดูข้อที่มีเครื่องหมาย ✕ ด้านล่าง ถ้าแน่ใจว่าสลิปถูกต้อง กด "สลิปถูกต้อง ส่งให้ทีมงานตรวจ" ได้ค่ะ',
+               blocked: 'สลิปหนึ่งใบใช้ลงทะเบียนได้ครั้งเดียว' }[v],
+    slip: { amount: res.slip.amount, time: res.slip.time, receiverName: res.slip.receiver, senderBank: res.slip.bank }
+  });
+}
 
 function showChecking() {
   $('checker').classList.remove('hidden');
@@ -709,6 +802,12 @@ async function runVerify() {
   catch (x) { renderResult({ status: 'unavailable', canManual: true, title: 'ระบบตรวจสลิปขัดข้องชั่วคราว', message: 'ไม่ต้องกังวล ส่งสลิปให้ทีมงานตรวจแทนได้เลยค่ะ' }); }
 }
 async function recheck() {
+  if (vs && vs.mode === 'ocr' && slip && slip.ocr) {
+    const res = SlipCheck.analyze(slip.ocr.text, slip.qr, { qty, price: CFG.PRICE_PER_PERSON, cfg: prescreenCfg() });
+    const dup = res.checks.find(c => c.key === 'duplicate');
+    if (slip.dup && dup.pending) Object.assign(dup, slip.dup, { pending: false });
+    return renderPrescreen(res);
+  }
   if (!vs || !vs.token) return;
   showChecking();
   if (DEMO) return setTimeout(() => renderResult(demoEvaluate(demoSlip, qty)), 700);
@@ -718,6 +817,7 @@ function renderResult(r) {
   if (r.status === 'unavailable') return attachedOnly('แนบสลิปแล้ว · ทีมงานจะตรวจให้');   // pre-check down → straight to the team
   vs = Object.assign({ manual: false }, r);
   const good = r.status === 'verified' || r.status === 'review';
+  if (r.mode === 'ocr') { const st = $('chkList'); if (!st.children.length) st.innerHTML = CHECK_LABELS.map(([k, l]) => `<li class="pending" data-k="${k}"><span class="ic"></span><div>${l}</div></li>`).join(''); }
   $('scanline').classList.add('hidden');
   $('mascot').innerHTML = good ? MASCOTS.happy : (r.status === 'unavailable' ? MASCOTS.look : MASCOTS.oops);
   $('chkTitle').textContent = r.title || ''; $('chkMsg').textContent = r.message || '';
@@ -726,6 +826,7 @@ function renderResult(r) {
     r.checks.forEach((c, i) => setTimeout(() => {
       const li = list.querySelector(`[data-k="${c.key}"]`); if (!li) return;
       li.className = c.ok === true ? 'ok' : c.ok === false ? 'fail' : 'warn';
+      if (c.pending) return;
       li.innerHTML = `<span class="ic pop">${c.ok === true ? '✓' : c.ok === false ? '✕' : '!'}</span><div><div>${esc(c.label)}</div>${c.fix ? `<div class="fix">${esc(c.fix)}</div>` : ''}</div>`;
     }, 260 * (i + 1)));
   } else {
@@ -733,13 +834,16 @@ function renderResult(r) {
   }
   const s = r.slip;
   $('chkSlip').textContent = DEMO ? '⚠ โหมดทดลอง: ผลนี้เป็นการจำลอง ระบบยังไม่ได้อ่านสลิปจริง (Demo – this slip was NOT actually checked)'
+    : r.mode === 'ocr' ? 'ระบบอ่านสลิปบนมือถือของคุณ (ไม่ใช่การยืนยันการชำระเงิน) · ทีมงานจะตรวจกับบัญชีธนาคารทุกรายการ'
+      + (s && s.amount != null ? ` · อ่านได้ ${fmt(s.amount)} ฿` : '') + (s && s.time ? ` · ${s.time} น.` : '') + (s && s.senderBank ? ` · ${s.senderBank}` : '')
     : s ? `จากสลิป: ${s.senderName || '-'}${s.senderBank ? ' (' + s.senderBank + ')' : ''} → ${s.receiverName || '-'} · ${fmt(s.amount)} ฿ · ${s.time} น.` : '';
   const acts = [];
   if (r.suggestQty) acts.push(`<button type="button" class="btn" data-act="qty" data-n="${r.suggestQty}">เปลี่ยนเป็น ${r.suggestQty} ท่าน (${fmt(r.suggestQty * CFG.PRICE_PER_PERSON)} ฿)</button>`);
   if (r.retry) acts.push('<button type="button" class="btn" data-act="retry">ตรวจอีกครั้ง</button>');
   if (!good) acts.push('<button type="button" class="btn ghost" data-act="new">แนบสลิปใบใหม่</button>');
-  if (r.canManual) acts.push('<button type="button" class="btn ghost" data-act="manual">ส่งให้ทีมงานตรวจแทน</button>');
-  if (r.status === 'failed' && !r.suggestQty) acts.push(`<a class="btn line" href="${esc(CFG.LINE_URL)}" target="_blank" rel="noopener">ทัก LINE ${esc(CFG.CONTACT_LINE)} ให้ทีมงานช่วย</a>`);
+  if (r.canManual) acts.push(`<button type="button" class="btn ghost" data-act="manual">${r.mode === 'ocr' ? 'สลิปถูกต้อง ส่งให้ทีมงานตรวจ · My slip is correct' : 'ส่งให้ทีมงานตรวจแทน'}</button>`);
+  if (r.status === 'blocked') acts.push('<a class="btn ghost" href="#status">ตรวจสถานะการลงทะเบียนเดิม · Check status</a>');
+  if ((r.status === 'failed' || r.status === 'blocked') && !r.suggestQty) acts.push(`<a class="btn line" href="${esc(CFG.LINE_URL)}" target="_blank" rel="noopener">ทัก LINE ${esc(CFG.CONTACT_LINE)} ให้ทีมงานช่วย</a>`);
   $('chkActions').innerHTML = acts.join('');
   updateSubmit();
   if (good) setTimeout(() => $('ageOk').scrollIntoView({ behavior: 'smooth', block: 'center' }), 1300);
@@ -748,7 +852,7 @@ $('chkActions').addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act;
   if (act === 'qty') { setQty(Number(b.dataset.n)); updatePay(); recheck(); }
-  else if (act === 'retry') runVerify();
+  else if (act === 'retry') (vs && vs.mode === 'ocr' ? runPrescreen() : runVerify());
   else if (act === 'new') $('slipInput').click();
   else if (act === 'manual') {
     vs = Object.assign({}, vs || {}, { manual: true });
@@ -811,7 +915,10 @@ async function submitForm() {
     name: $('name').value.trim(), phone: $('phone').value, email: $('email').value.trim(),
     line: $('line').value.trim(), qty, guests: $('guests').value.trim(), notes: $('notes').value.trim(),
     parking: $('parking').value, ageOk: true, termsOk: true,
-    slipToken: vs.manual ? '' : (vs.token || ''), manualReason: vs.manual ? (vs.status || 'manual') : '',
+    slipToken: vs.mode === 'ocr' || vs.manual ? '' : (vs.token || ''),
+    manualReason: vs.manual ? (vs.mode === 'ocr' ? 'guest says slip is correct' : (vs.status || 'manual')) : '',
+    precheck: vs.mode === 'ocr' ? { summary: SlipCheck.summary({ checks: vs.checks, slip: { amount: vs.slip.amount, time: vs.slip.time, bank: vs.slip.senderBank } }, vs.verdict, vs.manual), transRef: vs.transRef || '' }
+      : (slip.qr && typeof SlipCheck !== 'undefined' && SlipCheck.parseSlipQR(slip.qr) ? { summary: '', transRef: SlipCheck.parseSlipQR(slip.qr).transRef } : null),
     slipData: slip.data, slipMime: slip.mime
   };
   $('loading').classList.remove('hidden'); $('submitBtn').disabled = true;
@@ -923,7 +1030,11 @@ $('reInput').addEventListener('change', async e => {
       } catch (x) { /* pre-check is optional */ }
     }
     if (DEMO) await new Promise(res => setTimeout(res, 700));
-    else await api('resubmitSlip', { ref: bk.ref, phone: $('stPhone').value.replace(/\D/g, ''), slipData: data, slipMime: 'image/jpeg', slipToken: token });
+    else {
+      const q = qr && typeof SlipCheck !== 'undefined' ? SlipCheck.parseSlipQR(qr) : null;
+      await api('resubmitSlip', { ref: bk.ref, phone: $('stPhone').value.replace(/\D/g, ''), slipData: data, slipMime: 'image/jpeg', slipToken: token,
+        precheck: q ? { summary: 'Re-upload (not pre-screened)', transRef: q.transRef } : null });
+    }
     bk.status = 'Pending'; delete bk.problem;
     renderStatus({});
     const top = document.querySelectorAll('#stResults .bk')[i];

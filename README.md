@@ -93,6 +93,7 @@ The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`
 
 | Version | Change |
 |---|---|
+| v2.7.0 | Free slip reader on the guest's phone (Thai + English): amount, receiver, time, re-used slip. Approval stays manual |
 | v2.6.0 | New promo artwork; event name ANNYEONG (poster spelling) |
 | v2.5.0 | Email Status column (Waiting → To send → Sent), Email Sent At timestamp, Gmail permission narrowed to send-only |
 | v2.4.1 | Mascot redrawn: croissant crescent with a record halo, all five moods |
@@ -104,6 +105,22 @@ The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`
 | v1.2.0 | Slip-check fix (shared K SHOP biller ID), demo only with `?demo=1` |
 | v1.1.0 | Restyled to the ANNYONG poster and openface logo |
 | v1.0.0 | First site |
+
+## Slip pre-screen (on the guest's phone)
+When a guest attaches a slip, the page reads it **on their phone**. It uses Tesseract OCR with Thai and English, self-hosted in `ocr/v7/`, so there is no API key and no cost. It also reads the slip's bank QR. Then it checks:
+
+| Check | How | If it fails |
+|---|---|---|
+| Amount | Reads `จำนวนเงิน / จำนวน / Amount / THB / บาท`. Ignores fee and balance lines. | ✕ + fix. Offers "change to N guests" when the amount fits another guest count |
+| Receiver | `โอเพ่น เฟซ` / `โอเพ่น คิทเช่น` / openface, or shop code `KB000002299567`. Tolerates OCR misreads. | ✕ when another shop code or another receiver name is read |
+| Time | Thai dates (`14 ต.ค. 69`, `14 ต.ค. 2569`) and English dates (`14 Oct 26`, `Oct 14, 2026`, `14/10/2026`) | ✕ if before registration opened, in the future, or older than 48 h |
+| Re-used slip | The bank reference inside the slip QR, checked against the Sheet by the server | **Blocks** submitting. The server blocks it too, so it can't be bypassed |
+
+- ✓ everywhere: the guest submits. ! (couldn't read): the guest can still submit. ✕: the guest fixes it, or taps "สลิปถูกต้อง ส่งให้ทีมงานตรวจ" (my slip is correct).
+- The result is written to **Auto Check**, e.g. `Pre-screen on guest phone (OCR, not proof): amount ✓ · receiver ✕ · …`, plus the bank ref in **Trans Ref**.
+- **It is not proof of payment.** An edited slip image can pass every check. Always approve against the KBank statement.
+- First use downloads about 4 MB (cached afterwards). Reading takes about 2–4 s on a laptop and more on older phones. Phones without WebAssembly or DecompressionStream skip the reader and go straight to the team.
+- To turn it off: `SLIP_CHECK.PRESCREEN: false` in Code.gs.
 
 ## Notes and risks
 - **Status by phone number only** (as requested): anyone who knows a guest's phone number can see that guest's booking and entry code. Names are shortened on screen. To require the booking ref too, set `STATUS_REQUIRE_REF: true`.

@@ -52,6 +52,10 @@ const CONFIG = {
     RECEIVER_SHOP_CODES:     ['KB000002299567'],
     RECEIVER_ACCOUNT_DIGITS: [],
     RECEIVER_NAME_KEYWORDS:  ['โอเพ่นคิทเช่น', 'โอเพ่นเฟซ', 'openkitchen', 'openface'],
+    // On-phone slip reader (free, no API key): reads Thai/English slips with OCR in the guest's browser and
+    // checks amount, receiver, time + re-used slips. A hint for guest and admin only – approval stays manual.
+    PRESCREEN:        true,
+    PRESCREEN_NAMES:  ['โอเพ่นเฟซ', 'โอเพ่นคิทเช่น', 'openface', 'openkitchen', 'open face', 'open kitchen'],
     NOT_BEFORE:       '2026-09-28T00:00:00+07:00',
     MAX_AGE_HOURS:    48
   },
@@ -138,7 +142,7 @@ const CONFIG = {
 };
 
 // Must match APP_VERSION in index.html (major.minor). Bump both together, then Deploy → New version.
-const CODE_VERSION = '2.6.0';
+const CODE_VERSION = '2.7.0';
 
 // "Email Status" column – the guest-email confirmation status (emails are sent by hand)
 const MAIL = { WAITING: 'Waiting – payment check',
@@ -165,6 +169,7 @@ const API = {
   recheckSlip:        d  => recheckSlip(d.token, d.qty),
   submitRegistration: d  => submitRegistration(d),
   checkStatus:        d  => checkStatus(d),
+  checkSlipRef:       d  => checkSlipRef(d),
   resubmitSlip:       d  => resubmitSlip(d)
 };
 
@@ -188,11 +193,23 @@ function doGet() {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+/** Has this bank transaction (from the slip's QR) already been used for a booking? Answers yes/no only. */
+function checkSlipRef(d) {
+  const ref = String((d && d.transRef) || '');
+  if (!/^[A-Za-z0-9]{10,40}$/.test(ref)) throw new Error('bad reference');
+  throttle_('csr_' + ref, 10, 600);
+  return { used: !!findTransRef_(ref) };
+}
+
 function getConfig() {
   const c = JSON.parse(JSON.stringify(CONFIG));
   ['ADMIN_EMAIL', 'SLIP_FOLDER_ID', 'SHEET_NAME', 'SPREADSHEET_ID', 'SLIP_CHECK', 'EMAIL', 'PROBLEMS'].forEach(k => delete c[k]);
   c.VERSION = CODE_VERSION;
   c.SLIP_CHECK_ON = slipCheckReady_();
+  const sc = CONFIG.SLIP_CHECK;
+  c.PRESCREEN_ON = sc.PRESCREEN !== false;
+  c.PRESCREEN = { SHOP_CODES: sc.RECEIVER_SHOP_CODES, NAME_KEYWORDS: sc.PRESCREEN_NAMES || sc.RECEIVER_NAME_KEYWORDS,
+                  NOT_BEFORE: sc.NOT_BEFORE, MAX_AGE_HOURS: sc.MAX_AGE_HOURS };
   c.SEATS_TAKEN = countSeats_();
   c.CLOSED = isClosed_();
   return c;
@@ -401,7 +418,7 @@ function submitRegistration(f) {
     if (CONFIG.CAPACITY > 0 && countSeats_() + qty > CONFIG.CAPACITY) throw new Error('ที่นั่งไม่พอ / Not enough seats left');
 
     // Optional automatic pre-check – a hint for the admin, never an approval
-    const pre = preCheck_(f.slipToken, qty, f.manualReason, true);
+    const pre = preCheck_(f.slipToken, qty, f.manualReason, true, f.precheck);
     const slip = pre.slip;
     autoCheck = pre.text;
 
@@ -446,9 +463,17 @@ function submitRegistration(f) {
 }
 
 /** Turns the optional SlipOK result into the "Auto Check" text. Blocks only slips that are clearly wrong. */
-function preCheck_(token, qty, manualReason, isNew) {
+function preCheck_(token, qty, manualReason, isNew, pre) {
   if (!token) {
-    return { slip: null, text: 'Not auto-checked' + (manualReason ? ' – guest: ' + String(manualReason).slice(0, 80) : '') };
+    // On-phone pre-screen (OCR): only a hint. The slip's bank reference (from its QR) still blocks re-used slips.
+    const ref = pre && /^[A-Za-z0-9]{10,40}$/.test(String(pre.transRef || '')) ? String(pre.transRef) : '';
+    if (ref) {
+      const usedBy = findTransRef_(ref);
+      if (usedBy) throw new Error('สลิปนี้ถูกใช้ลงทะเบียนไปแล้ว / This slip was already used');
+    }
+    const hint = pre && pre.summary ? String(pre.summary).slice(0, 400) : 'Not auto-checked';
+    return { slip: ref ? { transRef: ref, amount: '', time: '', senderName: '', senderBank: '', receiverName: '', receiverAccount: '' } : null,
+             text: hint + (manualReason ? ' – guest: ' + String(manualReason).slice(0, 80) : '') };
   }
   const slip = getCachedSlip_(token);
   if (!slip) return { slip: null, text: 'Not auto-checked (check expired)' };
@@ -650,7 +675,7 @@ function resubmitSlip(d) {
     if (phoneKey_(r.phone) !== digits) throw new Error('ไม่พบการจองนี้ / Booking not found');
     if (r.status !== STATUS.PROBLEM) throw new Error('การจองนี้ไม่ต้องแนบสลิปเพิ่ม / This booking does not need a new slip');
 
-    const pre = preCheck_(d.slipToken, r.qty, '', false);
+    const pre = preCheck_(d.slipToken, r.qty, '', false, d.precheck);
     autoText = pre.text;
     fileUrl = saveSlip_(d.slipData, d.slipMime, ref + '_reupload_' + r.name);
 
@@ -658,7 +683,7 @@ function resubmitSlip(d) {
     const stamp = Utilities.formatDate(new Date(), TZ, 'd/MM HH:mm');
     set('Slip Link', [r.slipLink, fileUrl].filter(Boolean).join('\n'));
     if (pre.slip && pre.slip.transRef) set('Trans Ref', "'" + [String(r.transRef).replace(/^'/, ''), pre.slip.transRef].filter(Boolean).join(', '));
-    set('Auto Check', [r.autoCheck, stamp + ' re-upload: ' + autoText + (pre.slip ? ' (' + fmt_(pre.slip.amount) + ' THB)' : '')].filter(Boolean).join('\n'));
+    set('Auto Check', [r.autoCheck, stamp + ' re-upload: ' + autoText + (pre.slip && pre.slip.amount ? ' (' + fmt_(pre.slip.amount) + ' THB)' : '')].filter(Boolean).join('\n'));
     set('Internal Note', [r.internal, stamp + ' previous problem: ' + r.reason + (r.note ? ' – ' + r.note : '')].filter(Boolean).join('\n'));
     set('Problem Reason', '');
     set('Note to Guest', '');
