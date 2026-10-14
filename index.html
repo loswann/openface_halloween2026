@@ -405,7 +405,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 <div class="at">AT OPENFACE BKK</div>
 <img class="flogo" src="assets/logo-cream.png" width="900" height="223" alt="openface – all day brunch &amp; bakery">
 <div class="collab">No Judgment Gathering &nbsp;×&nbsp; openface</div>
-<div class="links"><a class="line" id="lineLink" href="#" target="_blank" rel="noopener">LINE <span id="lineId"></span></a><a id="telLink" href="#"><span id="phoneTxt"></span></a><a id="igLink" href="#" target="_blank" rel="noopener">Instagram</a></div>
+<div class="links"><a class="line" id="lineLink" href="#" target="_blank" rel="noopener">LINE <span id="lineId"></span></a><a id="telLink" href="#"><span id="phoneTxt"></span></a><a id="mailLink" href="#">อีเมล · Email</a><a id="igLink" href="#" target="_blank" rel="noopener">Instagram</a></div>
 <div class="fine">86/2 ถ.รามคำแหง 21 (ซ.นวศรี 15) วังทองหลาง กรุงเทพฯ<br>ดื่มอย่างรับผิดชอบ · Please drink responsibly – don't drink and drive</div>
 <div class="ver" id="verLine"></div>
 </footer>
@@ -419,7 +419,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 /* ================= version =================
    Bump on every release: MAJOR = booking process changes · MINOR = feature / wording / flow · PATCH = fix only.
    Keep CODE_VERSION in apps-script/Code.gs on the same MAJOR.MINOR.                                         */
-const APP_VERSION = '2.2.0';
+const APP_VERSION = '2.3.0';
 const APP_DATE = '14 Oct 2026';
 /* ================= the croissant-ghost DJ (from the poster) =================
    croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),
@@ -506,6 +506,8 @@ function render(c) {
   $('doneLine').href = CFG.LINE_URL || '#'; $('doneLine').textContent = 'เพิ่มเพื่อน LINE ' + (CFG.CONTACT_LINE || '');
   $('phoneTxt').textContent = CFG.CONTACT_PHONE || ''; $('telLink').href = 'tel:' + String(CFG.CONTACT_PHONE || '').replace(/\D/g, '');
   $('igLink').href = CFG.IG_URL || '#';
+  $('mailLink').href = 'mailto:' + (CFG.CONTACT_EMAIL || ''); $('mailLink').title = CFG.CONTACT_EMAIL || '';
+  $('mailLink').classList.toggle('hidden', !CFG.CONTACT_EMAIL);
   document.title = name + ' · openface';
   $('stRefWrap').classList.toggle('hidden', !CFG.STATUS_REQUIRE_REF);
   if (CFG.CLOSED) {

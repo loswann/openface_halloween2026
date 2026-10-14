@@ -66,7 +66,7 @@ const CONFIG = {
     SEND:           true,
     FROM_ALIAS:     '',            // TODO e.g. 'hello@openfacebkk.com' – must be a "Send mail as" alias of the Google account running this script
     SENDER_NAME:    'openface × No Judgment Gathering',
-    REPLY_TO:       'openfacebkk@gmail.com',
+    REPLY_TO:       'nojudgmentgathering@gmail.com',   // guest replies go here
     SEND_RECEIVED:  true,          // short "we got your registration" email right after registering
     TEMPLATES: {
       RECEIVED: {
@@ -119,7 +119,8 @@ const CONFIG = {
   CONTACT_PHONE:    '082-556-3659',
   IG_URL:           'https://www.instagram.com/openfacebkk/',
   SITE_URL:         'https://openface-halloween2026.vercel.app',
-  ADMIN_EMAIL:      'openfacebkk@gmail.com',   // gets a notice for every new registration / re-uploaded slip
+  ADMIN_EMAIL:      'nojudgmentgathering@gmail.com',   // event admin: notice for every new registration / re-uploaded slip
+  CONTACT_EMAIL:    'nojudgmentgathering@gmail.com',   // shown to guests on the site and in every email
   REFUND_POLICY:    'ไม่รับยกเลิกและไม่คืนเงินทุกกรณี · No cancellation, no refund',
   HOUSE_RULES:      'ผู้เข้าร่วมต้องอายุ 20 ปีขึ้นไป (ตรวจบัตรหน้างาน) · งดเด็กและสัตว์เลี้ยงสำหรับงานนี้ · 20+ only (ID check at the door) · No kids, no pets',
 
@@ -135,7 +136,7 @@ const CONFIG = {
 };
 
 // Must match APP_VERSION in index.html (major.minor). Bump both together, then Deploy → New version.
-const CODE_VERSION = '2.2.0';
+const CODE_VERSION = '2.3.0';
 
 const STATUS = { PENDING: 'Pending', APPROVED: 'Approved', PROBLEM: 'Problem', CANCELLED: 'Cancelled' };
 
@@ -671,7 +672,7 @@ function wrapEmail_(title, inner) {
    + (title ? '<h2 style="margin:0 0 10px;color:' + ink + ';font-family:Impact,\'Arial Narrow Bold\',sans-serif;font-weight:normal;font-size:24px;letter-spacing:.5px">' + title + '</h2>' : '')
    + inner
    + '<p style="color:#5b5d62;font-size:12px;margin-top:18px">' + CONFIG.HOUSE_RULES + '<br>' + CONFIG.REFUND_POLICY + '</p>'
-   + '<p style="color:#5b5d62;font-size:13px">LINE <a href="' + CONFIG.LINE_URL + '" style="color:' + gold + '">' + CONFIG.CONTACT_LINE + '</a> · โทร ' + CONFIG.CONTACT_PHONE + '</p>'
+   + '<p style="color:#5b5d62;font-size:13px">LINE <a href="' + CONFIG.LINE_URL + '" style="color:' + gold + '">' + CONFIG.CONTACT_LINE + '</a> · โทร ' + CONFIG.CONTACT_PHONE + (CONFIG.CONTACT_EMAIL ? ' · <a href="mailto:' + CONFIG.CONTACT_EMAIL + '" style="color:' + gold + '">' + CONFIG.CONTACT_EMAIL + '</a>' : '') + '</p>'
    + '</div>'
    + '<div style="background:' + slate + ';color:' + cream + ';text-align:center;padding:12px;font-family:Impact,\'Arial Narrow Bold\',sans-serif;font-size:22px;letter-spacing:1px">AT OPENFACE BKK</div>'
    + '</div></div>';

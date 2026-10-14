@@ -29,6 +29,7 @@ window.APP_CONFIG = {
     PROMPTPAY_ID: '', SHOP_NAME: 'โอเพ่น เฟซ', BANK_NAME: 'กสิกรไทย (K SHOP)',
     ACCOUNT_NAME: 'บจก. โอเพ่น คิทเช่น', ACCOUNT_NO: '',
     CONTACT_LINE: '@openfacebkk', LINE_URL: 'https://lin.ee/9pQIgO3', CONTACT_PHONE: '082-556-3659',
+    CONTACT_EMAIL: 'nojudgmentgathering@gmail.com',
     IG_URL: 'https://www.instagram.com/openfacebkk/',
     REFUND_POLICY: 'ไม่รับยกเลิกและไม่คืนเงินทุกกรณี · No cancellation, no refund',
     SLIP_CHECK_ON: true

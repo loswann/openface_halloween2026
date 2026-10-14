@@ -82,6 +82,7 @@ The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`
 
 | Version | Change |
 |---|---|
+| v2.3.0 | Event admin + guest contact email: nojudgmentgathering@gmail.com |
 | v2.2.0 | Price 1,199 THB per person |
 | v2.1.0 | Version footer, backend version check, "new version" notice |
 | v2.0.0 | Admin approval in the Sheet, emails, status check by phone |
