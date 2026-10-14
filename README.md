@@ -14,9 +14,9 @@ The page (`index.html`) is hosted on **Vercel**. The **Google Apps Script** (`ap
 |---|---|---|
 | 1 | Guest | Registers on the site, pays with the K SHOP QR and uploads the slip. A row is added with **Payment Status = Pending**. The admin gets a notice. |
 | 2 | Admin | Opens the slip (`Slip Link`) and checks it against the **KBank statement**: amount, time, sender. `Auto Check` is only a hint. |
-| 3a | Admin | Sets **Payment Status → Approved**. An entry code (e.g. `ANN-7KQ3`) is created, `Email Draft` gets the confirmation letter, and **Customer Email** shows `To send – Approved`. |
-| 3b | Admin | Types an optional **Note to Guest**, then picks a **Problem Reason**. Picking a reason sets **Payment Status → Problem** on its own. `Email Draft` gets the problem letter, and **Customer Email** shows `To send – Problem`. |
-| 4 | Admin | Clicks the `Email Draft` cell and opens the link. A Gmail window opens with the guest's address and the subject filled in. Copy the cell text below the "Subject" line into the email body, send it, then set **Customer Email → Sent – …**. |
+| 3a | Admin | Sets **Payment Status → Approved**. An entry code (e.g. `ANN-7KQ3`) is created, `Email Draft` gets the confirmation letter, and **Email Status** shows `To send – Approved`. |
+| 3b | Admin | Types an optional **Note to Guest**, then picks a **Problem Reason**. Picking a reason sets **Payment Status → Problem** on its own. `Email Draft` gets the problem letter, and **Email Status** shows `To send – Problem`. |
+| 4 | Admin | Clicks the `Email Draft` cell and opens the link. A Gmail window opens with the guest's address and the subject filled in. Copy the cell text below the "Subject" line into the email body, send it, then set **Email Status → Sent – …**. |
 | 5 | Guest | On the site → **Check status** (`/#status`), types the phone number and sees Pending, Approved with the entry code, or Problem with what to do. For most problems they can **upload a new slip** there. The row goes back to **Pending** and the admin gets a notice. |
 
 Use **openface ▸ List emails still to send** for everything still marked `To send`. Use **openface ▸ Rebuild email draft for selected rows** after editing a template. `Email Log` records when each draft was created.
@@ -29,10 +29,15 @@ Use **openface ▸ List emails still to send** for everything still marked `To s
 | **Payment Status** | **The payment-approval status:** `Pending` (yellow) · `Approved` (green) · `Problem` (red) · `Cancelled` (grey) |
 | **Problem Reason** | Dropdown, see below |
 | **Note to Guest** | ⚠️ The guest **sees** this in the Problem letter and on the status page |
-| **Customer Email** | `To send – Approved` / `To send – Problem` (yellow), set by the script · `Sent – Approved` / `Sent – Problem` (green), set by you after sending · `Not needed` |
+| **Email Status** | **The guest-email confirmation status:** `Waiting – payment check` (grey, new booking) → `To send – Approved` / `To send – Problem` (yellow, set by the script when the letter is ready) → `Sent – Approved` / `Sent – Problem` (green, **you** set it after sending) · `Not needed` (cancelled before any email) |
+| **Email Sent At** | Filled in automatically when you choose `Sent – …`, and cleared if you change it back. The log records each change. |
 | **Internal Note** | Team only. Re-upload history is written here. |
 
-Do not edit: `Booking Ref`, `Phone`, `Entry Code`, `Email Draft`, `Email Log`.
+Do not edit: `Booking Ref`, `Phone`, `Entry Code`, `Email Sent At`, `Email Draft`, `Email Log`.
+
+**Upgrading from v2.4:** paste the new Code.gs and run `setup()`. It renames `Customer Email` to `Email Status` and inserts `Email Sent At` **in the same tab**, so existing bookings stay put. Then Deploy → Manage deployments → Edit → New version.
+
+If a booking is set back from Approved after `Sent – Approved`, Email Status stays `Sent – Approved`. The guest already has an entry code, so contact them yourself.
 
 ### Problem reasons (dropdown)
 | Reason | Guest sees | Guest can re-upload |
@@ -75,7 +80,7 @@ Put the `/exec` URL into `config.js` (`API_URL: '…/exec'`) and commit. Vercel 
 ## 3 · Test before announcing
 - [ ] Scan the QR for 1 guest in KBank, SCB and one other bank app. Each should show **โอเพ่น เฟซ** with 1,199 pre-filled.
 - [ ] Set `PRICE_PER_PERSON: 1` in Code.gs, deploy a new version, register with your own phone/email and pay 1 THB. The row must appear as **Pending**, and the admin notice must reach nojudgmentgathering.
-- [ ] As **nojudgmentgathering**, pick a Problem Reason → Payment Status turns **Problem**, Customer Email shows `To send – Problem`, and the draft is filled in. Open the Gmail link, paste the draft, send it to yourself, and mark it Sent. On the site → Check status → upload a new slip → the row goes back to **Pending**.
+- [ ] As **nojudgmentgathering**, pick a Problem Reason → Payment Status turns **Problem**, Email Status shows `To send – Problem`, and the draft is filled in. Open the Gmail link, paste the draft, send it to yourself, and mark it Sent. On the site → Check status → upload a new slip → the row goes back to **Pending**.
 - [ ] Set it to **Approved** → entry code + `To send – Approved` draft, and the code shows on Check status.
 - [ ] Set the price back to 1199 and deploy a new version.
 
@@ -88,8 +93,9 @@ The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`
 
 | Version | Change |
 |---|---|
+| v2.5.0 | Email Status column (Waiting → To send → Sent), Email Sent At timestamp, Gmail permission narrowed to send-only |
 | v2.4.1 | Mascot redrawn: croissant crescent with a record halo, all five moods |
-| v2.4.0 | Guest emails sent by hand: Customer Email status + Email Draft with a Gmail link |
+| v2.4.0 | Guest emails sent by hand: Email Status + Email Draft with a Gmail link |
 | v2.3.0 | Event admin + guest contact email: nojudgmentgathering@gmail.com |
 | v2.2.0 | Price 1,199 THB per person |
 | v2.1.0 | Version footer, backend version check, "new version" notice |
