@@ -63,7 +63,10 @@ const CONFIG = {
    *   {{problem}} {{fix}} {{note}} {{statusLink}} {{line}} {{lineUrl}} {{phone}}
    * The letter is wrapped in the poster-style frame (logo, event band, footer) automatically.  */
   EMAIL: {
-    SEND:           true,
+    // false = MANUAL: nothing is emailed to guests. Approving / flagging a row writes a ready-to-send draft into
+    // "Email Draft" and sets "Customer Email" to "To send …"; the team sends it from Gmail and marks it "Sent …".
+    // true  = the script emails guests automatically (RECEIVED / APPROVED / PROBLEM).
+    SEND:           false,
     FROM_ALIAS:     '',            // TODO e.g. 'hello@openfacebkk.com' – must be a "Send mail as" alias of the Google account running this script
     SENDER_NAME:    'openface × No Judgment Gathering',
     REPLY_TO:       'nojudgmentgathering@gmail.com',   // guest replies go here
@@ -136,7 +139,10 @@ const CONFIG = {
 };
 
 // Must match APP_VERSION in index.html (major.minor). Bump both together, then Deploy → New version.
-const CODE_VERSION = '2.3.0';
+const CODE_VERSION = '2.4.0';
+
+const MAIL = { TO_APPROVED: 'To send – Approved', SENT_APPROVED: 'Sent – Approved',
+               TO_PROBLEM: 'To send – Problem', SENT_PROBLEM: 'Sent – Problem', NOT_NEEDED: 'Not needed' };
 
 const STATUS = { PENDING: 'Pending', APPROVED: 'Approved', PROBLEM: 'Problem', CANCELLED: 'Cancelled' };
 
@@ -144,7 +150,7 @@ const HEADERS = [
   'Timestamp', 'Booking Ref', 'Full Name', 'Phone', 'Email', 'LINE ID',
   'Attendees', 'Guest Names', 'Parking', 'Amount (THB)', 'Slip Link',
   'Slip Amount', 'Slip Time', 'Sender', 'Sender Bank', 'Receiver on Slip', 'Trans Ref', 'Auto Check',
-  'Notes', 'Payment Status', 'Problem Reason', 'Note to Guest', 'Entry Code', 'Email Log', 'Internal Note', 'Updated At'
+  'Notes', 'Payment Status', 'Problem Reason', 'Note to Guest', 'Entry Code', 'Customer Email', 'Email Draft', 'Email Log', 'Internal Note', 'Updated At'
 ];
 const COL = name => HEADERS.indexOf(name) + 1;
 const TZ = 'Asia/Bangkok';
@@ -416,7 +422,7 @@ function submitRegistration(f) {
       'Receiver on Slip': slip ? (slip.receiverName + (slip.receiverAccount ? ' ' + slip.receiverAccount : '')) : '',
       'Trans Ref': slip && slip.transRef ? "'" + slip.transRef : '', 'Auto Check': autoCheck,
       'Notes': String(f.notes || '').slice(0, 1000), 'Payment Status': STATUS.PENDING, 'Problem Reason': '',
-      'Note to Guest': '', 'Entry Code': '', 'Email Log': '', 'Internal Note': '', 'Updated At': now
+      'Note to Guest': '', 'Entry Code': '', 'Customer Email': '', 'Email Draft': '', 'Email Log': '', 'Internal Note': '', 'Updated At': now
     };
     const sh = getSheet_();
     sh.appendRow(HEADERS.map(h => rec[h] === undefined ? '' : rec[h]));
@@ -498,11 +504,17 @@ function processRow_(sh, row, force, reasonEdited) {
   const since = r.log.split('SLIP RE-UPLOADED').pop();          // only look after the latest re-upload
   let result = 'nothing to send';
 
+  if (status === STATUS.APPROVED && !r.entryCode) {
+    r.entryCode = newEntryCode_(sh);
+    sh.getRange(row, COL('Entry Code')).setValue(r.entryCode);
+  }
+  if (!CONFIG.EMAIL.SEND) {                                      // MANUAL e-mail mode
+    result = manualDraft_(sh, row, r, status, since, force);
+    sh.getRange(row, COL('Updated At')).setValue(new Date());
+    return result;
+  }
+
   if (status === STATUS.APPROVED) {
-    if (!r.entryCode) {
-      r.entryCode = newEntryCode_(sh);
-      sh.getRange(row, COL('Entry Code')).setValue(r.entryCode);
-    }
     sh.getRange(row, COL('Problem Reason')).clearNote();
     if (force || since.indexOf('APPROVED →') < 0) {
       result = sendTemplate_('APPROVED', r) ? 'APPROVED → ' + r.email + ' (' + r.entryCode + ')' : 'APPROVED FAILED';
@@ -524,6 +536,34 @@ function processRow_(sh, row, force, reasonEdited) {
   }
   sh.getRange(row, COL('Updated At')).setValue(new Date());
   return result;
+}
+
+/** Manual mode: keep "Email Draft" + "Customer Email" in step with the payment status. */
+function manualDraft_(sh, row, r, status, since, force) {
+  const mailCell = sh.getRange(row, COL('Customer Email'));
+  const draftCell = sh.getRange(row, COL('Email Draft'));
+  const reasonCell = sh.getRange(row, COL('Problem Reason'));
+  let kind = null, tag = '';
+  if (status === STATUS.APPROVED) { kind = 'APPROVED'; tag = 'APPROVED draft'; reasonCell.clearNote(); }
+  else if (status === STATUS.PROBLEM) {
+    if (!r.reason) { reasonCell.setNote('เลือก Problem Reason เพื่อสร้างอีเมลแจ้งลูกค้า / Pick a reason to create the email draft'); return 'waiting for Problem Reason'; }
+    reasonCell.clearNote(); kind = 'PROBLEM'; tag = 'PROBLEM [' + problemOf_(r.reason).key + '] draft';
+  }
+  if (!kind) {                                                   // Pending / Cancelled: drop unsent drafts
+    if (/^To send/.test(r.mailState)) { mailCell.setValue(status === STATUS.CANCELLED ? MAIL.NOT_NEEDED : ''); draftCell.setValue(''); }
+    return 'no email for ' + (status || 'blank');
+  }
+  const sentLabel = kind === 'APPROVED' ? MAIL.SENT_APPROVED : MAIL.SENT_PROBLEM;
+  const fresh = since.indexOf(tag) < 0;
+  if (r.mailState === sentLabel && !fresh && !force) return 'already sent';
+  const m = buildEmail_(kind, r);
+  const compose = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(r.email)
+                + '&su=' + encodeURIComponent(m.subject);
+  const text = 'To: ' + r.email + '\nSubject: ' + m.subject + '\n\n' + m.text;
+  draftCell.setRichTextValue(SpreadsheetApp.newRichTextValue().setText(text).setLinkUrl(compose).build());
+  mailCell.setValue(kind === 'APPROVED' ? MAIL.TO_APPROVED : MAIL.TO_PROBLEM);
+  if (fresh || force) logEmail_(sh, row, tag + ' ready → ' + r.email + (kind === 'APPROVED' ? ' (' + r.entryCode + ')' : ''));
+  return tag + ' ready';
 }
 
 /* ======================================================================
@@ -616,6 +656,24 @@ function resubmitSlip(d) {
 
 function sendTemplate_(kind, r) {
   if (!CONFIG.EMAIL.SEND || !r.email) return false;
+  const m = buildEmail_(kind, r);
+  try {
+    if (CONFIG.EMAIL.FROM_ALIAS) {
+      GmailApp.sendEmail(r.email, m.subject, m.text, { htmlBody: m.html, from: CONFIG.EMAIL.FROM_ALIAS,
+        name: CONFIG.EMAIL.SENDER_NAME, replyTo: CONFIG.EMAIL.REPLY_TO || CONFIG.EMAIL.FROM_ALIAS });
+    } else {
+      MailApp.sendEmail({ to: r.email, subject: m.subject, htmlBody: m.html, body: m.text,
+        name: CONFIG.EMAIL.SENDER_NAME, replyTo: CONFIG.EMAIL.REPLY_TO || undefined });
+    }
+    return true;
+  } catch (e) {
+    console.warn(kind + ' email failed for ' + r.ref + ': ' + e);
+    return false;
+  }
+}
+
+/** Fills a template → { subject, html (poster frame), text (plain, for pasting into Gmail) }. */
+function buildEmail_(kind, r) {
   const t = CONFIG.EMAIL.TEMPLATES[kind];
   const p = r.reason ? problemOf_(r.reason) : { th: '', fix: '' };
   const statusLink = CONFIG.SITE_URL.replace(/\/$/, '') + '/#status';
@@ -631,21 +689,19 @@ function sendTemplate_(kind, r) {
     return html && !/Url$|Link$/.test(k) ? esc_(v) : v;
   });
   const titles = { RECEIVED: 'ได้รับการลงทะเบียนแล้ว', APPROVED: "YOU'RE IN! · ยืนยันการชำระเงินแล้ว", PROBLEM: 'ต้องแก้ไขการชำระเงิน' };
-  const html = wrapEmail_(titles[kind] || '', fill(t.BODY, true));
-  const subject = fill(t.SUBJECT, false);
-  try {
-    if (CONFIG.EMAIL.FROM_ALIAS) {
-      GmailApp.sendEmail(r.email, subject, '', { htmlBody: html, from: CONFIG.EMAIL.FROM_ALIAS,
-        name: CONFIG.EMAIL.SENDER_NAME, replyTo: CONFIG.EMAIL.REPLY_TO || CONFIG.EMAIL.FROM_ALIAS });
-    } else {
-      MailApp.sendEmail({ to: r.email, subject: subject, htmlBody: html,
-        name: CONFIG.EMAIL.SENDER_NAME, replyTo: CONFIG.EMAIL.REPLY_TO || undefined });
-    }
-    return true;
-  } catch (e) {
-    console.warn(kind + ' email failed for ' + r.ref + ': ' + e);
-    return false;
-  }
+  const body = fill(t.BODY, true);
+  const text = htmlToText_(body) + '\n\n—\n' + CONFIG.HOUSE_RULES + '\n' + CONFIG.REFUND_POLICY
+    + '\nLINE ' + CONFIG.CONTACT_LINE + ' (' + CONFIG.LINE_URL + ') · โทร ' + CONFIG.CONTACT_PHONE
+    + (CONFIG.CONTACT_EMAIL ? ' · ' + CONFIG.CONTACT_EMAIL : '') + '\n' + CONFIG.BRAND + ' × ' + CONFIG.CO_HOST;
+  return { subject: fill(t.SUBJECT, false), html: wrapEmail_(titles[kind] || '', body), text: text };
+}
+
+function htmlToText_(h) {
+  return String(h)
+    .replace(/<a [^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/gi, (m, url, label) => label === url ? url : label + ' (' + url + ')')
+    .replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n\n').replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
 function notifyAdmin_(subject, line, autoCheck, slipUrl) {
@@ -654,7 +710,8 @@ function notifyAdmin_(subject, line, autoCheck, slipUrl) {
     MailApp.sendEmail({ to: CONFIG.ADMIN_EMAIL, name: CONFIG.BRAND + ' registration', subject: subject,
       htmlBody: esc_(line) + '<br>Auto check: ' + esc_(autoCheck || '-') + '<br>'
         + 'Slip: <a href="' + slipUrl + '">open</a> · Sheet: <a href="' + ss_().getUrl() + '">open</a><br>'
-        + '<small>Set "Payment Status" in the Sheet to Approved or Problem (+ Problem Reason). The guest email goes out automatically.</small>' });
+        + '<small>Set "Payment Status" in the Sheet to Approved or Problem (+ Problem Reason). '
+        + (CONFIG.EMAIL.SEND ? 'The guest email goes out automatically.' : 'Then send the guest the text in "Email Draft" from Gmail and set "Customer Email" to Sent.') + '</small>' });
   } catch (e) { console.warn('Admin email failed: ' + e); }
 }
 
@@ -683,7 +740,12 @@ function sendTestEmails() {
   const sample = { ref: CONFIG.ID_PREFIX + '0000', name: 'ทดสอบ Test', email: CONFIG.ADMIN_EMAIL, qty: 2,
                    amount: 2 * CONFIG.PRICE_PER_PERSON, entryCode: CONFIG.CODE_PREFIX + 'TEST',
                    reason: CONFIG.PROBLEMS[0].key, note: 'ตัวอย่างข้อความถึงลูกค้า' };
-  ['RECEIVED', 'APPROVED', 'PROBLEM'].forEach(k => sendTemplate_(k, sample));
+  const parts = ['APPROVED', 'PROBLEM'].concat(CONFIG.EMAIL.SEND ? ['RECEIVED'] : []).map(k => {
+    const m = buildEmail_(k, sample);
+    return '<h3>' + k + ' · ' + esc_(m.subject) + '</h3>' + (CONFIG.EMAIL.SEND ? m.html : '<pre style="white-space:pre-wrap;font-family:inherit">' + esc_(m.text) + '</pre>');
+  });
+  MailApp.sendEmail({ to: CONFIG.ADMIN_EMAIL, subject: '[Preview] ' + CONFIG.EVENT_NAME + ' guest emails',
+    htmlBody: parts.join('<hr>'), name: CONFIG.BRAND + ' registration' });
 }
 
 /* ======================================================================
@@ -691,10 +753,11 @@ function sendTestEmails() {
  * ====================================================================== */
 
 function onOpen() {
+  const manual = !CONFIG.EMAIL.SEND;
   SpreadsheetApp.getUi().createMenu('openface')
-    .addItem('ส่งอีเมลซ้ำ (แถวที่เลือก) · Resend email for selected rows', 'menuResend')
-    .addItem('ส่งอีเมลที่ยังค้าง · Send any missing emails', 'menuSweep')
-    .addItem('ส่งอีเมลตัวอย่างหาแอดมิน · Send test emails to admin', 'sendTestEmails')
+    .addItem(manual ? 'สร้างร่างอีเมลใหม่ (แถวที่เลือก) · Rebuild email draft for selected rows' : 'ส่งอีเมลซ้ำ (แถวที่เลือก) · Resend email for selected rows', 'menuResend')
+    .addItem(manual ? 'อีเมลที่ยังไม่ได้ส่ง · List emails still to send' : 'ส่งอีเมลที่ยังค้าง · Send any missing emails', 'menuSweep')
+    .addItem('ส่งตัวอย่างอีเมลหาแอดมิน · Send email preview to admin', 'sendTestEmails')
     .addSeparator()
     .addItem('Setup / repair sheet', 'setup')
     .addToUi();
@@ -715,7 +778,8 @@ function menuSweep() {
   const res = [];
   for (let r = 2; r <= sh.getLastRow(); r++) {
     const x = processRow_(sh, r, false, false);
-    if (/→|FAILED/.test(x)) res.push('Row ' + r + ': ' + x);
+    if (CONFIG.EMAIL.SEND ? /→|FAILED/.test(x) : /^To send/.test(sh.getRange(r, COL('Customer Email')).getValue()))
+      res.push('Row ' + r + ' · ' + sh.getRange(r, COL('Booking Ref')).getValue() + ': ' + (CONFIG.EMAIL.SEND ? x : sh.getRange(r, COL('Customer Email')).getValue()));
   }
   SpreadsheetApp.getUi().alert(res.length ? res.join('\n') : 'ไม่มีอีเมลค้าง · Nothing to send');
 }
@@ -733,19 +797,29 @@ function setup() {
 function styleSheet_(sh) {
   const N = 2000;
   sh.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold').setBackground('#33363c').setFontColor('#f2efc4');
-  ['Payment Status', 'Problem Reason', 'Note to Guest'].forEach(h =>
+  ['Payment Status', 'Problem Reason', 'Note to Guest', 'Customer Email'].forEach(h =>
     sh.getRange(1, COL(h)).setBackground('#c98a3c').setFontColor('#2f3640'));
   sh.getRange(2, COL('Payment Status'), N, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInList([STATUS.PENDING, STATUS.APPROVED, STATUS.PROBLEM, STATUS.CANCELLED], true).build());
   sh.getRange(2, COL('Problem Reason'), N, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInList(CONFIG.PROBLEMS.map(p => p.key), true).setAllowInvalid(false).build());
+  sh.getRange(2, COL('Customer Email'), N, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInList([MAIL.TO_APPROVED, MAIL.SENT_APPROVED, MAIL.TO_PROBLEM, MAIL.SENT_PROBLEM, MAIL.NOT_NEEDED], true).build());
   const rng = sh.getRange(2, COL('Payment Status'), N, 1);
+  const mrng = sh.getRange(2, COL('Customer Email'), N, 1);
   const colors = [[STATUS.APPROVED, '#d4ecd1', '#1e5a2a'], [STATUS.PENDING, '#fbe6bf', '#7a4b0c'],
                   [STATUS.PROBLEM, '#f7d2c8', '#8a2b1a'], [STATUS.CANCELLED, '#e1e1e1', '#666666']];
+  const mcolors = [['To send', '#fbe6bf', '#7a4b0c'], ['Sent', '#d4ecd1', '#1e5a2a']];
   const keep = sh.getConditionalFormatRules().filter(rule =>
-    !rule.getRanges().some(r => r.getColumn() === COL('Payment Status')));
-  sh.setConditionalFormatRules(keep.concat(colors.map(c => SpreadsheetApp.newConditionalFormatRule()
-    .whenTextEqualTo(c[0]).setBackground(c[1]).setFontColor(c[2]).setRanges([rng]).build())));
+    !rule.getRanges().some(r => r.getColumn() === COL('Payment Status') || r.getColumn() === COL('Customer Email')));
+  sh.setConditionalFormatRules(keep
+    .concat(colors.map(c => SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo(c[0]).setBackground(c[1]).setFontColor(c[2]).setRanges([rng]).build()))
+    .concat(mcolors.map(c => SpreadsheetApp.newConditionalFormatRule()
+      .whenTextStartsWith(c[0]).setBackground(c[1]).setFontColor(c[2]).setRanges([mrng]).build())));
+  sh.getRange(2, COL('Email Draft'), N, 1).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
+  sh.setColumnWidth(COL('Customer Email'), 170);
+  sh.setColumnWidth(COL('Email Draft'), 220);
   sh.getRange(2, COL('Slip Time'), N, 1).setNumberFormat('d/mm/yyyy hh:mm');
   sh.getRange(2, COL('Updated At'), N, 1).setNumberFormat('d/mm/yyyy hh:mm');
   sh.setColumnWidth(COL('Problem Reason'), 240);
@@ -763,7 +837,7 @@ function rowObj_(sh, row) {
     row: row, ref: String(g('Booking Ref') || ''), name: String(g('Full Name') || ''), phone: String(g('Phone') || ''),
     email: String(g('Email') || '').trim(), qty: g('Attendees'), amount: g('Amount (THB)'),
     status: String(g('Payment Status') || ''), reason: String(g('Problem Reason') || ''), note: String(g('Note to Guest') || ''),
-    entryCode: String(g('Entry Code') || ''), log: String(g('Email Log') || ''), internal: String(g('Internal Note') || ''),
+    entryCode: String(g('Entry Code') || ''), mailState: String(g('Customer Email') || ''), log: String(g('Email Log') || ''), internal: String(g('Internal Note') || ''),
     slipLink: String(g('Slip Link') || ''), transRef: String(g('Trans Ref') || ''), autoCheck: String(g('Auto Check') || '')
   };
 }
