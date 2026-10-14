@@ -8,7 +8,7 @@
  *  come from the Apps Script CONFIG (so edit event details THERE).
  * ===================================================================== */
 window.APP_CONFIG = {
-  API_URL: '',
+  API_URL: 'https://script.google.com/macros/s/AKfycbzR1-d6uxTJG4WObUyIh4XWs0BolkLur8VM4GYJ7m6qUt_9ao10dl700F9A6SbrbgSU/exec',
 
   DEFAULTS: {
     BRAND: 'openface',
