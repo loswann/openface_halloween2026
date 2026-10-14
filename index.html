@@ -81,6 +81,26 @@ footer .flogo{width:200px;height:auto;display:block;margin-top:4px}
 .demo select{width:auto;height:auto;font-size:12px;padding:2px 4px;border-radius:4px;border:0;margin-left:4px;background:var(--cream);color:var(--ink)}
 .hero{position:relative;display:block;line-height:0}
 .hero img{width:100%;height:auto;display:block}
+/* "LET'S GET … FREE FLOW!" call-and-response: each line pops in turn, left then right, top to bottom */
+.flow{position:absolute;inset:0;pointer-events:none}
+.flow .fl{position:absolute;display:block;background-repeat:no-repeat;will-change:transform;
+  animation:flowpop 4.2s cubic-bezier(.3,1.6,.5,1) infinite;animation-delay:calc(var(--i) * .32s)}
+.flow .l{background-image:url(assets/flow-left.png?v=280);transform-origin:12% 55%}
+.flow .r{background-image:url(assets/flow-right.png?v=280);transform-origin:88% 55%;animation-delay:calc(var(--i) * .32s + .16s)}
+@keyframes flowpop{
+  0%,14%,100%{transform:none;filter:none}
+  4%{transform:scale(1.16) rotate(-3deg);filter:drop-shadow(0 0 5px rgba(201,138,60,.85)) drop-shadow(2px 2px 0 rgba(201,138,60,.9))}
+  8%{transform:scale(.97) rotate(1deg)}
+  11%{transform:scale(1.03)}
+}
+.flow .r{animation-name:flowpopr}
+@keyframes flowpopr{
+  0%,14%,100%{transform:none;filter:none}
+  4%{transform:scale(1.16) rotate(3deg);filter:drop-shadow(0 0 5px rgba(201,138,60,.85)) drop-shadow(-2px 2px 0 rgba(201,138,60,.9))}
+  8%{transform:scale(.97) rotate(-1deg)}
+  11%{transform:scale(1.03)}
+}
+@media (prefers-reduced-motion:reduce){.flow .fl{animation:none}}
 .hero-cta{position:absolute;left:50%;bottom:20%;transform:translateX(-50%);line-height:1.2}
 .marquee{background:var(--slate);color:var(--cream);overflow:hidden;white-space:nowrap;border-top:3px solid var(--ink);border-bottom:3px solid var(--ink)}
 .marquee span{font-family:var(--display);font-size:24px;letter-spacing:1px;padding:8px 0 6px;display:inline-flex;align-items:center;gap:18px;margin-right:18px}
@@ -239,8 +259,9 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 
 <!-- ============ Hero: the poster ============ -->
 <a class="hero" href="#register" aria-label="ไปที่ฟอร์มลงทะเบียน">
-<img src="assets/poster.jpg?v=260" srcset="assets/poster-540.jpg?v=260 540w, assets/poster.jpg?v=260 1080w" sizes="(max-width: 480px) 100vw, 480px" width="1080" height="1440"
- alt="ANNYEONG 안녕안녕 SPOOKY HALLOWEEN NIGHT – Oct 31st 2026, 10:00 pm – 02:00 am. DJ, free-flow, Korean bites. Dress code: everything Korean. At openface BKK. No Judgment Gathering x openface.">
+<img src="assets/poster-clean.jpg?v=280" srcset="assets/poster-clean-540.jpg?v=280 540w, assets/poster-clean.jpg?v=280 1080w" sizes="(max-width: 480px) 100vw, 480px" width="1080" height="1440"
+ alt="ANNYEONG 안녕안녕 SPOOKY HALLOWEEN NIGHT – Oct 31st 2026, 10:00 pm – 02:00 am. DJ, free-flow, Korean bites. Dress code: everything Korean. At openface BKK. No Judgment Gathering x openface. Let's get free flow!">
+<span class="flow" aria-hidden="true"><i class="fl l" style="left:5.926%;top:30.069%;width:17.778%;height:3.194%;background-size:100% 728.261%;background-position:0 1.038%;--i:0"></i><i class="fl l" style="left:5.926%;top:33.750%;width:17.778%;height:3.194%;background-size:100% 728.261%;background-position:0 19.377%;--i:1"></i><i class="fl l" style="left:5.926%;top:37.639%;width:17.778%;height:3.194%;background-size:100% 728.261%;background-position:0 38.754%;--i:2"></i><i class="fl l" style="left:5.926%;top:41.597%;width:17.778%;height:3.194%;background-size:100% 728.261%;background-position:0 58.478%;--i:3"></i><i class="fl l" style="left:5.926%;top:45.694%;width:17.778%;height:3.194%;background-size:100% 728.261%;background-position:0 78.893%;--i:4"></i><i class="fl l" style="left:5.926%;top:49.653%;width:17.778%;height:3.194%;background-size:100% 728.261%;background-position:0 98.616%;--i:5"></i><i class="fl r" style="left:72.222%;top:30.069%;width:21.574%;height:3.194%;background-size:100% 728.261%;background-position:0 1.038%;--i:0"></i><i class="fl r" style="left:72.222%;top:33.750%;width:21.574%;height:3.194%;background-size:100% 728.261%;background-position:0 19.377%;--i:1"></i><i class="fl r" style="left:72.222%;top:37.639%;width:21.574%;height:3.194%;background-size:100% 728.261%;background-position:0 38.754%;--i:2"></i><i class="fl r" style="left:72.222%;top:41.597%;width:21.574%;height:3.194%;background-size:100% 728.261%;background-position:0 58.478%;--i:3"></i><i class="fl r" style="left:72.222%;top:45.694%;width:21.574%;height:3.194%;background-size:100% 728.261%;background-position:0 78.893%;--i:4"></i><i class="fl r" style="left:72.222%;top:49.653%;width:21.574%;height:3.194%;background-size:100% 728.261%;background-position:0 98.616%;--i:5"></i></span>
 </a>
 
 <div class="marquee" aria-hidden="true"><div class="marquee-track">
@@ -420,7 +441,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 /* ================= version =================
    Bump on every release: MAJOR = booking process changes · MINOR = feature / wording / flow · PATCH = fix only.
    Keep CODE_VERSION in apps-script/Code.gs on the same MAJOR.MINOR.                                         */
-const APP_VERSION = '2.7.0';
+const APP_VERSION = '2.8.0';
 const APP_DATE = '14 Oct 2026';
 /* ================= the croissant DJ · crescent + record halo (from the poster) =================
    croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),

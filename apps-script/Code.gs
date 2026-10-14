@@ -142,7 +142,7 @@ const CONFIG = {
 };
 
 // Must match APP_VERSION in index.html (major.minor). Bump both together, then Deploy → New version.
-const CODE_VERSION = '2.7.0';
+const CODE_VERSION = '2.8.0';
 
 // "Email Status" column – the guest-email confirmation status (emails are sent by hand)
 const MAIL = { WAITING: 'Waiting – payment check',
