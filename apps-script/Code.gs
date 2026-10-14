@@ -1,5 +1,5 @@
 /**
- * openface × No Judgment Gathering – ANNYONG SPOOKY HALLOWEEN NIGHT (31 Oct 2026)
+ * openface × No Judgment Gathering – ANNYEONG SPOOKY HALLOWEEN NIGHT (31 Oct 2026)
  * Backend for the Vercel registration site (Google Apps Script, bound to the event Google Sheet).
  *
  * PROCESS
@@ -16,7 +16,7 @@
 
 const CONFIG = {
   BRAND:            'openface',
-  EVENT_NAME:       'ANNYONG SPOOKY HALLOWEEN NIGHT',
+  EVENT_NAME:       'ANNYEONG SPOOKY HALLOWEEN NIGHT',
   TIME_EN:          '10:00 PM – 02:00 AM',
   CO_HOST:          'No Judgment Gathering',
   THEME:            'Korean Halloween in Bangkok',
@@ -138,7 +138,7 @@ const CONFIG = {
 };
 
 // Must match APP_VERSION in index.html (major.minor). Bump both together, then Deploy → New version.
-const CODE_VERSION = '2.5.0';
+const CODE_VERSION = '2.6.0';
 
 // "Email Status" column – the guest-email confirmation status (emails are sent by hand)
 const MAIL = { WAITING: 'Waiting – payment check',

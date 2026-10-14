@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ANNYONG SPOOKY HALLOWEEN NIGHT · openface BKK</title>
-<meta name="description" content="ANNYONG 안녕 SPOOKY HALLOWEEN NIGHT · Sat 31 Oct 2026 · 10 PM – 2 AM · DJ · Free-flow · Korean bites · Dress code: Everything Korean · 1,199 THB · openface BKK">
-<meta property="og:title" content="ANNYONG SPOOKY HALLOWEEN NIGHT · openface BKK">
+<title>ANNYEONG SPOOKY HALLOWEEN NIGHT · openface BKK</title>
+<meta name="description" content="ANNYEONG 안녕 SPOOKY HALLOWEEN NIGHT · Sat 31 Oct 2026 · 10 PM – 2 AM · DJ · Free-flow · Korean bites · Dress code: Everything Korean · 1,199 THB · openface BKK">
+<meta property="og:title" content="ANNYEONG SPOOKY HALLOWEEN NIGHT · openface BKK">
 <meta property="og:description" content="Oct 31st 2026 · 10 PM – 2 AM · DJ · Free-flow · Korean bites · 1,199 THB">
-<meta property="og:image" content="assets/og.jpg">
+<meta property="og:image" content="https://openface-halloween2026.vercel.app/assets/og.jpg?v=260">
 <meta name="theme-color" content="#2f3640">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M100 8 C66 8 48 38 42 84 C37 122 28 156 16 186 C70 190 130 190 184 186 C172 156 163 122 158 84 C152 38 134 8 100 8 Z' fill='%23ecebe4'/%3E%3Cpath d='M100 27 C84 27 74 47 72 79 C70 111 76 145 84 172 L116 172 C124 145 130 111 128 79 C126 47 116 27 100 27 Z' fill='%23c4823d'/%3E%3Cellipse cx='86' cy='72' rx='12' ry='8.5' fill='%2318191b'/%3E%3Cellipse cx='114' cy='72' rx='12' ry='8.5' fill='%2318191b'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -183,7 +183,7 @@ input::placeholder,textarea::placeholder{color:#9a9785}
 .party{position:relative;height:300px;margin-top:10px}
 .party .dj{position:absolute;left:50%;bottom:0;transform:translateX(-50%)}
 .party svg.conf{position:absolute;inset:0;width:100%;height:100%}
-.bubble{position:absolute;left:50%;top:6px;transform:translateX(-50%) rotate(-2deg);font-family:var(--display);font-size:36px;background:var(--ink);color:var(--cream);padding:2px 16px 4px;border-radius:12px}
+.bubble{position:absolute;left:50%;top:6px;transform:translateX(-50%) rotate(-2deg);font-family:var(--display);font-size:clamp(26px,8.5vw,36px);white-space:nowrap;background:var(--ink);color:var(--cream);padding:2px 16px 4px;border-radius:12px}
 .bubble .kr{font-family:var(--kr);color:var(--gold);font-size:30px}
 .regid{padding:10px 20px;border-radius:12px;border:2.5px dashed var(--ink);background:var(--field);font-family:var(--display);font-size:32px;letter-spacing:2px}
 .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;background:#efe2b8;border:1.5px solid var(--gold-d);font-size:13px;font-weight:600;color:#6b4318}
@@ -233,13 +233,13 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 </div>
 
 <main class="page">
-<h1 class="sr" id="evName">ANNYONG SPOOKY HALLOWEEN NIGHT</h1>
+<h1 class="sr" id="evName">ANNYEONG SPOOKY HALLOWEEN NIGHT</h1>
 <header class="topbar"><img src="assets/logo.png" width="900" height="223" alt="openface – all day brunch &amp; bakery"><span>× No Judgment Gathering</span></header>
 
 <!-- ============ Hero: the poster ============ -->
 <a class="hero" href="#register" aria-label="ไปที่ฟอร์มลงทะเบียน">
-<img src="assets/poster.jpg" srcset="assets/poster-540.jpg 540w, assets/poster.jpg 1080w" sizes="(max-width: 480px) 100vw, 480px" width="1080" height="1440"
- alt="ANNYONG 안녕안녕 SPOOKY HALLOWEEN NIGHT – Oct 31st 2026, 10:00 pm – 02:00 am. DJ, free-flow, Korean bites. Dress code: everything Korean. At openface BKK. No Judgment Gathering x openface.">
+<img src="assets/poster.jpg?v=260" srcset="assets/poster-540.jpg?v=260 540w, assets/poster.jpg?v=260 1080w" sizes="(max-width: 480px) 100vw, 480px" width="1080" height="1440"
+ alt="ANNYEONG 안녕안녕 SPOOKY HALLOWEEN NIGHT – Oct 31st 2026, 10:00 pm – 02:00 am. DJ, free-flow, Korean bites. Dress code: everything Korean. At openface BKK. No Judgment Gathering x openface.">
 </a>
 
 <div class="marquee" aria-hidden="true"><div class="marquee-track">
@@ -320,7 +320,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 <div class="amt">ยอด <b id="qrAmt"></b> ฿</div>
 </div>
 <div class="center-note">สแกนด้วยแอปธนาคารใดก็ได้ · ยอดเงินกรอกให้อัตโนมัติ</div>
-<a class="btn ghost" id="saveQr" href="#" download="annyong-halloween-qr.png">บันทึกรูป QR (จ่ายจากมือถือเครื่องนี้)</a>
+<a class="btn ghost" id="saveQr" href="#" download="annyeong-halloween-qr.png">บันทึกรูป QR (จ่ายจากมือถือเครื่องนี้)</a>
 <div class="center-note">บันทึกรูป แล้วเปิดแอปธนาคาร › สแกน › เลือกรูปจากอัลบั้ม</div>
 <div class="bankinfo"><div><span>ธนาคาร</span><span id="bankName"></span></div><div><span>ชื่อบัญชี</span><span id="accName"></span></div><div id="accRow" class="hidden"><span>เลขที่บัญชี</span><span id="accNo"></span></div></div>
 </section>
@@ -369,7 +369,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 <circle class="fall" cx="200" cy="0" r="4" fill="#c98a3c" style="animation-delay:-.9s"/>
 <circle class="fall" cx="330" cy="0" r="4" fill="#33363c" style="animation-delay:-3.2s"/>
 </svg>
-<div class="bubble">ANNYONG! <span class="kr">안녕</span></div>
+<div class="bubble">ANNYEONG! <span class="kr">안녕</span></div>
 <div class="dj" data-mascot="dj" data-size="220"></div>
 </div>
 <section class="card" style="margin-top:0;align-items:center;text-align:center">
@@ -419,7 +419,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 /* ================= version =================
    Bump on every release: MAJOR = booking process changes · MINOR = feature / wording / flow · PATCH = fix only.
    Keep CODE_VERSION in apps-script/Code.gs on the same MAJOR.MINOR.                                         */
-const APP_VERSION = '2.5.0';
+const APP_VERSION = '2.6.0';
 const APP_DATE = '14 Oct 2026';
 /* ================= the croissant DJ · crescent + record halo (from the poster) =================
    croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),

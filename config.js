@@ -1,5 +1,5 @@
 /* =====================================================================
- *  openface × No Judgment Gathering · ANNYONG SPOOKY HALLOWEEN NIGHT – site settings
+ *  openface × No Judgment Gathering · ANNYEONG SPOOKY HALLOWEEN NIGHT – site settings
  *
  *  API_URL: paste the Google Apps Script web-app URL here (ends in /exec).
  *  While it is empty the site runs in DEMO mode (nothing is saved).
@@ -12,7 +12,7 @@ window.APP_CONFIG = {
 
   DEFAULTS: {
     BRAND: 'openface',
-    EVENT_NAME: 'ANNYONG SPOOKY HALLOWEEN NIGHT',
+    EVENT_NAME: 'ANNYEONG SPOOKY HALLOWEEN NIGHT',
     TIME_EN: '10:00 PM – 02:00 AM',
     CO_HOST: 'No Judgment Gathering',
     THEME: 'Korean Halloween in Bangkok',

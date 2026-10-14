@@ -1,6 +1,6 @@
-# openface × No Judgment Gathering · ANNYONG SPOOKY HALLOWEEN NIGHT
+# openface × No Judgment Gathering · ANNYEONG SPOOKY HALLOWEEN NIGHT
 
-The registration site for **ANNYONG 안녕 SPOOKY HALLOWEEN NIGHT** at openface BKK: **Sat 31 Oct 2026, 10 PM – 2 AM (register 22:00, DJ 22:30), DJ, free-flow alcohol, Korean bites. Dress code: everything Korean. 1,199 THB.**
+The registration site for **ANNYEONG 안녕 SPOOKY HALLOWEEN NIGHT** at openface BKK: **Sat 31 Oct 2026, 10 PM – 2 AM (register 22:00, DJ 22:30), DJ, free-flow alcohol, Korean bites. Dress code: everything Korean. 1,199 THB.**
 
 The page (`index.html`) is hosted on **Vercel**. The **Google Apps Script** (`apps-script/Code.gs`) is the backend: it writes to the Google Sheet, saves slips to Drive and sends the emails.
 
@@ -93,6 +93,7 @@ The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`
 
 | Version | Change |
 |---|---|
+| v2.6.0 | New promo artwork; event name ANNYEONG (poster spelling) |
 | v2.5.0 | Email Status column (Waiting → To send → Sent), Email Sent At timestamp, Gmail permission narrowed to send-only |
 | v2.4.1 | Mascot redrawn: croissant crescent with a record halo, all five moods |
 | v2.4.0 | Guest emails sent by hand: Email Status + Email Draft with a Gmail link |
