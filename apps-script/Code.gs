@@ -1,5 +1,5 @@
 /**
- * openface – ANYONG SPOOKY HALLOWEEN NIGHT (31 Oct 2026)
+ * openface × No Judgment Gathering – ANNYONG SPOOKY HALLOWEEN NIGHT (31 Oct 2026)
  * Backend API for the Vercel registration site: Google Sheet + Drive slips + emails + SlipOK slip checker.
  *
  * Values marked  // TODO  still need your input. Run setup() once after pasting.
@@ -8,16 +8,18 @@
 
 const CONFIG = {
   BRAND:            'openface',
-  EVENT_NAME:       'ANYONG SPOOKY HALLOWEEN NIGHT',
+  EVENT_NAME:       'ANNYONG SPOOKY HALLOWEEN NIGHT',
+  TIME_EN:          '10:00 PM – 02:00 AM',
+  CO_HOST:          'No Judgment Gathering',
   THEME:            'Korean Halloween in Bangkok',
   EVENT_DATE:       'เสาร์ 31 ต.ค. 2026 · Sat 31 Oct 2026',
-  EVENT_TIME:       'ลงทะเบียน 22:00 · DJ 22:30 – 01:30',
-  SCHEDULE:         [['22:00', 'ลงทะเบียน · Registration'], ['22:30', 'DJ ขึ้น · DJ up'], ['01:30', 'ปิดงาน · Till 01:30']],
+  EVENT_TIME:       'ลงทะเบียน 22:00 · DJ 22:30 – 02:00',
+  SCHEDULE:         [['22:00', 'ลงทะเบียน · Registration'], ['22:30', 'DJ ขึ้น · DJ up'], ['02:00', 'ปิดงาน · Till 02:00']],
   VENUE:            'openface · 86/2 ถ.รามคำแหง 21 (ซ.นวศรี 15) แขวงพลับพลา เขตวังทองหลาง กรุงเทพฯ',
   MAP_URL:          'https://share.google/kdPgH8cJINAYblTop',
   PRICE_PER_PERSON: 1200,          // THB
-  PRICE_INCLUDES:   'Free-flow alcohol & small bites',
-  DRESS_CODE:       'Korean Halloween in Bangkok',
+  PRICE_INCLUDES:   'DJ · Free-flow alcohol · Korean bites',
+  DRESS_CODE:       'Everything Korean',
   MIN_AGE:          20,
   MAX_PER_BOOKING:  50,            // "no max" – kept at 50 only as a typo guard
   CAPACITY:         0,             // 0 = unlimited
@@ -50,6 +52,7 @@ const CONFIG = {
   LINE_URL:         'https://lin.ee/9pQIgO3',
   CONTACT_PHONE:    '082-556-3659',
   IG_URL:           'https://www.instagram.com/openfacebkk/',
+  SITE_URL:         '',            // your Vercel address, e.g. 'https://annyong.vercel.app' – shows the logo in emails
   ADMIN_EMAIL:      'openfacebkk@gmail.com',
   REFUND_POLICY:    'ไม่รับยกเลิกและไม่คืนเงินทุกกรณี · No cancellation, no refund',
   HOUSE_RULES:      'ผู้เข้าร่วมต้องอายุ 20 ปีขึ้นไป (ตรวจบัตรหน้างาน) · งดเด็กและสัตว์เลี้ยงสำหรับงานนี้ · 20+ only (ID check at the door) · No kids, no pets',
@@ -106,7 +109,7 @@ function doGet() {
 
 function getConfig() {
   const c = JSON.parse(JSON.stringify(CONFIG));
-  delete c.ADMIN_EMAIL; delete c.SLIP_FOLDER_ID; delete c.SHEET_NAME; delete c.SPREADSHEET_ID; delete c.SEND_EMAIL; delete c.SLIP_CHECK;
+  delete c.ADMIN_EMAIL; delete c.SITE_URL; delete c.SLIP_FOLDER_ID; delete c.SHEET_NAME; delete c.SPREADSHEET_ID; delete c.SEND_EMAIL; delete c.SLIP_CHECK;
   c.SLIP_CHECK_ON = slipCheckReady_();
   c.SEATS_TAKEN = countSeats_();
   c.CLOSED = isClosed_();
@@ -486,29 +489,37 @@ function countSeats_() {
 }
 
 function emailHtml_(name, regId, qty, amount, confirmed) {
-  const title = confirmed ? 'ยืนยันการชำระเงินเรียบร้อย' : 'ได้รับการลงทะเบียนแล้ว';
+  const title = confirmed ? "YOU'RE IN! · ยืนยันการชำระเงินเรียบร้อย" : 'ได้รับการลงทะเบียนแล้ว';
   const body  = confirmed
     ? 'เราตรวจสอบการชำระเงินของคุณเรียบร้อยแล้ว กรุณาแสดงรหัสลงทะเบียนนี้และบัตรประชาชนที่หน้างาน แล้วพบกันคืนฮาโลวีนค่ะ'
     : 'เราได้รับข้อมูลและสลิปของคุณแล้ว ทีมงานจะตรวจสอบและส่งอีเมลยืนยันอีกครั้งค่ะ';
-  const row = (k, v) => '<tr><td style="padding:6px 16px 6px 0;color:#8a8175">' + k + '</td><td style="padding:6px 0;color:#2b2622">' + v + '</td></tr>';
-  return '<div style="background:#f4efdf;padding:28px 16px;font-family:Georgia,\'Times New Roman\',serif">'
-   + '<div style="max-width:520px;margin:0 auto;background:#fffdf5;border:1px solid #e3dcc6;padding:28px">'
-   + '<div style="text-align:center;letter-spacing:4px;font-size:22px;color:#2b2622">' + CONFIG.BRAND + '</div>'
-   + '<div style="text-align:center;font-size:11px;letter-spacing:3px;color:#8a8175;margin-bottom:18px">CAFE · BANGKOK</div>'
-   + '<h2 style="font-weight:normal;color:#b5602a;margin:0 0 8px">' + title + '</h2>'
-   + '<p style="font-family:sans-serif;color:#2b2622">สวัสดีคุณ ' + name + ',</p>'
-   + '<p style="font-family:sans-serif;color:#2b2622">' + body + '</p>'
-   + '<table style="font-family:sans-serif;font-size:14px;border-collapse:collapse">'
-   + row('Registration ID', '<b>' + regId + '</b>')
-   + row('Event', CONFIG.EVENT_NAME)
-   + row('Date / Time', CONFIG.EVENT_DATE + ' · ' + CONFIG.EVENT_TIME)
-   + row('Venue', CONFIG.VENUE + ' · <a href="' + CONFIG.MAP_URL + '" style="color:#b5602a">Map</a>')
-   + row('Theme', CONFIG.THEME)
+  const ink = '#33363c', slate = '#2f3640', cream = '#f2efc4', gold = '#8f5626';
+  const row = (k, v) => '<tr><td style="padding:6px 16px 6px 0;color:#5b5d62">' + k + '</td><td style="padding:6px 0;color:' + ink + '">' + v + '</td></tr>';
+  const logo = CONFIG.SITE_URL
+    ? '<img src="' + CONFIG.SITE_URL.replace(/\/$/, '') + '/assets/logo.png" width="200" alt="openface" style="display:block;margin:0 auto 6px;width:200px;height:auto">'
+    : '<div style="text-align:center;font-family:\'Courier New\',monospace;font-weight:bold;letter-spacing:4px;font-size:26px;color:' + ink + '">openface</div>';
+  return '<div style="background:' + cream + ';padding:28px 16px;font-family:Helvetica,Arial,sans-serif">'
+   + '<div style="max-width:520px;margin:0 auto;background:#f8f5d8;border:3px solid ' + ink + ';border-radius:16px;overflow:hidden">'
+   + '<div style="padding:22px 24px 10px">' + logo
+   + '<div style="text-align:center;font-size:11px;letter-spacing:3px;color:#5b5d62">× ' + (CONFIG.CO_HOST || '').toUpperCase() + '</div></div>'
+   + '<div style="background:' + slate + ';color:' + cream + ';text-align:center;padding:14px 12px;font-family:Impact,\'Arial Narrow Bold\',sans-serif;font-size:26px;letter-spacing:1px">' + CONFIG.EVENT_NAME + '</div>'
+   + '<div style="padding:22px 24px">'
+   + '<h2 style="margin:0 0 8px;color:' + ink + ';font-family:Impact,\'Arial Narrow Bold\',sans-serif;font-weight:normal;font-size:24px;letter-spacing:.5px">' + title + '</h2>'
+   + '<p style="color:' + ink + '">สวัสดีคุณ ' + name + ',</p>'
+   + '<p style="color:' + ink + '">' + body + '</p>'
+   + '<table style="font-size:14px;border-collapse:collapse">'
+   + row('Registration ID', '<b style="font-size:18px;letter-spacing:1px">' + regId + '</b>')
+   + row('Date / Time', 'Sat 31 Oct 2026 · ' + (CONFIG.TIME_EN || CONFIG.EVENT_TIME))
+   + row('Schedule', CONFIG.EVENT_TIME)
+   + row('Venue', 'openface BKK · ' + CONFIG.VENUE.replace(/^openface · /, '') + ' · <a href="' + CONFIG.MAP_URL + '" style="color:' + gold + '">Map</a>')
    + row('Includes', CONFIG.PRICE_INCLUDES)
+   + row('Dress code', CONFIG.DRESS_CODE)
    + row('Attendees', qty)
    + row('Amount', Number(amount).toLocaleString() + ' THB')
    + '</table>'
-   + '<p style="font-family:sans-serif;color:#8a8175;font-size:12px;margin-top:16px">' + CONFIG.HOUSE_RULES + '<br>' + CONFIG.REFUND_POLICY + '</p>'
-   + '<p style="font-family:sans-serif;color:#8a8175;font-size:13px;margin-top:20px">LINE <a href="' + CONFIG.LINE_URL + '" style="color:#b5602a">' + CONFIG.CONTACT_LINE + '</a> · โทร ' + CONFIG.CONTACT_PHONE + '</p>'
+   + '<p style="color:#5b5d62;font-size:12px;margin-top:16px">' + CONFIG.HOUSE_RULES + '<br>' + CONFIG.REFUND_POLICY + '</p>'
+   + '<p style="color:#5b5d62;font-size:13px;margin-top:16px">LINE <a href="' + CONFIG.LINE_URL + '" style="color:' + gold + '">' + CONFIG.CONTACT_LINE + '</a> · โทร ' + CONFIG.CONTACT_PHONE + '</p>'
+   + '</div>'
+   + '<div style="background:' + slate + ';color:' + cream + ';text-align:center;padding:12px;font-family:Impact,\'Arial Narrow Bold\',sans-serif;font-size:22px;letter-spacing:1px">AT OPENFACE BKK</div>'
    + '</div></div>';
 }

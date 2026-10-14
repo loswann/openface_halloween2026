@@ -3,201 +3,202 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ANYONG SPOOKY HALLOWEEN NIGHT · openface</title>
-<meta name="description" content="openface Korean Halloween in Bangkok · Sat 31 Oct 2026 · Register 22:00 · DJ 22:30 – 01:30 · Free-flow alcohol & small bites · 1,200 THB">
-<meta property="og:title" content="ANYONG SPOOKY HALLOWEEN NIGHT · openface">
-<meta property="og:description" content="Sat 31 Oct · Register 22:00 · DJ 22:30 – 01:30 · Free-flow & small bites · 1,200 THB">
-<meta name="theme-color" content="#1b1815">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 92'%3E%3Cpath d='M10 50 C10 22 26 12 40 12 C54 12 70 22 70 50 L70 80 C66 76 62 76 58 81 C54 86 50 86 46 81 C42 76 38 76 34 81 C30 86 26 86 22 81 C18 76 14 76 10 80 Z' fill='%23fbf5e3'/%3E%3Cellipse cx='30' cy='46' rx='4' ry='5' fill='%231b1815'/%3E%3Cellipse cx='50' cy='46' rx='4' ry='5' fill='%231b1815'/%3E%3Cellipse cx='40' cy='17' rx='35' ry='5.5' fill='%232b2622'/%3E%3Cpath d='M29 17 L31 -6 Q40 -11 49 -6 L51 17 Z' fill='%232b2622'/%3E%3C/svg%3E">
+<title>ANNYONG SPOOKY HALLOWEEN NIGHT · openface BKK</title>
+<meta name="description" content="ANNYONG 안녕 SPOOKY HALLOWEEN NIGHT · Sat 31 Oct 2026 · 10 PM – 2 AM · DJ · Free-flow · Korean bites · Dress code: Everything Korean · 1,200 THB · openface BKK">
+<meta property="og:title" content="ANNYONG SPOOKY HALLOWEEN NIGHT · openface BKK">
+<meta property="og:description" content="Oct 31st 2026 · 10 PM – 2 AM · DJ · Free-flow · Korean bites · 1,200 THB">
+<meta property="og:image" content="assets/og.jpg">
+<meta name="theme-color" content="#2f3640">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M100 8 C66 8 48 38 42 84 C37 122 28 156 16 186 C70 190 130 190 184 186 C172 156 163 122 158 84 C152 38 134 8 100 8 Z' fill='%23ecebe4'/%3E%3Cpath d='M100 27 C84 27 74 47 72 79 C70 111 76 145 84 172 L116 172 C124 145 130 111 128 79 C126 47 116 27 100 27 Z' fill='%23c4823d'/%3E%3Cellipse cx='86' cy='72' rx='12' ry='8.5' fill='%2318191b'/%3E%3Cellipse cx='114' cy='72' rx='12' ry='8.5' fill='%2318191b'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Jua&family=Courier+Prime:wght@700&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Black+Han+Sans&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
 <script src="config.js"></script>
 <style>
+/* Poster palette: cream paper, charcoal ink, slate band, croissant gold */
 :root{
-  --night:#1b1815; --walnut:#27221e; --field:#1f1b18; --line:#3a332d; --line2:#4a4139;
-  --cream:#f4efdf; --text2:#d8d0bf; --muted:#b3a998; --stone:#8a8175;
-  --amber:#e2a15f; --amber2:#f2c089; --ember:#c8702a;
-  --red:#c0463a; --blue:#3d5a80; --jade:#8cc5a6; --ok:#2f6b4a; --bad:#a8412f; --badtext:#f08a78;
+  --paper:#f2efc4; --paper2:#f8f5d8; --field:#fffcea; --ink:#33363c; --ink2:#5b5d62; --slate:#2f3640; --slate2:#3d4550;
+  --cream:#f6f1c9; --gold:#c98a3c; --gold-d:#8f5626; --line:#d9d4a6;
+  --ok:#2f6b4a; --okbg:#dff0e2; --bad:#a8412f; --badbg:#f7dcd2; --line-green:#06c755;
+  --display:'Anton','Prompt',sans-serif; --kr:'Black Han Sans','Anton',sans-serif;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--night);color:var(--cream);font-family:'Noto Sans Thai',system-ui,sans-serif;font-weight:400;-webkit-font-smoothing:antialiased}
-a{color:var(--amber)}a:hover{color:var(--amber2)}
+body{background:var(--paper);color:var(--ink);font-family:'Prompt',system-ui,sans-serif;font-weight:400;-webkit-font-smoothing:antialiased}
+/* film grain like the poster */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;opacity:.13;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+a{color:var(--gold-d)}a:hover{color:var(--ink)}
 button,input,select,textarea{font-family:inherit}
-.page{max-width:460px;margin:0 auto;padding-bottom:48px;overflow:hidden}
+.page{max-width:480px;margin:0 auto;overflow:hidden;background:var(--paper)}
 .hidden{display:none!important}
-.jua{font-family:'Jua',sans-serif;font-weight:400}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.disp{font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.5px}
 
 /* ---------- motion ---------- */
 .a{transform-box:fill-box;transform-origin:center}
 .float{animation:floaty 3.2s ease-in-out infinite}
-.blink{animation:blink 4.2s infinite}
-.blink.d2{animation-delay:-1.5s}.blink.d3{animation-delay:-2.6s}
-.flap{animation:flap .32s ease-in-out infinite}
-.flapL{transform-box:fill-box;transform-origin:100% 50%;animation:flap .32s ease-in-out infinite}
-.flapR{transform-box:fill-box;transform-origin:0% 50%;animation:flap .32s ease-in-out infinite}
-.drift1{animation:drift 7s ease-in-out infinite}
-.drift2{animation:drift 9s ease-in-out -3s infinite reverse}
-.swing{transform-box:fill-box;transform-origin:50% 0%;animation:swing 2.8s ease-in-out infinite}
-.swing.d2{animation-delay:-.7s}.swing.d3{animation-delay:-1.4s}.swing.d4{animation-delay:-2.1s}
-.glow{animation:glow 2.8s ease-in-out infinite}
-.twinkle{animation:twinkle 2.4s ease-in-out infinite}
-.twinkle.d2{animation-delay:-.8s}.twinkle.d3{animation-delay:-1.6s}
-.moon{animation:moonglow 5s ease-in-out infinite}
-.hop{animation:hop 1.4s ease-in-out infinite}
-.hop.d1{animation-delay:-.28s}.hop.d2{animation-delay:-.55s}.hop.d3{animation-delay:-.82s}
-.wiggle{transform-box:fill-box;transform-origin:10% 90%;animation:wiggle 1.3s ease-in-out infinite}
-.wave{transform-box:fill-box;transform-origin:90% 90%;animation:wave .7s ease-in-out infinite}
-.wobble{animation:wobble 2.6s ease-in-out infinite}
-.peek{animation:peek 2.4s ease-in-out infinite}
-.sway{transform-box:fill-box;transform-origin:50% 90%;animation:sway 2.6s ease-in-out infinite}
-.bow{animation:bow 1.8s ease-in-out infinite}
+.hop{animation:hop 1.2s ease-in-out infinite}
+.nod{transform-box:fill-box;transform-origin:50% 100%;animation:nod .5s ease-in-out infinite}
+.spin{animation:spin 1.6s linear infinite}
+.fader{animation:fader 1s ease-in-out infinite}.fader.d2{animation-delay:-.5s}
 .search{animation:search 1.6s ease-in-out infinite}
 .shake{animation:shake .9s ease-in-out infinite}
+.tilt{transform-box:fill-box;transform-origin:center;transform:rotate(9deg) translateY(5px)}
 .sweat{animation:sweat 1.4s ease-in infinite}
-.fall{animation:fall 3.6s linear infinite}
-.halo{animation:halo 3s ease-in-out infinite}
+.twinkle{animation:twinkle 1.6s ease-in-out infinite}.twinkle.d2{animation-delay:-.8s}
+.fall{animation:fall 3.4s linear infinite}
 .stamp{animation:stamp .6s cubic-bezier(.2,1.6,.4,1) .2s both}
 .pop{animation:pop .45s cubic-bezier(.2,1.6,.4,1) both}
 .scan{animation:scan 1.3s ease-in-out infinite}
-.spinner{animation:spin .9s linear infinite}
-@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
-@keyframes blink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.08)}}
-@keyframes flap{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.5)}}
-@keyframes drift{0%{transform:translate(0,0)}50%{transform:translate(22px,-12px)}100%{transform:translate(0,0)}}
-@keyframes swing{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
-@keyframes glow{0%,100%{opacity:.08}50%{opacity:.3}}
-@keyframes twinkle{0%,100%{opacity:.15}50%{opacity:.95}}
-@keyframes moonglow{0%,100%{opacity:.06;transform:scale(1)}50%{opacity:.16;transform:scale(1.06)}}
+.marquee-track{display:flex;width:max-content;animation:marquee 18s linear infinite}
+.marquee.rev .marquee-track{animation-direction:reverse;animation-duration:24s}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 @keyframes hop{0%,100%{transform:translateY(0)}35%{transform:translateY(-10px)}55%{transform:translateY(-10px)}}
-@keyframes wiggle{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(12deg)}}
-@keyframes wave{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(18deg)}}
-@keyframes wobble{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
-@keyframes peek{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-8px) rotate(-4deg)}}
-@keyframes sway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
-@keyframes bow{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
-@keyframes search{0%,100%{transform:translate(0,0)}25%{transform:translate(-10px,6px)}50%{transform:translate(-4px,14px)}75%{transform:translate(4px,4px)}}
-@keyframes shake{0%,100%{transform:translateX(0) rotate(0)}20%{transform:translateX(-3px) rotate(-4deg)}40%{transform:translateX(3px) rotate(4deg)}60%{transform:translateX(-2px) rotate(-2deg)}80%{transform:translateX(2px)}}
-@keyframes sweat{0%{transform:translateY(0);opacity:1}100%{transform:translateY(10px);opacity:0}}
-@keyframes fall{0%{transform:translateY(-30px) rotate(0deg);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(270px) rotate(540deg);opacity:0}}
-@keyframes halo{0%,100%{opacity:.06;transform:scale(1)}50%{opacity:.14;transform:scale(1.08)}}
-@keyframes stamp{0%{transform:scale(1.6);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes nod{0%,100%{transform:rotate(-2deg) translateY(0)}50%{transform:rotate(2deg) translateY(3px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fader{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+@keyframes search{0%,100%{transform:translate(0,0)}25%{transform:translate(-10px,-8px)}50%{transform:translate(-4px,-16px)}75%{transform:translate(4px,-6px)}}
+@keyframes shake{0%,100%{transform:translateX(0) rotate(0)}20%{transform:translateX(-3px) rotate(-3deg)}40%{transform:translateX(3px) rotate(3deg)}60%{transform:translateX(-2px)}80%{transform:translateX(2px)}}
+@keyframes sweat{0%{transform:translateY(0);opacity:1}100%{transform:translateY(12px);opacity:0}}
+@keyframes twinkle{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1.1)}}
+@keyframes fall{0%{transform:translateY(-30px) rotate(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(300px) rotate(540deg);opacity:0}}
+@keyframes stamp{0%{transform:scale(1.6) rotate(-6deg);opacity:0}100%{transform:scale(1) rotate(-2deg);opacity:1}}
 @keyframes pop{0%{transform:scale(0)}100%{transform:scale(1)}}
 @keyframes scan{0%,100%{transform:translateY(0)}50%{transform:translateY(62px)}}
-@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes marquee{to{transform:translateX(-50%)}}
 @keyframes rowin{from{opacity:.4;transform:translateX(-6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 
-/* ---------- layout ---------- */
-.demo{background:var(--ember);color:#fff;text-align:center;font-size:12px;padding:6px 10px;line-height:1.6}
-.demo select{width:auto;height:auto;font-size:12px;padding:2px 4px;border-radius:4px;border:0;margin-left:4px;background:#fff;color:#1b1815}
-.scene{position:relative;height:340px}
-.scene svg.bg{position:absolute;inset:0;width:100%;height:340px}
-.brand{position:absolute;left:20px;top:20px;display:flex;align-items:center;gap:10px}
-.brand .tag{font-size:10px;letter-spacing:3px;color:var(--muted)}
-.title{padding:22px 20px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
-.chips{display:flex;gap:6px}
-.chip{font-family:'Jua',sans-serif;font-size:13px;padding:4px 12px;border-radius:999px;color:var(--cream)}
-h1{margin:0;font-family:'Jua',sans-serif;font-weight:400;font-size:40px;line-height:1.04;color:var(--amber);letter-spacing:.5px}
-.subtitle{font-size:14px;color:var(--muted)}
-.card{margin:16px 16px 0;padding:20px;background:var(--walnut);border:1px solid var(--line);border-radius:22px;display:flex;flex-direction:column;gap:14px}
-.row-ic{display:flex;align-items:flex-start;gap:10px}
-.row-ic svg{flex-shrink:0;margin-top:2px}
+/* ---------- blocks ---------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:var(--paper);border-bottom:3px solid var(--ink)}
+.topbar img{height:34px;width:auto;display:block}
+.topbar span{font-size:12px;font-weight:600;color:var(--ink2);text-align:right}
+footer .flogo{width:200px;height:auto;display:block;margin-top:4px}
+.demo{position:relative;z-index:60;background:var(--slate);color:var(--cream);text-align:center;font-size:12px;padding:6px 10px;line-height:1.6}
+.demo select{width:auto;height:auto;font-size:12px;padding:2px 4px;border-radius:4px;border:0;margin-left:4px;background:var(--cream);color:var(--ink)}
+.hero{position:relative;display:block;line-height:0}
+.hero img{width:100%;height:auto;display:block}
+.hero-cta{position:absolute;left:50%;bottom:20%;transform:translateX(-50%);line-height:1.2}
+.marquee{background:var(--slate);color:var(--cream);overflow:hidden;white-space:nowrap;border-top:3px solid var(--ink);border-bottom:3px solid var(--ink)}
+.marquee span{font-family:var(--display);font-size:24px;letter-spacing:1px;padding:8px 0 6px;display:inline-flex;align-items:center;gap:18px;margin-right:18px}
+.marquee span i{font-style:normal;color:var(--gold);font-size:18px}
+.marquee .kr{font-family:var(--kr);color:var(--gold)}
+.card{margin:18px 16px 0;padding:20px;background:var(--paper2);border:2.5px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 var(--ink);display:flex;flex-direction:column;gap:14px}
+h2{margin:0;font-family:var(--display);font-weight:400;font-size:30px;line-height:1.05;text-transform:uppercase;letter-spacing:.5px}
+h2 small{display:block;font-family:'Prompt',sans-serif;font-size:14px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink2);margin-top:2px}
+.when{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.when .date{font-family:var(--display);font-size:44px;line-height:.95}
+.when .date sup{font-size:.45em}
+.when .time{font-weight:700;font-size:17px}
 .sched{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.sched div{padding:12px 6px;background:var(--field);border-radius:14px;text-align:center;font-size:12px;color:var(--muted);line-height:1.4}
-.sched b{display:block;font-family:'Jua',sans-serif;font-weight:400;font-size:24px;color:var(--amber)}
-.price{display:flex;align-items:center;gap:14px;padding:14px;background:var(--field);border-radius:16px}
-.price .big{font-family:'Jua',sans-serif;font-size:30px;line-height:1}
-.price .big span{font-size:18px;color:var(--amber)}
+.sched div{padding:10px 6px 9px;background:var(--slate);color:var(--cream);border-radius:12px;text-align:center;font-size:12px;line-height:1.35}
+.sched b{display:block;font-family:var(--display);font-weight:400;font-size:28px;color:var(--cream);letter-spacing:.5px}
+.tags{font-family:var(--display);font-size:22px;letter-spacing:.5px;line-height:1.15}
+.tags i{font-style:normal;color:var(--gold)}
+.dress{display:inline-flex;align-self:flex-start;gap:6px;align-items:center;padding:6px 12px;border-radius:999px;background:var(--ink);color:var(--cream);font-size:13px;font-weight:600}
+.row-ic{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.6}
+.row-ic svg{flex-shrink:0;margin-top:2px}
+.price{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--field);border:2px dashed var(--ink);border-radius:16px}
+.price .big{font-family:var(--display);font-size:46px;line-height:1}
+.price .big span{font-size:20px;color:var(--gold-d);white-space:nowrap}
 .pills{display:flex;flex-wrap:wrap;gap:6px}
-.pill{font-size:12px;padding:5px 10px;border-radius:999px;border:1px solid var(--line2);color:var(--text2)}
-.pill.hot{border-color:var(--amber);color:var(--amber)}
-.steps{margin:26px 16px 0;display:flex;align-items:center;gap:8px}
-.step{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
-.step .n{width:26px;height:26px;border-radius:50%;background:var(--line);color:var(--muted);font-family:'Jua',sans-serif;font-size:14px;display:flex;align-items:center;justify-content:center}
-.step.on{color:var(--cream)}.step.on .n{background:var(--amber);color:var(--night)}
-.step.done .n{background:#5a4e44;color:var(--cream)}
-.bar{flex-grow:1;height:2px;background:var(--line);border-radius:2px}.bar.on{background:var(--amber)}
-h2{margin:0;font-family:'Jua',sans-serif;font-weight:400;font-size:26px}
+.pill{font-size:12px;font-weight:500;padding:5px 10px;border-radius:999px;border:1.5px solid var(--ink);background:var(--field)}
+.pill.hot{background:var(--gold);border-color:var(--gold-d);color:#2a1a0c}
+.steps{margin:28px 16px 0;display:flex;align-items:center;gap:8px}
+.step{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--ink2)}
+.step .n{width:28px;height:28px;border-radius:50%;border:2px solid var(--ink);background:var(--paper2);color:var(--ink);font-family:var(--display);font-size:15px;display:flex;align-items:center;justify-content:center}
+.step.on{color:var(--ink)}.step.on .n{background:var(--ink);color:var(--cream)}
+.step.done .n{background:var(--gold);border-color:var(--gold-d)}
+.bar{flex-grow:1;height:3px;background:var(--line);border-radius:2px}.bar.on{background:var(--ink)}
 .field{display:flex;flex-direction:column;gap:6px}
-.field label,.lbl{font-size:13px;color:var(--muted)}
-.req{color:var(--amber)}
-input[type=text],input[type=tel],input[type=email],select,textarea{width:100%;height:48px;padding:0 14px;border-radius:14px;border:1px solid var(--line);background:var(--field);color:var(--cream);font-size:16px}
-textarea{height:76px;padding:12px 14px;resize:vertical}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--amber)}
-input::placeholder,textarea::placeholder{color:#7d7468}
+.field label,.lbl{font-size:13px;font-weight:500;color:var(--ink2)}
+.req{color:var(--bad)}
+input[type=text],input[type=tel],input[type=email],select,textarea{width:100%;height:50px;padding:0 14px;border-radius:12px;border:2px solid var(--ink);background:var(--field);color:var(--ink);font-size:16px}
+textarea{height:78px;padding:12px 14px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:3px solid var(--gold);outline-offset:1px}
+input::placeholder,textarea::placeholder{color:#9a9785}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .qty{display:flex;align-items:center;gap:10px}
-.qty button{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--field);color:var(--cream);font-size:24px;cursor:pointer}
-.qty button.plus{border:0;background:var(--amber);color:var(--night)}
-.qty .val{min-width:64px;height:48px;border-radius:14px;background:var(--field);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Jua',sans-serif;font-size:22px}
-.total{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:16px;background:var(--field);border:1px dashed var(--amber)}
-.total b{font-family:'Jua',sans-serif;font-weight:400;font-size:30px;color:var(--amber)}
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:54px;border-radius:999px;border:0;background:var(--amber);color:var(--night);font-size:17px;font-weight:600;cursor:pointer;text-decoration:none}
-.btn:hover{background:var(--amber2);color:var(--night)}
-.btn:disabled{background:var(--line);color:#a79d8e;cursor:default}
-.btn.ghost{background:transparent;border:1px solid var(--line2);color:var(--muted);font-weight:400;min-height:48px;font-size:15px}
-.btn.line{background:#06c755;color:#fff;font-weight:500}
-.err{color:var(--badtext);font-size:14px;min-height:1em}
-.form-wrap{position:relative;margin-top:50px}
+.qty button{width:50px;height:50px;border-radius:50%;border:2px solid var(--ink);background:var(--field);color:var(--ink);font-size:24px;font-weight:600;cursor:pointer}
+.qty button.plus{background:var(--ink);color:var(--cream)}
+.qty .val{min-width:66px;height:50px;border-radius:12px;background:var(--field);border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:26px}
+.total{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-radius:14px;background:var(--slate);color:var(--cream)}
+.total b{font-family:var(--display);font-weight:400;font-size:34px;color:var(--cream)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:56px;padding:6px 16px;border-radius:999px;border:2.5px solid var(--ink);background:var(--ink);color:var(--cream);font-size:17px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:4px 4px 0 var(--gold-d);transition:transform .1s,box-shadow .1s}
+.btn:hover{color:var(--cream);transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--gold-d)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--gold-d)}
+.btn:disabled{background:#d9d4b3;border-color:#b9b494;color:#6f6c5b;box-shadow:none;cursor:default;transform:none}
+.btn.ghost{background:var(--field);color:var(--ink);font-weight:500;min-height:48px;font-size:15px;box-shadow:none}
+.btn.ghost:hover{color:var(--ink);box-shadow:3px 3px 0 var(--ink)}
+.btn.line{background:var(--line-green);border-color:#049a42;color:#fff;box-shadow:none}
+.err{color:var(--bad);font-size:14px;font-weight:500;min-height:1em}
+.form-wrap{position:relative;margin-top:84px}
 .form-wrap .card{margin-top:0}
-.peeker{position:absolute;right:22px;top:-70px;width:92px;height:104px}
+.peeker{position:absolute;right:26px;top:-96px;z-index:2}
 /* payment */
-.card.amount{flex-direction:row;align-items:center;gap:14px}
-.amount .big{font-family:'Jua',sans-serif;font-size:44px;line-height:1;color:var(--amber)}
-.qrcard{align-self:center;width:250px;border-radius:16px;overflow:hidden;background:#fff;color:var(--night);text-align:center}
-.qrcard .hd{background:#113566;color:#fff;font-size:12px;font-weight:600;letter-spacing:1.5px;padding:8px}
+.card.amount{flex-direction:row;align-items:center;gap:12px}
+.amount .big{font-family:var(--display);font-size:52px;line-height:1}
+.qrcard{align-self:center;width:256px;border-radius:16px;overflow:hidden;background:#fff;color:var(--ink);text-align:center;border:2.5px solid var(--ink)}
+.qrcard .hd{background:#113566;color:#fff;font-size:12px;font-weight:700;letter-spacing:1.5px;padding:8px}
 .qrcard .box{display:flex;justify-content:center;padding:14px 14px 6px;min-height:236px}
-.qrcard .shop{font-size:14px;font-weight:600}
-.qrcard .acc{font-size:12px;color:#5a4e44}
-.qrcard .amt{font-size:13px;color:#5a4e44;padding:4px 0 12px}.qrcard .amt b{color:var(--ember);font-size:17px}
-.center-note{font-size:12px;color:var(--muted);text-align:center;line-height:1.6}
-.bankinfo{padding:14px 16px;border-radius:16px;background:var(--field);display:flex;flex-direction:column;gap:6px;font-size:14px}
-.bankinfo div{display:flex;justify-content:space-between;gap:10px}.bankinfo span:first-child{color:var(--muted)}
-.upload{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;padding:22px 14px;border-radius:18px;border:2px dashed #5a4e44;background:var(--field);color:var(--cream);cursor:pointer;text-align:center}
-.upload:hover{border-color:var(--amber)}
-.upload .t{font-size:16px;font-weight:500}.upload .s{font-size:12px;color:var(--muted);line-height:1.6}
+.qrcard .shop{font-size:15px;font-weight:700}
+.qrcard .acc{font-size:12px;color:var(--ink2)}
+.qrcard .amt{font-size:13px;color:var(--ink2);padding:4px 0 12px}.qrcard .amt b{color:var(--gold-d);font-size:18px}
+.center-note{font-size:12px;color:var(--ink2);text-align:center;line-height:1.6}
+.bankinfo{padding:12px 16px;border-radius:14px;background:var(--field);border:1.5px solid var(--line);display:flex;flex-direction:column;gap:6px;font-size:14px}
+.bankinfo div{display:flex;justify-content:space-between;gap:10px}.bankinfo span:first-child{color:var(--ink2)}.bankinfo span:last-child{font-weight:600}
+.upload{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:18px 14px;border-radius:16px;border:2.5px dashed var(--ink);background:var(--field);color:var(--ink);cursor:pointer;text-align:center}
+.upload:hover{background:#fff8d6}
+.upload .t{font-size:17px;font-weight:700}.upload .s{font-size:12px;color:var(--ink2);line-height:1.6}
 .upload.small{flex-direction:row;padding:10px 14px;justify-content:center}
-.upload.small svg,.upload.small .s{display:none}.upload.small .t{font-size:14px;color:var(--amber)}
-.checker{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:18px;background:var(--field);border:1px solid var(--line)}
+.upload.small .ghost-slot,.upload.small .s{display:none}.upload.small .t{font-size:14px}
+.checker{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:16px;background:var(--field);border:2px solid var(--ink)}
 .chk-top{display:flex;align-items:center;gap:12px}
-.thumb{position:relative;width:58px;height:80px;flex-shrink:0;border-radius:8px;background:#fff;overflow:hidden}
+.thumb{position:relative;width:58px;height:80px;flex-shrink:0;border-radius:8px;background:#fff;overflow:hidden;border:1.5px solid var(--line)}
 .thumb img{width:100%;height:100%;object-fit:cover}
-.thumb .scanline{position:absolute;left:0;top:6px;width:100%;height:4px;background:var(--amber);opacity:.85}
-.mascot{width:60px;height:60px;flex-shrink:0}
-.chk-title{font-size:16px;font-weight:600}
-.chk-msg{font-size:13px;color:var(--muted);line-height:1.5}
+.thumb .scanline{position:absolute;left:0;top:6px;width:100%;height:4px;background:var(--gold);opacity:.9}
+.mascot{width:64px;height:64px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.chk-title{font-size:17px;font-weight:700}
+.chk-msg{font-size:13px;color:var(--ink2);line-height:1.5}
 .chk-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.chk-list li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:var(--walnut);border:1px solid transparent;font-size:14px;line-height:1.5;animation:rowin .35s ease-out both}
-.chk-list .ic{width:22px;height:22px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
-.chk-list li.pending{color:#a79d8e}
-.chk-list li.pending .ic{width:18px;height:18px;margin-top:2px;border:2px solid var(--line);border-top-color:var(--amber);animation:spin .9s linear infinite}
-.chk-list li.ok .ic{background:var(--ok)}
-.chk-list li.fail{background:#3a1f1a;border-color:#8a3a2e}.chk-list li.fail .ic{background:var(--bad)}
-.chk-list li.warn .ic{background:#6b5a2f}
-.chk-list li.skip{color:var(--stone)}.chk-list li.skip .ic{border:2px solid var(--line)}
-.chk-list .fix{font-size:13px;color:var(--amber);margin-top:2px}
-.chk-slip{font-size:12px;color:var(--stone);line-height:1.6}
+.chk-list li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:var(--paper2);border:1.5px solid var(--line);font-size:14px;line-height:1.5;animation:rowin .35s ease-out both}
+.chk-list .ic{width:24px;height:24px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+.chk-list li.pending{color:var(--ink2)}
+.chk-list li.pending .ic{width:20px;height:20px;margin-top:1px;border:3px solid var(--line);border-top-color:var(--ink);animation:spin .9s linear infinite}
+.chk-list li.ok{background:var(--okbg);border-color:#9cc9a8}.chk-list li.ok .ic{background:var(--ok)}
+.chk-list li.fail{background:var(--badbg);border-color:var(--bad)}.chk-list li.fail .ic{background:var(--bad)}
+.chk-list li.warn .ic{background:#8a6a1f}
+.chk-list li.skip{color:#8a876f}.chk-list li.skip .ic{border:2px solid var(--line)}
+.chk-list .fix{font-size:13px;color:var(--gold-d);font-weight:600;margin-top:2px}
+.chk-slip{font-size:12px;color:var(--ink2);line-height:1.6}
 .chk-actions{display:flex;flex-direction:column;gap:8px}.chk-actions:empty{display:none}
-.notice{padding:12px 14px;border-radius:14px;background:#3a1f1a;border:1px solid #8a3a2e;font-size:13px;line-height:1.6}
-.notice b{color:var(--badtext)}
-.check{display:flex;gap:12px;align-items:flex-start;font-size:13px;color:var(--text2);line-height:1.6;cursor:pointer}
-.check input{width:22px;height:22px;flex-shrink:0;margin:1px 0 0;accent-color:var(--amber)}
-.check b{color:var(--cream);font-weight:500}
+.notice{padding:12px 14px;border-radius:12px;background:var(--badbg);border:2px solid var(--bad);font-size:13px;line-height:1.6}
+.notice b{color:var(--bad)}
+.check{display:flex;gap:12px;align-items:flex-start;font-size:13px;line-height:1.6;cursor:pointer}
+.check input{width:22px;height:22px;flex-shrink:0;margin:1px 0 0;accent-color:var(--ink)}
+.check b{font-weight:700}
 /* done */
-.regid{padding:10px 20px;border-radius:14px;border:2px dashed var(--amber);font-family:'Courier Prime',monospace;font-weight:700;font-size:26px;letter-spacing:2px;color:var(--amber)}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;background:var(--line);font-size:13px;color:var(--amber2)}
-.badge.ok{background:#1e3b2c;border:1px solid var(--ok);color:#9fe0b8}
-.summary{align-self:stretch;padding:14px 16px;border-radius:16px;background:var(--field);display:flex;flex-direction:column;gap:6px;font-size:14px;text-align:left}
-.summary div{display:flex;justify-content:space-between;gap:10px}.summary span:first-child{color:var(--muted)}
-footer{margin:30px 16px 0;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.party{position:relative;height:300px;margin-top:10px}
+.party .dj{position:absolute;left:50%;bottom:0;transform:translateX(-50%)}
+.party svg.conf{position:absolute;inset:0;width:100%;height:100%}
+.bubble{position:absolute;left:50%;top:6px;transform:translateX(-50%) rotate(-2deg);font-family:var(--display);font-size:36px;background:var(--ink);color:var(--cream);padding:2px 16px 4px;border-radius:12px}
+.bubble .kr{font-family:var(--kr);color:var(--gold);font-size:30px}
+.regid{padding:10px 20px;border-radius:12px;border:2.5px dashed var(--ink);background:var(--field);font-family:var(--display);font-size:32px;letter-spacing:2px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;background:#efe2b8;border:1.5px solid var(--gold-d);font-size:13px;font-weight:600;color:#6b4318}
+.badge.ok{background:var(--okbg);border-color:var(--ok);color:#1f5236}
+.summary{align-self:stretch;padding:14px 16px;border-radius:14px;background:var(--field);border:1.5px solid var(--line);display:flex;flex-direction:column;gap:6px;font-size:14px;text-align:left}
+.summary div{display:flex;justify-content:space-between;gap:10px}.summary span:first-child{color:var(--ink2)}
+/* footer band like the poster bottom */
+footer{margin-top:40px;background:var(--slate);color:var(--cream);padding:26px 16px 34px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;border-top:3px solid var(--ink)}
+footer .at{font-family:var(--display);font-size:clamp(34px,11vw,52px);white-space:nowrap;line-height:1;color:var(--cream);letter-spacing:.5px}
+footer .collab{font-size:14px;font-weight:600;letter-spacing:.5px;color:#e2dcb2}
 footer .links{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-footer .links a{display:flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line2);color:var(--cream);font-size:14px;text-decoration:none}
-footer .links a.line{background:#06c755;border-color:#06c755;color:#fff}
-footer .fine{font-size:11px;color:var(--stone);line-height:1.7}
-.overlay{position:fixed;inset:0;background:rgba(15,13,11,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:9}
+footer .links a{display:flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid #8b91a0;color:var(--cream);font-size:14px;text-decoration:none}
+footer .links a.line{background:var(--line-green);border-color:var(--line-green);color:#fff}
+footer .fine{font-size:11px;color:#b9bdc6;line-height:1.7}
+.overlay{position:fixed;inset:0;background:rgba(47,54,64,.88);color:var(--cream);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:70;font-weight:600}
 </style>
 </head>
 <body>
@@ -211,105 +212,52 @@ footer .fine{font-size:11px;color:var(--stone);line-height:1.7}
 </div>
 
 <main class="page">
+<h1 class="sr" id="evName">ANNYONG SPOOKY HALLOWEEN NIGHT</h1>
+<header class="topbar"><img src="assets/logo.png" width="900" height="223" alt="openface – all day brunch &amp; bakery"><span>× No Judgment Gathering</span></header>
 
-<!-- ================= Header scene ================= -->
-<div class="scene">
-<svg class="bg" viewBox="0 0 390 340" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-<rect width="390" height="340" fill="#1b1815"/>
-<circle class="twinkle" cx="40" cy="60" r="1.6" fill="#f4efdf"/>
-<circle class="twinkle d2" cx="120" cy="30" r="1.3" fill="#f4efdf"/>
-<circle class="twinkle d3" cx="200" cy="80" r="1.4" fill="#f4efdf"/>
-<circle class="twinkle d2" cx="360" cy="40" r="1.3" fill="#f4efdf"/>
-<circle class="twinkle" cx="80" cy="140" r="1.1" fill="#f4efdf"/>
-<circle class="twinkle d3" cx="170" cy="150" r="1" fill="#f4efdf"/>
-<circle class="a moon" cx="296" cy="112" r="72" fill="#f6ecc9"/>
-<circle cx="296" cy="112" r="56" fill="#f6ecc9"/>
-<circle cx="276" cy="96" r="8" fill="#eadcae"/><circle cx="312" cy="130" r="11" fill="#eadcae"/><circle cx="318" cy="92" r="5" fill="#eadcae"/>
-<g class="drift1"><g transform="translate(300 70)"><g class="a flap"><path d="M-16 0 Q-11 -9 -4 -3 Q0 -8 4 -3 Q11 -9 16 0 Q10 -2 8 4 Q4 0 0 5 Q-4 0 -8 4 Q-10 -2 -16 0 Z" fill="#2b2622"/><circle cx="-2" cy="-1" r=".9" fill="#f4efdf"/><circle cx="2" cy="-1" r=".9" fill="#f4efdf"/></g></g></g>
-<g class="drift2"><g transform="translate(60 100) scale(.8)"><g class="a flap"><path d="M-16 0 Q-11 -9 -4 -3 Q0 -8 4 -3 Q11 -9 16 0 Q10 -2 8 4 Q4 0 0 5 Q-4 0 -8 4 Q-10 -2 -16 0 Z" fill="#5a4e44"/><circle cx="-2" cy="-1" r="1" fill="#e2a15f"/><circle cx="2" cy="-1" r="1" fill="#e2a15f"/></g></g></g>
-<g class="drift1"><g transform="translate(150 56) scale(.6)"><g class="a flap"><path d="M-16 0 Q-11 -9 -4 -3 Q0 -8 4 -3 Q11 -9 16 0 Q10 -2 8 4 Q4 0 0 5 Q-4 0 -8 4 Q-10 -2 -16 0 Z" fill="#5a4e44"/></g></g></g>
-<path d="M14 184 Q195 294 376 184" stroke="#8a8175" stroke-width="1" fill="none"/>
-<g transform="translate(66 196)"><g class="swing"><circle class="glow" cx="0" cy="18" r="17" fill="#e2a15f"/><line x1="0" y1="0" x2="0" y2="6" stroke="#8a8175"/><rect x="-8" y="6" width="16" height="12" rx="5" fill="#c0463a"/><rect x="-8" y="16" width="16" height="12" rx="5" fill="#3d5a80"/><line x1="0" y1="28" x2="0" y2="36" stroke="#e2a15f" stroke-width="1.5"/></g></g>
-<g transform="translate(132 215)"><g class="swing d2"><circle class="glow" cx="0" cy="18" r="17" fill="#e2a15f"/><line x1="0" y1="0" x2="0" y2="6" stroke="#8a8175"/><rect x="-8" y="6" width="16" height="12" rx="5" fill="#c0463a"/><rect x="-8" y="16" width="16" height="12" rx="5" fill="#3d5a80"/><line x1="0" y1="28" x2="0" y2="36" stroke="#e2a15f" stroke-width="1.5"/></g></g>
-<g transform="translate(258 215)"><g class="swing d3"><circle class="glow" cx="0" cy="18" r="17" fill="#e2a15f"/><line x1="0" y1="0" x2="0" y2="6" stroke="#8a8175"/><rect x="-8" y="6" width="16" height="12" rx="5" fill="#c0463a"/><rect x="-8" y="16" width="16" height="12" rx="5" fill="#3d5a80"/><line x1="0" y1="28" x2="0" y2="36" stroke="#e2a15f" stroke-width="1.5"/></g></g>
-<g transform="translate(324 196)"><g class="swing d4"><circle class="glow" cx="0" cy="18" r="17" fill="#e2a15f"/><line x1="0" y1="0" x2="0" y2="6" stroke="#8a8175"/><rect x="-8" y="6" width="16" height="12" rx="5" fill="#c0463a"/><rect x="-8" y="16" width="16" height="12" rx="5" fill="#3d5a80"/><line x1="0" y1="28" x2="0" y2="36" stroke="#e2a15f" stroke-width="1.5"/></g></g>
-<g transform="translate(152 162)"><g class="float">
-<path d="M10 50 C10 22 26 12 40 12 C54 12 70 22 70 50 L70 80 C66 76 62 76 58 81 C54 86 50 86 46 81 C42 76 38 76 34 81 C30 86 26 86 22 81 C18 76 14 76 10 80 Z" fill="#fbf5e3"/>
-<g class="a blink"><ellipse cx="30" cy="46" rx="3.6" ry="4.6" fill="#1b1815"/><ellipse cx="50" cy="46" rx="3.6" ry="4.6" fill="#1b1815"/><circle cx="31.2" cy="44.4" r="1.2" fill="#fff"/><circle cx="51.2" cy="44.4" r="1.2" fill="#fff"/></g>
-<ellipse cx="23" cy="55" rx="5" ry="3" fill="#f2a3a0" opacity=".85"/><ellipse cx="57" cy="55" rx="5" ry="3" fill="#f2a3a0" opacity=".85"/>
-<path d="M36 54 Q40 58.5 44 54" stroke="#1b1815" stroke-width="2" fill="none" stroke-linecap="round"/>
-<path d="M29 17 L31 -6 Q40 -11 49 -6 L51 17 Z" fill="#2b2622" opacity=".92"/><ellipse cx="40" cy="17" rx="35" ry="5.5" fill="#2b2622" opacity=".92"/>
-<ellipse cx="40" cy="16" rx="33" ry="4" fill="none" stroke="#6b5f53" stroke-width=".8"/>
-<path d="M13 19 Q10 40 22 62" stroke="#e2a15f" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="0.1 5.5"/>
-</g></g>
-<path d="M0 286 C70 280 118 262 156 250 L234 250 C272 262 320 280 390 286 L390 300 L0 300 Z" fill="#2e2823"/>
-<rect x="146" y="242" width="98" height="10" rx="5" fill="#3a322b"/>
-<path d="M40 284 L60 278 M90 276 L110 268 M300 276 L280 268 M350 284 L330 278" stroke="#40372f" stroke-width="2"/>
-<rect x="0" y="298" width="390" height="8" fill="#3b2a20"/><rect x="0" y="306" width="390" height="34" fill="#231f1b"/>
-<g fill="#f4efdf" opacity=".09">
-<rect x="10" y="312" width="22" height="6" rx="1"/><rect x="42" y="312" width="22" height="6" rx="1"/><rect x="74" y="312" width="22" height="6" rx="1"/><rect x="106" y="312" width="22" height="6" rx="1"/><rect x="138" y="312" width="22" height="6" rx="1"/><rect x="170" y="312" width="22" height="6" rx="1"/><rect x="202" y="312" width="22" height="6" rx="1"/><rect x="234" y="312" width="22" height="6" rx="1"/><rect x="266" y="312" width="22" height="6" rx="1"/><rect x="298" y="312" width="22" height="6" rx="1"/><rect x="330" y="312" width="22" height="6" rx="1"/><rect x="362" y="312" width="22" height="6" rx="1"/>
-<rect x="26" y="326" width="22" height="6" rx="1"/><rect x="58" y="326" width="22" height="6" rx="1"/><rect x="90" y="326" width="22" height="6" rx="1"/><rect x="122" y="326" width="22" height="6" rx="1"/><rect x="154" y="326" width="22" height="6" rx="1"/><rect x="186" y="326" width="22" height="6" rx="1"/><rect x="218" y="326" width="22" height="6" rx="1"/><rect x="250" y="326" width="22" height="6" rx="1"/><rect x="282" y="326" width="22" height="6" rx="1"/><rect x="314" y="326" width="22" height="6" rx="1"/><rect x="346" y="326" width="22" height="6" rx="1"/>
-</g>
-</svg>
-<div class="brand">
-<svg width="58" height="58" viewBox="0 0 120 120" role="img" aria-label="openface"><circle cx="60" cy="60" r="58" fill="#f6f1d9" stroke="#d9d1b4" stroke-width="2"/><text x="60" y="66" text-anchor="middle" font-family="'Courier Prime',Courier,monospace" font-weight="700" font-size="18" letter-spacing="2" fill="#2b2622">openface</text></svg>
-<div class="tag">CAFE · BANGKOK</div>
-</div>
-</div>
+<!-- ============ Hero: the poster ============ -->
+<a class="hero" href="#register" aria-label="ไปที่ฟอร์มลงทะเบียน">
+<img src="assets/poster.jpg" srcset="assets/poster-540.jpg 540w, assets/poster.jpg 1080w" sizes="(max-width: 480px) 100vw, 480px" width="1080" height="1440"
+ alt="ANNYONG 안녕안녕 SPOOKY HALLOWEEN NIGHT – Oct 31st 2026, 10:00 pm – 02:00 am. DJ, free-flow, Korean bites. Dress code: everything Korean. At openface BKK. No Judgment Gathering x openface.">
+</a>
 
-<div class="title">
-<div class="chips"><span class="chip" style="background:#3d5a80">할로윈</span><span class="chip" style="background:#c0463a">in 방콕</span></div>
-<h1 id="evName">ANYONG SPOOKY<br>HALLOWEEN NIGHT</h1>
-<div class="subtitle"><span id="evTheme">Korean Halloween in Bangkok</span> · openface</div>
-</div>
+<div class="marquee" aria-hidden="true"><div class="marquee-track">
+<span>LET'S GET FREE FLOW! <i>✦</i> <b class="kr">안녕</b> <i>✦</i> DJ <i>✦</i> FREEFLOW <i>✦</i> KOREAN BITES <i>✦</i></span>
+<span>LET'S GET FREE FLOW! <i>✦</i> <b class="kr">안녕</b> <i>✦</i> DJ <i>✦</i> FREEFLOW <i>✦</i> KOREAN BITES <i>✦</i></span>
+</div></div>
 
-<!-- ================= Event info ================= -->
+<!-- ============ Event info ============ -->
 <section class="card" aria-label="รายละเอียดงาน">
-<div class="row-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e2a15f" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><div style="font-size:16px;font-weight:500" id="evDate"></div></div>
+<div class="when"><div class="date">OCT 31<sup>ST</sup> 2026</div><div class="time" id="evTime">10:00 PM – 02:00 AM</div></div>
+<div class="lbl" id="evDate" style="margin-top:-8px"></div>
 <div class="sched" id="evSched"></div>
-<div class="row-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e2a15f" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><div style="font-size:14px;color:var(--text2);line-height:1.6"><span id="evVenue"></span> · <a id="mapLink" href="#" target="_blank" rel="noopener">เปิดแผนที่ ↗</a></div></div>
+<div class="tags">DJ <i>•</i> FREEFLOW <i>•</i> KOREAN BITES</div>
+<span class="dress">Dress code: <span id="evDress">Everything Korean</span></span>
 <div class="price">
-<svg width="60" height="92" viewBox="-6 -6 82 120" aria-hidden="true"><g class="a wobble">
-<rect x="27" y="0" width="16" height="7" rx="2" fill="#3d6b52"/><rect x="28" y="5" width="14" height="20" rx="3" fill="#7fb89a"/>
-<path d="M22 30 Q22 22 35 22 Q48 22 48 30 L52 44 L52 98 Q52 106 44 106 L26 106 Q18 106 18 98 L18 44 Z" fill="#8cc5a6"/>
-<rect x="23" y="46" width="5" height="46" rx="2.5" fill="#fff" opacity=".35"/>
-<g class="flapL"><path d="M18 52 Q4 44 0 56 Q6 56 8 62 Q12 58 18 62 Z" fill="#3a322b"/></g>
-<g class="flapR"><path d="M52 52 Q66 44 70 56 Q64 56 62 62 Q58 58 52 62 Z" fill="#3a322b"/></g>
-<rect x="21" y="62" width="28" height="26" rx="4" fill="#fbf5e3"/>
-<g class="a blink"><circle cx="30" cy="72" r="2.2" fill="#1b1815"/><circle cx="40" cy="72" r="2.2" fill="#1b1815"/></g>
-<path d="M31 78 Q35 82 39 78" stroke="#1b1815" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-<ellipse cx="26" cy="77" rx="2.5" ry="1.6" fill="#f2a3a0"/><ellipse cx="44" cy="77" rx="2.5" ry="1.6" fill="#f2a3a0"/>
-</g></svg>
-<div style="display:flex;flex-direction:column;gap:4px">
-<div class="big"><span id="evPrice" style="font-size:30px;color:var(--cream)">1,200</span> <span>฿ / ท่าน</span></div>
-<div style="font-size:14px;color:var(--text2);line-height:1.5" id="evIncludes"></div>
-<div style="font-size:12px;color:var(--muted)">Costume: <span id="evDress"></span></div>
+<div data-mascot="chill" data-size="84"></div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<div class="big"><span id="evPrice" style="font-size:46px;color:var(--ink)">1,200</span> <span>THB</span></div>
+<div style="font-size:12px;font-weight:600;color:var(--gold-d)">ต่อท่าน · per person</div>
+<div style="font-size:14px;font-weight:500" id="evIncludes"></div>
 </div>
 </div>
+<div class="row-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#33363c" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><div><b>openface BKK</b> · <span id="evVenue"></span> · <a id="mapLink" href="#" target="_blank" rel="noopener">เปิดแผนที่ ↗</a></div></div>
 <div class="pills"><span class="pill hot">20+ ตรวจบัตร · ID check</span><span class="pill">งดเด็ก · No kids</span><span class="pill">งดสัตว์เลี้ยง · No pets</span><span class="pill">ไม่คืนเงิน · Non-refundable</span></div>
+<span class="sr" id="evTheme"></span>
 </section>
 
-<!-- ================= Steps ================= -->
-<div class="steps" aria-hidden="true">
+<!-- ============ Steps ============ -->
+<div class="steps" id="register" aria-hidden="true">
 <div class="step on" id="st1"><span class="n">1</span><span>ลงทะเบียน</span></div><div class="bar" id="bar1"></div>
 <div class="step" id="st2"><span class="n">2</span><span>ชำระเงิน</span></div><div class="bar" id="bar2"></div>
 <div class="step" id="st3"><span class="n">3</span><span>เสร็จ</span></div>
 </div>
 
-<!-- ================= STEP 1 · Register ================= -->
+<!-- ============ STEP 1 · Register ============ -->
 <div class="form-wrap" id="step1">
-<svg class="peeker" viewBox="-4 -8 100 112" aria-hidden="true"><g class="peek">
-<ellipse cx="33" cy="92" rx="9" ry="5" fill="#b8543c"/><ellipse cx="57" cy="92" rx="9" ry="5" fill="#b8543c"/>
-<path d="M38 30 Q45 6 52 30 Z" fill="#f6ecc9"/><circle cx="45" cy="58" r="32" fill="#d8674c"/><ellipse cx="45" cy="70" rx="17" ry="12" fill="#e98f6e" opacity=".7"/>
-<path d="M27 41 L40 45" stroke="#2b2622" stroke-width="3.2" stroke-linecap="round"/><path d="M63 41 L50 45" stroke="#2b2622" stroke-width="3.2" stroke-linecap="round"/>
-<g class="a blink"><circle cx="34" cy="52" r="7" fill="#fff"/><circle cx="56" cy="52" r="7" fill="#fff"/><circle cx="35.5" cy="53" r="3.6" fill="#1b1815"/><circle cx="54.5" cy="53" r="3.6" fill="#1b1815"/></g>
-<path d="M33 65 Q45 78 57 65 Z" fill="#6e2a20"/><path d="M37 65.5 L41 65.5 L39 70 Z" fill="#fff"/><path d="M49 65.5 L53 65.5 L51 70 Z" fill="#fff"/>
-<ellipse cx="24" cy="63" rx="4.5" ry="3" fill="#f7b39c"/><ellipse cx="66" cy="63" rx="4.5" ry="3" fill="#f7b39c"/>
-<g class="wiggle"><path d="M72 72 L84 34" stroke="#8a5a3a" stroke-width="8" stroke-linecap="round"/><circle cx="85" cy="30" r="9" fill="#9b6a45"/><circle cx="81" cy="26" r="1.8" fill="#f6ecc9"/><circle cx="89" cy="29" r="1.8" fill="#f6ecc9"/><circle cx="84" cy="35" r="1.8" fill="#f6ecc9"/></g>
-<ellipse cx="72" cy="72" rx="6" ry="5" fill="#d8674c"/>
-</g></svg>
+<div class="peeker" data-mascot="dj" data-size="120"></div>
 <section class="card">
-<h2>ลงทะเบียน · Register</h2>
+<h2>Register<small>ลงทะเบียนร่วมงาน</small></h2>
 <p class="lbl" id="seatsInfo" style="margin:0"></p>
 <div class="field"><label for="name">ชื่อ-นามสกุล / Full name <span class="req">*</span></label><input id="name" type="text" autocomplete="name"></div>
 <div class="grid2">
@@ -323,34 +271,25 @@ footer .fine{font-size:11px;color:var(--stone);line-height:1.7}
 <div class="field"><label for="guests">ชื่อผู้ร่วมงานท่านอื่น / Other guests</label><textarea id="guests" placeholder="1 ชื่อต่อบรรทัด"></textarea></div>
 <div class="field"><label for="parking">ขับรถมา ต้องการที่จอด / Need parking?</label><select id="parking"><option value="No">ไม่ใช้ / No</option><option value="Yes">ใช้ / Yes</option></select></div>
 <div class="field"><label for="notes">หมายเหตุ / Notes</label><textarea id="notes" placeholder="อาหารที่แพ้, คำขอพิเศษ ฯลฯ"></textarea></div>
-<div class="total"><span>ยอดชำระ / Total</span><b><span id="total">1,200</span> ฿</b></div>
+<div class="total"><span style="font-weight:600">ยอดชำระ / Total</span><b><span id="total">1,200</span> ฿</b></div>
 <div class="err" id="err1" role="alert"></div>
 <button type="button" class="btn" id="next1">ถัดไป: ชำระเงิน →</button>
 </section>
 </div>
 
-<!-- ================= STEP 2 · Pay + slip checker ================= -->
+<!-- ============ STEP 2 · Pay + slip checker ============ -->
 <div id="step2" class="hidden">
 <section class="card amount">
-<svg width="92" height="112" viewBox="-4 0 98 112" aria-hidden="true" style="flex-shrink:0"><g class="sway">
-<path d="M42 20 Q44 8 52 5" stroke="#5f7a4a" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M50 11 Q60 4 64 12 Q56 16 50 11 Z" fill="#7a9a5a"/>
-<ellipse cx="45" cy="50" rx="38" ry="32" fill="#d9782f"/><ellipse cx="45" cy="50" rx="21" ry="32" fill="none" stroke="#b85f22" stroke-width="2"/><ellipse cx="45" cy="50" rx="6" ry="32" fill="none" stroke="#b85f22" stroke-width="2"/>
-<path d="M25 46 Q31 38 37 46" stroke="#3a2410" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M53 46 Q59 38 65 46" stroke="#3a2410" stroke-width="3.2" fill="none" stroke-linecap="round"/>
-<ellipse cx="22" cy="56" rx="5" ry="3" fill="#f2a3a0" opacity=".8"/><ellipse cx="68" cy="56" rx="5" ry="3" fill="#f2a3a0" opacity=".8"/>
-<path d="M36 56 Q45 65 54 56" stroke="#3a2410" stroke-width="3" fill="none" stroke-linecap="round"/>
-<path d="M20 78 L45 94 L70 78" stroke="#fbf5e3" stroke-width="7" fill="none" stroke-linejoin="round"/>
-<g class="a bow"><path d="M45 90 Q33 81 29 92 Q37 98 45 90 Z" fill="#c0463a"/><path d="M45 90 Q57 81 61 92 Q53 98 45 90 Z" fill="#c0463a"/><circle cx="45" cy="90" r="3.5" fill="#a83a30"/></g>
-<path d="M44 92 L38 108" stroke="#c0463a" stroke-width="4" stroke-linecap="round"/><path d="M46 92 L51 108" stroke="#c0463a" stroke-width="4" stroke-linecap="round"/>
-</g></svg>
-<div style="display:flex;flex-direction:column;gap:4px">
+<div data-mascot="chill" data-size="88"></div>
+<div style="display:flex;flex-direction:column;gap:2px">
 <div class="lbl">ยอดที่ต้องโอน · <span id="payQty">1</span> ท่าน</div>
 <div class="big"><span id="payAmt">1,200</span> ฿</div>
-<div style="font-size:13px;color:var(--text2)">สแกน QR จ่าย แล้วแนบสลิปด้านล่างนะคะ</div>
+<div style="font-size:13px;color:var(--ink2)">สแกน QR จ่าย แล้วแนบสลิปด้านล่างนะคะ</div>
 </div>
 </section>
 
 <section class="card">
-<h2 style="font-size:24px">ชำระเงิน · Payment</h2>
+<h2>Payment<small>ชำระเงินผ่าน QR</small></h2>
 <div class="qrcard" id="qrWrap">
 <div class="hd">THAI QR PAYMENT · PromptPay</div>
 <div class="box" id="qr" role="img" aria-label="QR ชำระเงิน"></div>
@@ -359,20 +298,15 @@ footer .fine{font-size:11px;color:var(--stone);line-height:1.7}
 <div class="amt">ยอด <b id="qrAmt"></b> ฿</div>
 </div>
 <div class="center-note">สแกนด้วยแอปธนาคารใดก็ได้ · ยอดเงินกรอกให้อัตโนมัติ</div>
-<a class="btn ghost" id="saveQr" href="#" download="openface-halloween-qr.png" style="color:var(--amber);border-color:var(--amber)">บันทึกรูป QR (จ่ายจากมือถือเครื่องนี้)</a>
-<div class="center-note" style="color:var(--stone)">บันทึกรูป แล้วเปิดแอปธนาคาร › สแกน › เลือกรูปจากอัลบั้ม</div>
+<a class="btn ghost" id="saveQr" href="#" download="annyong-halloween-qr.png">บันทึกรูป QR (จ่ายจากมือถือเครื่องนี้)</a>
+<div class="center-note">บันทึกรูป แล้วเปิดแอปธนาคาร › สแกน › เลือกรูปจากอัลบั้ม</div>
 <div class="bankinfo"><div><span>ธนาคาร</span><span id="bankName"></span></div><div><span>ชื่อบัญชี</span><span id="accName"></span></div><div id="accRow" class="hidden"><span>เลขที่บัญชี</span><span id="accNo"></span></div></div>
 </section>
 
 <section class="card">
-<h2 style="font-size:22px">แนบสลิป · Slip</h2>
+<h2>Slip<small>แนบสลิป · ระบบตรวจให้อัตโนมัติ</small></h2>
 <label class="upload" for="slipInput" id="drop">
-<svg width="60" height="64" viewBox="0 0 80 92" aria-hidden="true"><g class="hop">
-<path d="M10 50 C10 22 26 12 40 12 C54 12 70 22 70 50 L70 80 C66 76 62 76 58 81 C54 86 50 86 46 81 C42 76 38 76 34 81 C30 86 26 86 22 81 C18 76 14 76 10 80 Z" fill="#fbf5e3"/>
-<g class="a blink"><ellipse cx="30" cy="46" rx="3.6" ry="4.6" fill="#1b1815"/><ellipse cx="50" cy="46" rx="3.6" ry="4.6" fill="#1b1815"/></g>
-<ellipse cx="23" cy="55" rx="5" ry="3" fill="#f2a3a0"/><ellipse cx="57" cy="55" rx="5" ry="3" fill="#f2a3a0"/><ellipse cx="40" cy="57" rx="4" ry="5" fill="#1b1815"/>
-<rect x="56" y="22" width="22" height="28" rx="3" fill="#e2a15f" transform="rotate(12 67 36)"/>
-</g></svg>
+<span class="ghost-slot" data-mascot="look" data-size="70"></span>
 <span class="t" id="dropTitle">แตะเพื่อแนบสลิปจากแอปธนาคาร</span>
 <span class="s">ระบบจะตรวจยอดเงิน บัญชีผู้รับ และเวลาโอนให้อัตโนมัติ · ไม่ต้องกรอกอะไรเพิ่ม</span>
 </label>
@@ -399,79 +333,90 @@ footer .fine{font-size:11px;color:var(--stone);line-height:1.7}
 </section>
 </div>
 
-<!-- ================= STEP 3 · Done ================= -->
+<!-- ============ STEP 3 · Done ============ -->
 <div id="step3" class="hidden">
-<svg viewBox="0 0 390 280" width="100%" aria-hidden="true" style="display:block;margin-top:12px">
-<circle class="a halo" cx="195" cy="130" r="112" fill="#f6ecc9"/>
-<rect class="fall" x="40" y="0" width="6" height="10" rx="2" fill="#e2a15f"/>
-<rect class="fall" x="92" y="0" width="6" height="10" rx="2" fill="#c0463a" style="animation-delay:-1.1s"/>
-<rect class="fall" x="150" y="0" width="6" height="10" rx="2" fill="#8cc5a6" style="animation-delay:-2.3s"/>
-<rect class="fall" x="210" y="0" width="6" height="10" rx="2" fill="#3d5a80" style="animation-delay:-.6s"/>
-<rect class="fall" x="262" y="0" width="6" height="10" rx="2" fill="#e2a15f" style="animation-delay:-1.8s"/>
-<rect class="fall" x="318" y="0" width="6" height="10" rx="2" fill="#c0463a" style="animation-delay:-2.9s"/>
-<rect class="fall" x="356" y="0" width="6" height="10" rx="2" fill="#8cc5a6" style="animation-delay:-1.4s"/>
-<circle class="fall" cx="70" cy="0" r="3" fill="#f4efdf" style="animation-delay:-2.6s"/>
-<circle class="fall" cx="182" cy="0" r="3" fill="#e2a15f" style="animation-delay:-.9s"/>
-<circle class="fall" cx="300" cy="0" r="3" fill="#3d5a80" style="animation-delay:-3.2s"/>
-<rect x="20" y="258" width="350" height="6" rx="3" fill="#3a332d"/>
-<g transform="translate(22 148) scale(.95)"><g class="hop">
-<rect x="27" y="0" width="16" height="7" rx="2" fill="#3d6b52"/><rect x="28" y="5" width="14" height="20" rx="3" fill="#7fb89a"/>
-<path d="M22 30 Q22 22 35 22 Q48 22 48 30 L52 44 L52 98 Q52 106 44 106 L26 106 Q18 106 18 98 L18 44 Z" fill="#8cc5a6"/>
-<rect x="23" y="46" width="5" height="46" rx="2.5" fill="#fff" opacity=".35"/>
-<g class="flapL"><path d="M18 52 Q4 44 0 56 Q6 56 8 62 Q12 58 18 62 Z" fill="#5a4e44"/></g><g class="flapR"><path d="M52 52 Q66 44 70 56 Q64 56 62 62 Q58 58 52 62 Z" fill="#5a4e44"/></g>
-<rect x="21" y="62" width="28" height="26" rx="4" fill="#fbf5e3"/>
-<path d="M27 72 Q30 69 33 72" stroke="#1b1815" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M37 72 Q40 69 43 72" stroke="#1b1815" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-<path d="M30 77 Q35 83 40 77 Z" fill="#6e2a20"/>
-</g></g>
-<g transform="translate(88 134) scale(1.2)"><g class="hop d1">
-<ellipse cx="33" cy="92" rx="9" ry="5" fill="#b8543c"/><ellipse cx="57" cy="92" rx="9" ry="5" fill="#b8543c"/>
-<path d="M38 30 Q45 6 52 30 Z" fill="#f6ecc9"/><circle cx="45" cy="58" r="32" fill="#d8674c"/><ellipse cx="45" cy="70" rx="17" ry="12" fill="#e98f6e" opacity=".7"/>
-<path d="M28 46 Q34 40 40 46" stroke="#2b2622" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M50 46 Q56 40 62 46" stroke="#2b2622" stroke-width="3" fill="none" stroke-linecap="round"/>
-<path d="M33 62 Q45 78 57 62 Z" fill="#6e2a20"/><path d="M37 62.5 L41 62.5 L39 67 Z" fill="#fff"/><path d="M49 62.5 L53 62.5 L51 67 Z" fill="#fff"/>
-<ellipse cx="24" cy="58" rx="4.5" ry="3" fill="#f7b39c"/><ellipse cx="66" cy="58" rx="4.5" ry="3" fill="#f7b39c"/>
-<g class="wave"><path d="M14 50 L6 30" stroke="#d8674c" stroke-width="8" stroke-linecap="round"/></g>
-<g class="wiggle"><path d="M72 60 L86 26" stroke="#8a5a3a" stroke-width="8" stroke-linecap="round"/><circle cx="87" cy="22" r="9" fill="#9b6a45"/><circle cx="83" cy="18" r="1.8" fill="#f6ecc9"/><circle cx="91" cy="21" r="1.8" fill="#f6ecc9"/><circle cx="86" cy="27" r="1.8" fill="#f6ecc9"/></g>
-</g></g>
-<g transform="translate(196 64) scale(1.15)"><g class="hop d2">
-<path d="M10 50 C10 22 26 12 40 12 C54 12 70 22 70 50 L70 80 C66 76 62 76 58 81 C54 86 50 86 46 81 C42 76 38 76 34 81 C30 86 26 86 22 81 C18 76 14 76 10 80 Z" fill="#fbf5e3"/>
-<path d="M24 46 Q30 40 36 46" stroke="#1b1815" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M44 46 Q50 40 56 46" stroke="#1b1815" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-<ellipse cx="23" cy="55" rx="5" ry="3" fill="#f2a3a0"/><ellipse cx="57" cy="55" rx="5" ry="3" fill="#f2a3a0"/><path d="M35 53 Q40 60 45 53 Z" fill="#6e2a20"/>
-<path d="M29 17 L31 -6 Q40 -11 49 -6 L51 17 Z" fill="#2b2622" opacity=".92"/><ellipse cx="40" cy="17" rx="35" ry="5.5" fill="#2b2622" opacity=".92"/>
-<path d="M13 19 Q10 40 22 62" stroke="#e2a15f" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="0.1 5.5"/>
-</g></g>
-<g transform="translate(282 146)"><g class="hop d3">
-<path d="M42 20 Q44 8 52 5" stroke="#5f7a4a" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M50 11 Q60 4 64 12 Q56 16 50 11 Z" fill="#7a9a5a"/>
-<ellipse cx="45" cy="50" rx="38" ry="32" fill="#d9782f"/><ellipse cx="45" cy="50" rx="21" ry="32" fill="none" stroke="#b85f22" stroke-width="2"/><ellipse cx="45" cy="50" rx="6" ry="32" fill="none" stroke="#b85f22" stroke-width="2"/>
-<path d="M25 46 Q31 38 37 46" stroke="#3a2410" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M53 46 Q59 38 65 46" stroke="#3a2410" stroke-width="3.2" fill="none" stroke-linecap="round"/>
-<ellipse cx="22" cy="56" rx="5" ry="3" fill="#f2a3a0" opacity=".8"/><ellipse cx="68" cy="56" rx="5" ry="3" fill="#f2a3a0" opacity=".8"/>
-<path d="M36 56 Q45 66 54 56 Z" fill="#3a2410"/><path d="M20 78 L45 94 L70 78" stroke="#fbf5e3" stroke-width="7" fill="none" stroke-linejoin="round"/>
-<g class="a bow"><path d="M45 90 Q33 81 29 92 Q37 98 45 90 Z" fill="#c0463a"/><path d="M45 90 Q57 81 61 92 Q53 98 45 90 Z" fill="#c0463a"/><circle cx="45" cy="90" r="3.5" fill="#a83a30"/></g>
-</g></g>
+<div class="party">
+<svg class="conf" viewBox="0 0 390 300" preserveAspectRatio="none" aria-hidden="true">
+<rect class="fall" x="30" y="0" width="7" height="12" rx="2" fill="#c98a3c"/>
+<rect class="fall" x="80" y="0" width="7" height="12" rx="2" fill="#33363c" style="animation-delay:-1.1s"/>
+<rect class="fall" x="130" y="0" width="7" height="12" rx="2" fill="#2f3640" style="animation-delay:-2.3s"/>
+<rect class="fall" x="250" y="0" width="7" height="12" rx="2" fill="#c98a3c" style="animation-delay:-.6s"/>
+<rect class="fall" x="300" y="0" width="7" height="12" rx="2" fill="#33363c" style="animation-delay:-1.8s"/>
+<rect class="fall" x="350" y="0" width="7" height="12" rx="2" fill="#c98a3c" style="animation-delay:-2.9s"/>
+<circle class="fall" cx="60" cy="0" r="4" fill="#8f5626" style="animation-delay:-2.6s"/>
+<circle class="fall" cx="200" cy="0" r="4" fill="#c98a3c" style="animation-delay:-.9s"/>
+<circle class="fall" cx="330" cy="0" r="4" fill="#33363c" style="animation-delay:-3.2s"/>
 </svg>
-<section class="card" style="margin-top:8px;align-items:center;text-align:center">
-<h2 style="font-size:32px">ลงทะเบียนสำเร็จ!</h2>
-<div class="jua" style="font-size:16px;color:var(--amber)">할로윈에 만나요 · See you on Halloween</div>
-<div class="lbl" style="margin-top:6px">รหัสลงทะเบียน / Registration ID</div>
+<div class="bubble">ANNYONG! <span class="kr">안녕</span></div>
+<div class="dj" data-mascot="dj" data-size="220"></div>
+</div>
+<section class="card" style="margin-top:0;align-items:center;text-align:center">
+<h2 style="font-size:36px">You're in!<small>ลงทะเบียนสำเร็จ · 할로윈에 만나요</small></h2>
+<div class="lbl" style="margin-top:4px">รหัสลงทะเบียน / Registration ID</div>
 <div class="regid stamp" id="regId"></div>
 <span class="badge" id="doneBadge">รอตรวจสอบการชำระเงิน · Pending check</span>
 <div class="summary" id="summary"></div>
-<div style="font-size:13px;color:var(--text2);line-height:1.6" id="doneNote"></div>
+<div style="font-size:13px;line-height:1.6" id="doneNote"></div>
 <a class="btn line" id="doneLine" href="#" target="_blank" rel="noopener">เพิ่มเพื่อน LINE</a>
 <button type="button" class="btn ghost" id="again">ลงทะเบียนเพิ่ม · Register another</button>
 </section>
 </div>
 
 <footer>
-<div class="lbl">สอบถาม / Contact</div>
+<div class="marquee rev" aria-hidden="true" style="align-self:stretch;margin:-26px -16px 6px;border-top:0"><div class="marquee-track">
+<span>SPOOKY HALLOWEEN NIGHT <i>✦</i> <b class="kr">안녕안녕</b> <i>✦</i> OCT 31 <i>✦</i></span><span>SPOOKY HALLOWEEN NIGHT <i>✦</i> <b class="kr">안녕안녕</b> <i>✦</i> OCT 31 <i>✦</i></span>
+</div></div>
+<div class="at">AT OPENFACE BKK</div>
+<img class="flogo" src="assets/logo-cream.png" width="900" height="223" alt="openface – all day brunch &amp; bakery">
+<div class="collab">No Judgment Gathering &nbsp;×&nbsp; openface</div>
 <div class="links"><a class="line" id="lineLink" href="#" target="_blank" rel="noopener">LINE <span id="lineId"></span></a><a id="telLink" href="#"><span id="phoneTxt"></span></a><a id="igLink" href="#" target="_blank" rel="noopener">Instagram</a></div>
-<div class="fine">openface · All Day Brunch &amp; Bakery · Korean &amp; Asian Twist<br>ดื่มอย่างรับผิดชอบ · Please drink responsibly – don't drink and drive</div>
+<div class="fine">86/2 ถ.รามคำแหง 21 (ซ.นวศรี 15) วังทองหลาง กรุงเทพฯ<br>ดื่มอย่างรับผิดชอบ · Please drink responsibly – don't drink and drive</div>
 </footer>
 </main>
 
-<div class="overlay hidden" id="loading"><div class="mascot"><svg viewBox="0 0 80 92" width="60" height="64" aria-hidden="true"><g class="float"><path d="M10 50 C10 22 26 12 40 12 C54 12 70 22 70 50 L70 80 C66 76 62 76 58 81 C54 86 50 86 46 81 C42 76 38 76 34 81 C30 86 26 86 22 81 C18 76 14 76 10 80 Z" fill="#fbf5e3"/><ellipse cx="30" cy="46" rx="3.6" ry="4.6" fill="#1b1815"/><ellipse cx="50" cy="46" rx="3.6" ry="4.6" fill="#1b1815"/><circle cx="40" cy="58" r="3" fill="#1b1815"/></g></svg></div><div>กำลังส่งข้อมูล…</div></div>
+<div class="overlay hidden" id="loading"><div data-mascot="dj" data-size="120"></div><div>กำลังส่งข้อมูล…</div></div>
 
 <script>
 'use strict';
+/* ================= the croissant-ghost DJ (from the poster) =================
+   croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),
+   'happy' (all good), 'oops' (something's wrong), 'chill' (idle bob)          */
+function croissant(mood, size) {
+  const W = size || 120;
+  const uid = 'c' + (croissant.n = (croissant.n || 0) + 1);
+  const rolls = [[166, 19], [148, 23], [129, 26], [110, 28], [91, 28], [73, 25], [56, 20], [41, 14]]
+    .map(([y, rx], k) => `<ellipse cx="100" cy="${y}" rx="${rx}" ry="11" fill="${k % 2 ? '#c4823d' : '#b3712f'}" stroke="#7d4419" stroke-width="1.6"/><path d="M${100 - rx * .72} ${y - 4} Q100 ${y - 13} ${100 + rx * .72} ${y - 4}" stroke="#f0c47c" stroke-width="3" fill="none" stroke-linecap="round" opacity=".85"/>`).join('');
+  const ridges = `<defs><clipPath id="${uid}"><path d="M100 27 C84 27 74 47 72 79 C70 111 76 145 84 172 L116 172 C124 145 130 111 128 79 C126 47 116 27 100 27 Z"/></clipPath></defs><g clip-path="url(#${uid})"><rect x="60" y="20" width="80" height="160" fill="#a5642a"/>${rolls}</g>`;
+  const hand = (x, flip) => `<g transform="translate(${x} 180) rotate(${flip ? 20 : -20})"><ellipse rx="15" ry="8" fill="#c4823d"/><path d="M-8 -6 Q-6 0 -8 6 M-2 -8 Q0 0 -2 8 M4 -7 Q6 0 4 7" stroke="#86491c" stroke-width="2" fill="none"/></g>`;
+  const deck = `<rect x="14" y="174" width="172" height="34" rx="7" fill="#232427"/><rect x="14" y="170" width="172" height="10" rx="4" fill="#3a3c41"/>
+    <g class="a spin"><circle cx="56" cy="190" r="14" fill="#0f0f10" stroke="#4a4c50" stroke-width="2"/><circle cx="56" cy="190" r="4.5" fill="#c98a3c"/><path d="M56 190 L56 177" stroke="#9a9a9a" stroke-width="1.6"/></g>
+    <g class="a spin"><circle cx="144" cy="190" r="14" fill="#0f0f10" stroke="#4a4c50" stroke-width="2"/><circle cx="144" cy="190" r="4.5" fill="#c98a3c"/><path d="M144 190 L144 177" stroke="#9a9a9a" stroke-width="1.6"/></g>
+    <rect x="86" y="180" width="28" height="20" rx="3" fill="#2b2d30"/><rect class="fader" x="92" y="184" width="4" height="8" rx="1" fill="#f2efc4"/><rect class="fader d2" x="104" y="186" width="4" height="8" rx="1" fill="#f2efc4"/>`;
+  const glasses = `<g class="glasses${mood === 'oops' ? ' tilt' : ''}"><ellipse cx="86" cy="72" rx="12" ry="8.5" fill="#18191b"/><ellipse cx="114" cy="72" rx="12" ry="8.5" fill="#18191b"/><path d="M97 70 Q100 67 103 70" stroke="#18191b" stroke-width="2.4" fill="none"/><path d="M74 70 L66 66 M126 70 L134 66" stroke="#18191b" stroke-width="2.2"/><ellipse cx="81" cy="69" rx="3.5" ry="1.6" fill="#fff" opacity=".45"/><ellipse cx="109" cy="69" rx="3.5" ry="1.6" fill="#fff" opacity=".45"/></g>`;
+  const mouth = { happy: '<path d="M90 90 Q100 100 110 90" stroke="#4a2a10" stroke-width="3" fill="#6e2a20" stroke-linecap="round"/>',
+    oops: '<path d="M91 95 Q95 91 100 95 Q105 99 109 95" stroke="#4a2a10" stroke-width="2.6" fill="none" stroke-linecap="round"/>',
+    look: '<ellipse cx="100" cy="94" rx="4" ry="3.5" fill="#4a2a10"/>' }[mood] || '';
+  const ghost = `
+    <path d="M100 8 C66 8 48 38 42 84 C37 122 28 156 16 186 C40 196 70 190 100 192 C130 190 160 196 184 186 C172 156 163 122 158 84 C152 38 134 8 100 8 Z" fill="#ecebe4"/>
+    <path d="M58 72 C54 112 47 150 36 184 M142 72 C146 112 153 150 164 184 M50 120 C46 150 40 170 30 188" stroke="#c9c9c1" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path d="M100 22 C80 22 68 44 66 78 C64 112 70 146 78 174 L122 174 C130 146 136 112 134 78 C132 44 120 22 100 22 Z" fill="#4d3220"/>
+    <path d="M100 27 C84 27 74 47 72 79 C70 111 76 145 84 172 L116 172 C124 145 130 111 128 79 C126 47 116 27 100 27 Z" fill="#c4823d"/>
+    ${ridges}
+    <path d="M100 22 C80 22 68 44 66 78 C64 112 70 146 78 174 M100 22 C120 22 132 44 134 78 C136 112 130 146 122 174" stroke="#f8f7f1" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M108 18 C114 6 126 2 136 8" stroke="#7d4419" stroke-width="12" fill="none" stroke-linecap="round"/><path d="M108 18 C114 6 126 2 136 8" stroke="#c4823d" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M112 12 C117 6 124 4 130 6" stroke="#f0c47c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    ${glasses}${mouth}`;
+  const extras = {
+    look: '<g class="search"><circle cx="150" cy="120" r="17" fill="#fff" fill-opacity=".35" stroke="#2f3640" stroke-width="6"/><path d="M162 133 L178 150" stroke="#2f3640" stroke-width="8" stroke-linecap="round"/></g>',
+    happy: '<g class="twinkle"><path d="M170 30 l4 10 10 4 -10 4 -4 10 -4 -10 -10 -4 10 -4z" fill="#c98a3c"/></g><g class="twinkle d2"><path d="M26 50 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#c98a3c"/></g>',
+    oops: '<path class="sweat" d="M150 40 Q157 54 150 60 Q143 54 150 40 Z" fill="#7fb6d9"/>'
+  }[mood] || '';
+  const body = mood === 'dj'
+    ? `<g class="nod">${ghost}</g>${deck}${hand(60, false)}${hand(140, true)}`
+    : `<g class="${mood === 'happy' ? 'hop' : mood === 'oops' ? 'a shake' : 'float'}">${ghost}${hand(64, false)}${hand(136, true)}</g>${extras}`;
+  const vb = mood === 'dj' ? '0 0 200 212' : '0 0 200 200';
+  return `<svg viewBox="${vb}" width="${W}" height="${Math.round(W * (mood === 'dj' ? 1.06 : 1))}" aria-hidden="true" style="overflow:visible">${body}</svg>`;
+}
+
 /* ================= setup ================= */
 const APP = window.APP_CONFIG || { API_URL: '', DEFAULTS: {} };
 const API_URL = (APP.API_URL || '').trim();
@@ -494,8 +439,8 @@ async function api(action, data) {
 function render(c) {
   CFG = Object.assign({}, CFG, c);
   const name = String(CFG.EVENT_NAME || '');
-  const words = name.split(' ');
-  $('evName').innerHTML = words.length > 2 ? esc(words.slice(0, 2).join(' ')) + '<br>' + esc(words.slice(2).join(' ')) : esc(name);
+  $('evName').textContent = name;
+  if (CFG.TIME_EN) $('evTime').textContent = CFG.TIME_EN;
   $('evTheme').textContent = CFG.THEME || '';
   $('evDate').textContent = CFG.EVENT_DATE || '';
   $('evSched').innerHTML = (CFG.SCHEDULE || []).map(s => {
@@ -602,26 +547,25 @@ function renderQR(amt) {
   new QRCode(box, { text, width: 216, height: 216, colorDark: '#1b1815', correctLevel: QRCode.CorrectLevel.M });
   setTimeout(() => { const c = box.querySelector('canvas'); if (c) $('saveQr').href = qrPoster(c, amt); }, 80);
 }
+const LOGO = new Image(); LOGO.src = 'assets/logo.png';
 function qrPoster(qrCanvas, amt) {
-  const W = 600, H = 780, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const W = 600, H = 840, c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d');
   x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
   x.fillStyle = '#113566'; x.fillRect(0, 0, W, 90);
   x.fillStyle = '#fff'; x.font = 'bold 34px sans-serif'; x.textAlign = 'center'; x.fillText('THAI QR PAYMENT', W / 2, 58);
+  if (LOGO.complete && LOGO.naturalWidth) { const lw = 200, lh = lw * LOGO.naturalHeight / LOGO.naturalWidth; x.drawImage(LOGO, W - lw - 24, H - lh - 18, lw, lh); }
   x.imageSmoothingEnabled = false; x.drawImage(qrCanvas, 90, 120, 420, 420);
   x.fillStyle = '#1b1815'; x.font = 'bold 32px sans-serif'; x.fillText(CFG.SHOP_NAME || CFG.ACCOUNT_NAME || '', W / 2, 600);
   x.font = '24px sans-serif'; x.fillStyle = '#5a4e44'; x.fillText(CFG.ACCOUNT_NAME || '', W / 2, 640);
   x.font = 'bold 42px sans-serif'; x.fillStyle = '#c8702a'; x.fillText(fmt(amt) + ' บาท', W / 2, 705);
   x.font = '20px sans-serif'; x.fillStyle = '#8a8175'; x.fillText(CFG.EVENT_NAME || '', W / 2, 748);
+  x.textAlign = 'left'; x.font = '18px sans-serif'; x.fillText('31 Oct 2026 · 22:00', 24, H - 34);
   return c.toDataURL('image/png');
 }
 
 /* ================= slip checker ================= */
-const MASCOTS = {
-  look: '<svg viewBox="-4 -12 96 104" width="60" height="60" aria-hidden="true"><path d="M10 52 C10 24 26 14 40 14 C54 14 70 24 70 52 L70 82 C66 78 62 78 58 83 C54 88 50 88 46 83 C42 78 38 78 34 83 C30 88 26 88 22 83 C18 78 14 78 10 82 Z" fill="#fbf5e3"/><ellipse cx="31" cy="45" rx="3.6" ry="4.6" fill="#1b1815"/><ellipse cx="51" cy="45" rx="3.6" ry="4.6" fill="#1b1815"/><ellipse cx="23" cy="57" rx="5" ry="3" fill="#f2a3a0"/><ellipse cx="57" cy="57" rx="5" ry="3" fill="#f2a3a0"/><circle cx="40" cy="58" r="3" fill="#1b1815"/><path d="M29 19 L31 -4 Q40 -9 49 -4 L51 19 Z" fill="#2b2622" opacity=".92"/><ellipse cx="40" cy="19" rx="35" ry="5.5" fill="#2b2622" opacity=".92"/><g class="search"><circle cx="70" cy="30" r="9" fill="#fbf5e3" fill-opacity=".25" stroke="#e2a15f" stroke-width="3.5"/><path d="M76 37 L84 45" stroke="#e2a15f" stroke-width="4.5" stroke-linecap="round"/></g></svg>',
-  happy: '<svg viewBox="-4 -12 88 104" width="60" height="60" aria-hidden="true"><g class="hop"><path d="M10 52 C10 24 26 14 40 14 C54 14 70 24 70 52 L70 82 C66 78 62 78 58 83 C54 88 50 88 46 83 C42 78 38 78 34 83 C30 88 26 88 22 83 C18 78 14 78 10 82 Z" fill="#fbf5e3"/><path d="M24 48 Q30 42 36 48" stroke="#1b1815" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M44 48 Q50 42 56 48" stroke="#1b1815" stroke-width="2.6" fill="none" stroke-linecap="round"/><ellipse cx="23" cy="57" rx="5" ry="3" fill="#f2a3a0"/><ellipse cx="57" cy="57" rx="5" ry="3" fill="#f2a3a0"/><path d="M35 55 Q40 62 45 55 Z" fill="#6e2a20"/><path d="M29 19 L31 -4 Q40 -9 49 -4 L51 19 Z" fill="#2b2622" opacity=".92"/><ellipse cx="40" cy="19" rx="35" ry="5.5" fill="#2b2622" opacity=".92"/><path d="M13 21 Q10 42 22 64" stroke="#e2a15f" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="0.1 5.5"/></g></svg>',
-  oops: '<svg viewBox="0 0 92 100" width="60" height="60" aria-hidden="true"><g class="a shake"><path d="M38 30 Q45 6 52 30 Z" fill="#f6ecc9"/><circle cx="45" cy="58" r="32" fill="#d8674c"/><ellipse cx="45" cy="70" rx="17" ry="12" fill="#e98f6e" opacity=".7"/><path d="M28 44 L39 40" stroke="#2b2622" stroke-width="3" stroke-linecap="round"/><path d="M62 44 L51 40" stroke="#2b2622" stroke-width="3" stroke-linecap="round"/><circle cx="35" cy="52" r="5.5" fill="#fff"/><circle cx="55" cy="52" r="5.5" fill="#fff"/><circle cx="35" cy="53" r="2.8" fill="#1b1815"/><circle cx="55" cy="53" r="2.8" fill="#1b1815"/><path d="M37 70 Q45 64 53 70" stroke="#2b2622" stroke-width="2.6" fill="none" stroke-linecap="round"/></g><path class="sweat" d="M76 30 Q80 38 76 42 Q72 38 76 30 Z" fill="#8cc5e6"/></svg>'
-};
+const MASCOTS = { look: croissant('look', 64), happy: croissant('happy', 64), oops: croissant('oops', 64) };
 const CHECK_LABELS = [['amount', 'ตรวจยอดเงิน…'], ['receiver', 'ตรวจบัญชีผู้รับ…'], ['time', 'ตรวจเวลาโอน…'], ['duplicate', 'ตรวจว่าสลิปไม่เคยใช้…']];
 
 function readAsDataURL(f) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); }); }
@@ -815,9 +759,11 @@ $('back1').onclick = () => go(1);
 $('submitBtn').onclick = submitForm;
 $('again').onclick = () => location.reload();
 
+document.querySelectorAll('[data-mascot]').forEach(el => { el.innerHTML = croissant(el.dataset.mascot, Number(el.dataset.size) || 100); });
 render({});
 if (DEMO) $('demoBar').classList.remove('hidden');
 else api('getConfig').then(render).catch(() => {});
+
 </script>
 </body>
 </html>

@@ -1,6 +1,8 @@
-# openface · ANYONG SPOOKY HALLOWEEN NIGHT
+# openface × No Judgment Gathering · ANNYONG SPOOKY HALLOWEEN NIGHT
 
-The registration site for openface's Korean Halloween night: **Sat 31 Oct 2026, register 22:00, DJ 22:30 – 01:30, free-flow alcohol & small bites, 1,200 THB.**
+The registration site for **ANNYONG 안녕 SPOOKY HALLOWEEN NIGHT** at openface BKK: **Sat 31 Oct 2026, 10 PM – 2 AM (register 22:00, DJ 22:30), DJ, free-flow alcohol, Korean bites. Dress code: everything Korean. 1,200 THB.**
+
+The look follows the event poster: cream paper, charcoal ink, the slate bottom band, heavy condensed type, and the croissant-ghost DJ as the animated mascot.
 
 The page itself (`index.html`) is hosted on **Vercel**. The **Google Apps Script** stays as the backend; it writes to the Google Sheet, saves slips to Drive, sends the emails and runs the SlipOK slip check.
 
@@ -17,7 +19,8 @@ Customer phone ──► Vercel (index.html + config.js)
 
 | File | What it is |
 |---|---|
-| `index.html` | The site: animated hanok scene and characters, registration form, K SHOP Thai QR with the amount filled in, live slip checker, confirmation page |
+| `index.html` | The site: the poster as the hero, scrolling "LET'S GET FREE FLOW!" band, registration form, K SHOP Thai QR with the amount filled in, live slip checker with the croissant-ghost mascot, confirmation page with the croissant DJ |
+| `assets/` | Poster (`poster.jpg`, `poster-540.jpg`, `og.jpg` for link previews) and the openface logo (`logo.png` in dark, `logo-cream.png` for the dark footer) |
 | `config.js` | **`API_URL`** (the Apps Script `/exec` URL) and display defaults. While `API_URL` is empty the site runs in **demo mode**: nothing is saved, and a bar at the top lets you simulate each slip result. |
 | `vercel.json` | Static hosting settings |
 | `apps-script/Code.gs` | The backend. Paste it into Apps Script. Event details, price, QR payload and SlipOK settings live in its `CONFIG`. |
@@ -27,7 +30,8 @@ Customer phone ──► Vercel (index.html + config.js)
 2. Replace `Code.gs` with `apps-script/Code.gs` from this repo. If an `Index` HTML file is left over from the old version, you can delete it.
 3. In **Project Settings → Script properties**, add `SLIPOK_API_KEY`. In `CONFIG.SLIP_CHECK`, set `SLIPOK_BRANCH_ID`.
 4. Run `setup()` once and approve the permissions (Sheets, Drive, Gmail, external requests).
-5. **Deploy → New deployment → Web app**, with *Execute as:* **Me** and *Who has access:* **Anyone**. Copy the URL ending in `/exec`.
+5. Optional: set `CONFIG.SITE_URL` to your Vercel address so the confirmation emails show the openface logo.
+6. **Deploy → New deployment → Web app**, with *Execute as:* **Me** and *Who has access:* **Anyone**. Copy the URL ending in `/exec`.
    - When you change `Code.gs` later, go to **Deploy → Manage deployments → Edit → New version**. That keeps the same URL.
 
 ## 2 · Point the site at the backend
