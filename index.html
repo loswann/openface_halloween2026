@@ -250,6 +250,13 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 .newver span{flex-grow:1}.newver button{flex-shrink:0;min-height:40px;padding:0 14px;border-radius:999px;border:0;background:var(--gold);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer}
 .newver .x{background:transparent;color:var(--cream);padding:0 6px;font-size:18px}
 .overlay{position:fixed;inset:0;background:rgba(47,54,64,.88);color:var(--cream);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:70;font-weight:600}
+.savesheet{position:fixed;inset:0;z-index:80;background:rgba(27,24,21,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px 16px;color:var(--cream);text-align:center}
+.savesheet img{max-width:min(78vw,340px);max-height:58vh;border-radius:12px;border:3px solid var(--gold);-webkit-touch-callout:default!important;user-select:auto;-webkit-user-select:auto;pointer-events:auto}
+.savesheet .how{font-size:17px;font-weight:700;line-height:1.5}
+.savesheet .how b{color:var(--gold)}
+.savesheet .sub{font-size:13px;opacity:.85;line-height:1.5;max-width:340px}
+.savesheet button{min-height:46px;padding:0 26px;border-radius:999px;border:2px solid var(--cream);background:transparent;color:var(--cream);font-weight:700;font-size:15px}
+.savetoast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:85;background:var(--ink);color:var(--cream);padding:12px 18px;border-radius:14px;font-size:14px;font-weight:600;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.3);text-align:center}
 </style>
 </head>
 <body>
@@ -351,7 +358,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 <div class="amt">ยอด <b id="qrAmt"></b> ฿</div>
 </div>
 <div class="center-note">สแกนด้วยแอปธนาคารใดก็ได้ · ยอดเงินกรอกให้อัตโนมัติ</div>
-<a class="btn ghost" id="saveQr" href="#" download="annyeong-halloween-qr.png">บันทึกรูป QR (จ่ายจากมือถือเครื่องนี้)</a>
+<button type="button" class="btn ghost" id="saveQr">บันทึกรูป QR ลงอัลบั้มรูป (จ่ายจากมือถือเครื่องนี้)</button>
 <div class="center-note">บันทึกรูป แล้วเปิดแอปธนาคาร › สแกน › เลือกรูปจากอัลบั้ม</div>
 <div class="bankinfo"><div><span>ธนาคาร</span><span id="bankName"></span></div><div><span>ชื่อบัญชี</span><span id="accName"></span></div><div id="accRow" class="hidden"><span>เลขที่บัญชี</span><span id="accNo"></span></div></div>
 </section>
@@ -450,7 +457,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 /* ================= version =================
    Bump on every release: MAJOR = booking process changes · MINOR = feature / wording / flow · PATCH = fix only.
    Keep CODE_VERSION in apps-script/Code.gs on the same MAJOR.MINOR.                                         */
-const APP_VERSION = '2.9.1';
+const APP_VERSION = '2.9.2';
 const APP_DATE = '14 Oct 2026';
 /* ================= the croissant DJ · crescent + record halo (from the poster) =================
    croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),
@@ -653,7 +660,7 @@ function renderQR(amt) {
   $('qrWrap').classList.remove('hidden');
   if (typeof QRCode === 'undefined') { box.textContent = 'กำลังโหลด QR…'; return setTimeout(() => renderQR(amt), 400); }
   new QRCode(box, { text, width: 216, height: 216, colorDark: '#1b1815', correctLevel: QRCode.CorrectLevel.M });
-  setTimeout(() => { const c = box.querySelector('canvas'); if (c) $('saveQr').href = qrPoster(c, amt); }, 80);
+  setTimeout(() => { const c = box.querySelector('canvas'); if (c) prepQrSave(qrPoster(c, amt)); }, 80);
 }
 const LOGO = new Image(); LOGO.src = 'assets/logo.png';
 function qrPoster(qrCanvas, amt) {
@@ -669,7 +676,64 @@ function qrPoster(qrCanvas, amt) {
   x.font = 'bold 42px sans-serif'; x.fillStyle = '#c8702a'; x.fillText(fmt(amt) + ' บาท', W / 2, 705);
   x.font = '20px sans-serif'; x.fillStyle = '#8a8175'; x.fillText(CFG.EVENT_NAME || '', W / 2, 748);
   x.textAlign = 'left'; x.font = '18px sans-serif'; x.fillText('31 Oct 2026 · 22:00', 24, H - 34);
-  return c.toDataURL('image/png');
+  return c;
+}
+
+/* ===== save QR to Photos (iPhone) / Gallery (Android) =====
+   iPhone: share sheet → "Save Image" goes straight to Photos (an <a download> only goes to Files).
+   Android Chrome/Samsung: normal download → appears in Gallery / Google Photos under "Download".
+   In-app browsers (LINE, Facebook, IG, TikTok) or anything that fails: show the image big → long-press → save. */
+const QRSAVE = { url: '', file: null, name: 'annyeong-halloween-qr.png' };
+const UA = navigator.userAgent || '';
+const IS_IOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const IS_ANDROID = /Android/i.test(UA);
+const IN_APP = /\bLine\/|FBAN|FBAV|FB_IAB|Instagram|BytedanceWebview|musical_ly|TikTok|KAKAOTALK|Twitter/i.test(UA);
+function prepQrSave(canvas) {
+  QRSAVE.url = canvas.toDataURL('image/png');
+  QRSAVE.file = null;
+  // build the File now, so the tap can open the share sheet immediately (iOS needs it inside the tap)
+  if (canvas.toBlob) canvas.toBlob(b => { if (b) try { QRSAVE.file = new File([b], QRSAVE.name, { type: 'image/png' }); } catch (e) {} }, 'image/png');
+}
+function saveToast(msg, onTap) {
+  document.querySelectorAll('.savetoast').forEach(n => n.remove());
+  const t = document.createElement('div'); t.className = 'savetoast'; t.innerHTML = msg; document.body.appendChild(t);
+  if (onTap) { t.style.cursor = 'pointer'; t.onclick = () => { t.remove(); onTap(); }; }
+  setTimeout(() => t.remove(), 8000);
+}
+function showSaveSheet() {
+  const how = IS_IOS
+    ? 'แตะค้างที่รูป แล้วเลือก <b>“บันทึกไปยังรูปภาพ”</b><br><span style="font-size:14px;font-weight:600">Press &amp; hold → <b>Save to Photos</b></span>'
+    : IS_ANDROID
+    ? 'แตะค้างที่รูป แล้วเลือก <b>“ดาวน์โหลดรูปภาพ / บันทึกรูป”</b><br><span style="font-size:14px;font-weight:600">Press &amp; hold → <b>Download image</b></span>'
+    : 'คลิกขวาที่รูป แล้วเลือก <b>“บันทึกรูปภาพ”</b><br><span style="font-size:14px;font-weight:600">Right-click → <b>Save image</b></span>';
+  const d = document.createElement('div'); d.className = 'savesheet'; d.setAttribute('role', 'dialog');
+  d.innerHTML = '<div class="how">' + how + '</div><img alt="QR ชำระเงิน" src="' + QRSAVE.url + '">' +
+    '<div class="sub">จากนั้นเปิดแอปธนาคาร › สแกน › เลือกรูปจากอัลบั้ม<br>Open your bank app › Scan › pick from album</div>' +
+    '<button type="button">ปิด · Close</button>';
+  d.querySelector('button').onclick = () => d.remove();
+  d.addEventListener('click', e => { if (e.target === d) d.remove(); });
+  document.body.appendChild(d);
+}
+function downloadQr() {
+  const a = document.createElement('a'); a.href = QRSAVE.url; a.download = QRSAVE.name;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+async function onSaveQr(e) {
+  e.preventDefault();
+  if (!QRSAVE.url) return saveToast('กำลังสร้าง QR… ลองอีกครั้งใน 1 วินาที');
+  const f = QRSAVE.file;
+  // iPhone (Safari, Chrome, LINE…): share sheet → "บันทึกภาพ / Save Image" → Photos
+  if (IS_IOS && f && navigator.canShare && navigator.canShare({ files: [f] })) {
+    try { await navigator.share({ files: [f] }); return; }
+    catch (err) { if (err && err.name === 'AbortError') return; }   // user closed the sheet
+    return showSaveSheet();
+  }
+  if (IS_IOS || IN_APP) return showSaveSheet();
+  if (IS_ANDROID) {
+    downloadQr();
+    return saveToast('บันทึกแล้ว ✓ อยู่ในแกลเลอรี › อัลบั้ม “Download”<br><u>ไม่เจอรูป? แตะตรงนี้</u>', showSaveSheet);
+  }
+  downloadQr();   // computer
 }
 
 /* ================= slip checker ================= */
@@ -1132,6 +1196,7 @@ window.addEventListener('focus', () => checkForUpdate(false));
 $('minus').onclick = () => setQty(qty - 1);
 $('plus').onclick = () => setQty(qty + 1);
 $('next1').onclick = toPayment;
+$('saveQr').addEventListener('click', onSaveQr);
 $('back1').onclick = () => go(1);
 $('submitBtn').onclick = submitForm;
 $('again').onclick = () => location.reload();

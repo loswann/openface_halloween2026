@@ -94,6 +94,7 @@ The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`
 | Version | Change |
 |---|---|
 | v2.9.1 | Bolder status colours on the site and in the Sheet (amber Pending with pulsing dot, green Approved, red Problem, grey Cancelled) |
+| v2.9.2 | "Save QR" puts the image in Photos/Gallery: iPhone → share sheet → Save Image; Android Chrome → Download album; LINE/FB/IG in-app browsers → full-screen image to press-and-hold. Front-end only (backend stays v2.9.1) |
 | v2.9.0 | Main contact everywhere is nojudgmentgathering@gmail.com (site, status page, slip hints, problem reasons, guest emails); LINE kept as a footer link |
 | v2.8.1 | Slip-problem help button emails nojudgmentgathering@gmail.com (prefilled) instead of LINE |
 | v2.8.0 | Animated "LET'S GET / FREE FLOW!" lines on the hero poster |
