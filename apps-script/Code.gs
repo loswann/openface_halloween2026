@@ -25,7 +25,7 @@ const CONFIG = {
   SCHEDULE:         [['22:00', 'ลงทะเบียน · Registration'], ['22:30', 'DJ ขึ้น · DJ up'], ['02:00', 'ปิดงาน · Till 02:00']],
   VENUE:            'openface · 86/2 ถ.รามคำแหง 21 (ซ.นวศรี 15) แขวงพลับพลา เขตวังทองหลาง กรุงเทพฯ',
   MAP_URL:          'https://share.google/kdPgH8cJINAYblTop',
-  PRICE_PER_PERSON: 1200,          // THB
+  PRICE_PER_PERSON: 1199,          // THB
   PRICE_INCLUDES:   'DJ · Free-flow alcohol · Korean bites',
   DRESS_CODE:       'Everything Korean',
   MIN_AGE:          20,
@@ -135,7 +135,7 @@ const CONFIG = {
 };
 
 // Must match APP_VERSION in index.html (major.minor). Bump both together, then Deploy → New version.
-const CODE_VERSION = '2.1.0';
+const CODE_VERSION = '2.2.0';
 
 const STATUS = { PENDING: 'Pending', APPROVED: 'Approved', PROBLEM: 'Problem', CANCELLED: 'Cancelled' };
 

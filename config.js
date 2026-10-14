@@ -21,7 +21,7 @@ window.APP_CONFIG = {
     SCHEDULE: [['22:00', 'ลงทะเบียน', 'Register'], ['22:30', 'DJ ขึ้น', 'DJ up'], ['02:00', 'ปิดงาน', 'Till 02:00']],
     VENUE: '86/2 ถ.รามคำแหง 21 (ซ.นวศรี 15) วังทองหลาง กรุงเทพฯ',
     MAP_URL: 'https://share.google/kdPgH8cJINAYblTop',
-    PRICE_PER_PERSON: 1200,
+    PRICE_PER_PERSON: 1199,
     PRICE_INCLUDES: 'DJ · Free-flow alcohol · Korean bites',
     DRESS_CODE: 'Everything Korean',
     MAX_PER_BOOKING: 50, CAPACITY: 0, SEATS_TAKEN: 0, CLOSED: false,

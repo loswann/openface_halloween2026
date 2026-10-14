@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ANNYONG SPOOKY HALLOWEEN NIGHT · openface BKK</title>
-<meta name="description" content="ANNYONG 안녕 SPOOKY HALLOWEEN NIGHT · Sat 31 Oct 2026 · 10 PM – 2 AM · DJ · Free-flow · Korean bites · Dress code: Everything Korean · 1,200 THB · openface BKK">
+<meta name="description" content="ANNYONG 안녕 SPOOKY HALLOWEEN NIGHT · Sat 31 Oct 2026 · 10 PM – 2 AM · DJ · Free-flow · Korean bites · Dress code: Everything Korean · 1,199 THB · openface BKK">
 <meta property="og:title" content="ANNYONG SPOOKY HALLOWEEN NIGHT · openface BKK">
-<meta property="og:description" content="Oct 31st 2026 · 10 PM – 2 AM · DJ · Free-flow · Korean bites · 1,200 THB">
+<meta property="og:description" content="Oct 31st 2026 · 10 PM – 2 AM · DJ · Free-flow · Korean bites · 1,199 THB">
 <meta property="og:image" content="assets/og.jpg">
 <meta name="theme-color" content="#2f3640">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M100 8 C66 8 48 38 42 84 C37 122 28 156 16 186 C70 190 130 190 184 186 C172 156 163 122 158 84 C152 38 134 8 100 8 Z' fill='%23ecebe4'/%3E%3Cpath d='M100 27 C84 27 74 47 72 79 C70 111 76 145 84 172 L116 172 C124 145 130 111 128 79 C126 47 116 27 100 27 Z' fill='%23c4823d'/%3E%3Cellipse cx='86' cy='72' rx='12' ry='8.5' fill='%2318191b'/%3E%3Cellipse cx='114' cy='72' rx='12' ry='8.5' fill='%2318191b'/%3E%3C/svg%3E">
@@ -257,7 +257,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 <div class="price">
 <div data-mascot="chill" data-size="84"></div>
 <div style="display:flex;flex-direction:column;gap:2px">
-<div class="big"><span id="evPrice" style="font-size:46px;color:var(--ink)">1,200</span> <span>THB</span></div>
+<div class="big"><span id="evPrice" style="font-size:46px;color:var(--ink)">1,199</span> <span>THB</span></div>
 <div style="font-size:12px;font-weight:600;color:var(--gold-d)">ต่อท่าน · per person</div>
 <div style="font-size:14px;font-weight:500" id="evIncludes"></div>
 </div>
@@ -293,7 +293,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 <div class="field"><label for="guests">ชื่อผู้ร่วมงานท่านอื่น / Other guests</label><textarea id="guests" placeholder="1 ชื่อต่อบรรทัด"></textarea></div>
 <div class="field"><label for="parking">ขับรถมา ต้องการที่จอด / Need parking?</label><select id="parking"><option value="No">ไม่ใช้ / No</option><option value="Yes">ใช้ / Yes</option></select></div>
 <div class="field"><label for="notes">หมายเหตุ / Notes</label><textarea id="notes" placeholder="อาหารที่แพ้, คำขอพิเศษ ฯลฯ"></textarea></div>
-<div class="total"><span style="font-weight:600">ยอดชำระ / Total</span><b><span id="total">1,200</span> ฿</b></div>
+<div class="total"><span style="font-weight:600">ยอดชำระ / Total</span><b><span id="total">1,199</span> ฿</b></div>
 <div class="err" id="err1" role="alert"></div>
 <button type="button" class="btn" id="next1">ถัดไป: ชำระเงิน →</button>
 </section>
@@ -305,7 +305,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 <div data-mascot="chill" data-size="88"></div>
 <div style="display:flex;flex-direction:column;gap:2px">
 <div class="lbl">ยอดที่ต้องโอน · <span id="payQty">1</span> ท่าน</div>
-<div class="big"><span id="payAmt">1,200</span> ฿</div>
+<div class="big"><span id="payAmt">1,199</span> ฿</div>
 <div style="font-size:13px;color:var(--ink2)">สแกน QR จ่าย แล้วแนบสลิปด้านล่างนะคะ</div>
 </div>
 </section>
@@ -419,7 +419,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 /* ================= version =================
    Bump on every release: MAJOR = booking process changes · MINOR = feature / wording / flow · PATCH = fix only.
    Keep CODE_VERSION in apps-script/Code.gs on the same MAJOR.MINOR.                                         */
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.2.0';
 const APP_DATE = '14 Oct 2026';
 /* ================= the croissant-ghost DJ (from the poster) =================
    croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),
@@ -904,7 +904,7 @@ $('reInput').addEventListener('change', async e => {
 function demoStatus(phone) {
   const last = phone.slice(-1), base = { ref: 'DEMO-0001', name: 'ทดสอบ ร.', qty: 2, amount: 2 * CFG.PRICE_PER_PERSON, submitted: '14 Oct 2026 20:15' };
   if (last === '1') return { bookings: [Object.assign(base, { status: 'Approved', entryCode: 'ANN-7KQ3' })] };
-  if (last === '2') return { bookings: [Object.assign(base, { status: 'Problem', problem: { th: 'ยอดโอนไม่ครบตามจำนวนผู้เข้าร่วม', note: 'ยอดขาด 1,200 บาท', fix: 'โอนส่วนที่ขาดผ่าน QR เดิม แล้วแนบสลิปเพิ่มในหน้าตรวจสอบสถานะ', reupload: true } })] };
+  if (last === '2') return { bookings: [Object.assign(base, { status: 'Problem', problem: { th: 'ยอดโอนไม่ครบตามจำนวนผู้เข้าร่วม', note: 'ยอดขาด 1,199 บาท', fix: 'โอนส่วนที่ขาดผ่าน QR เดิม แล้วแนบสลิปเพิ่มในหน้าตรวจสอบสถานะ', reupload: true } })] };
   if (last === '0') return { bookings: [] };
   return { bookings: [Object.assign(base, { status: 'Pending' })] };
 }

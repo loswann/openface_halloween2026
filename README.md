@@ -1,6 +1,6 @@
 # openface × No Judgment Gathering · ANNYONG SPOOKY HALLOWEEN NIGHT
 
-The registration site for **ANNYONG 안녕 SPOOKY HALLOWEEN NIGHT** at openface BKK: **Sat 31 Oct 2026, 10 PM – 2 AM (register 22:00, DJ 22:30), DJ, free-flow alcohol, Korean bites. Dress code: everything Korean. 1,200 THB.**
+The registration site for **ANNYONG 안녕 SPOOKY HALLOWEEN NIGHT** at openface BKK: **Sat 31 Oct 2026, 10 PM – 2 AM (register 22:00, DJ 22:30), DJ, free-flow alcohol, Korean bites. Dress code: everything Korean. 1,199 THB.**
 
 The page (`index.html`) is hosted on **Vercel**. The **Google Apps Script** (`apps-script/Code.gs`) is the backend: it writes to the Google Sheet, saves slips to Drive and sends the emails.
 
@@ -67,11 +67,11 @@ Edit the wording in `CONFIG.PROBLEMS` in Code.gs, then run **setup()** again so 
 Put the `/exec` URL into `config.js` (`API_URL: '…/exec'`) and commit. Vercel redeploys automatically.
 
 ## 3 · Test before announcing
-- [ ] Scan the QR for 1 guest in KBank, SCB and one other bank app. Each should show **โอเพ่น เฟซ** with 1,200 pre-filled.
+- [ ] Scan the QR for 1 guest in KBank, SCB and one other bank app. Each should show **โอเพ่น เฟซ** with 1,199 pre-filled.
 - [ ] Set `PRICE_PER_PERSON: 1` in Code.gs, deploy a new version, register with your own phone/email and pay 1 THB. The row must appear as **Pending** and the RECEIVED email must arrive.
 - [ ] Set it to **Problem** + a reason → PROBLEM email. On the site → Check status → upload a new slip → the row goes back to **Pending**.
 - [ ] Set it to **Approved** → APPROVED email with the entry code, and the code shows on Check status.
-- [ ] Set the price back to 1200 and deploy a new version.
+- [ ] Set the price back to 1199 and deploy a new version.
 
 ## Versions
 The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`.
@@ -82,6 +82,7 @@ The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`
 
 | Version | Change |
 |---|---|
+| v2.2.0 | Price 1,199 THB per person |
 | v2.1.0 | Version footer, backend version check, "new version" notice |
 | v2.0.0 | Admin approval in the Sheet, emails, status check by phone |
 | v1.2.0 | Slip-check fix (shared K SHOP biller ID), demo only with `?demo=1` |
