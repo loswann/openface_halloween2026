@@ -88,6 +88,7 @@ The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`
 
 | Version | Change |
 |---|---|
+| v2.4.1 | Mascot redrawn: croissant crescent with a record halo, all five moods |
 | v2.4.0 | Guest emails sent by hand: Customer Email status + Email Draft with a Gmail link |
 | v2.3.0 | Event admin + guest contact email: nojudgmentgathering@gmail.com |
 | v2.2.0 | Price 1,199 THB per person |

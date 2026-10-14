@@ -139,7 +139,7 @@ const CONFIG = {
 };
 
 // Must match APP_VERSION in index.html (major.minor). Bump both together, then Deploy → New version.
-const CODE_VERSION = '2.4.0';
+const CODE_VERSION = '2.4.1';
 
 const MAIL = { TO_APPROVED: 'To send – Approved', SENT_APPROVED: 'Sent – Approved',
                TO_PROBLEM: 'To send – Problem', SENT_PROBLEM: 'Sent – Problem', NOT_NEEDED: 'Not needed' };
