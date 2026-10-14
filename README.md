@@ -73,6 +73,21 @@ Put the `/exec` URL into `config.js` (`API_URL: '…/exec'`) and commit. Vercel 
 - [ ] Set it to **Approved** → APPROVED email with the entry code, and the code shows on Check status.
 - [ ] Set the price back to 1200 and deploy a new version.
 
+## Versions
+The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`.
+- **Mode:** LIVE (backend connected) · DEMO (`?demo=1`, fake data) · SOON (no backend yet).
+- **Backend:** ✓ when `CODE_VERSION` in Code.gs has the same MAJOR.MINOR as the site. ⚠ means Apps Script was not redeployed (Deploy → Manage deployments → Edit → **New version**), or it is offline.
+- Open tabs check for a newer site every 10 minutes and when brought back into focus, then show a "มีเวอร์ชันใหม่ · รีเฟรช" bar. It never reloads by itself.
+- Bump rule: `APP_VERSION` in index.html (and `APP_DATE`) on every release. MAJOR = booking process change, MINOR = feature/wording/flow, PATCH = fix only. Bump `CODE_VERSION` in Code.gs when the backend changes; keep MAJOR.MINOR in step.
+
+| Version | Change |
+|---|---|
+| v2.1.0 | Version footer, backend version check, "new version" notice |
+| v2.0.0 | Admin approval in the Sheet, emails, status check by phone |
+| v1.2.0 | Slip-check fix (shared K SHOP biller ID), demo only with `?demo=1` |
+| v1.1.0 | Restyled to the ANNYONG poster and openface logo |
+| v1.0.0 | First site |
+
 ## Notes and risks
 - **Status by phone number only** (as requested): anyone who knows a guest's phone number can see that guest's booking and entry code. Names are shortened on screen. To require the booking ref too, set `STATUS_REQUIRE_REF: true`.
 - **Check entry codes against the Sheet at the door.** A screenshot of someone else's code is the main way people would get in without paying.

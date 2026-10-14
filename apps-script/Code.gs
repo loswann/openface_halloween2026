@@ -134,6 +134,9 @@ const CONFIG = {
   STATUS_REQUIRE_REF: false
 };
 
+// Must match APP_VERSION in index.html (major.minor). Bump both together, then Deploy → New version.
+const CODE_VERSION = '2.1.0';
+
 const STATUS = { PENDING: 'Pending', APPROVED: 'Approved', PROBLEM: 'Problem', CANCELLED: 'Cancelled' };
 
 const HEADERS = [
@@ -180,6 +183,7 @@ function doGet() {
 function getConfig() {
   const c = JSON.parse(JSON.stringify(CONFIG));
   ['ADMIN_EMAIL', 'SLIP_FOLDER_ID', 'SHEET_NAME', 'SPREADSHEET_ID', 'SLIP_CHECK', 'EMAIL', 'PROBLEMS'].forEach(k => delete c[k]);
+  c.VERSION = CODE_VERSION;
   c.SLIP_CHECK_ON = slipCheckReady_();
   c.SEATS_TAKEN = countSeats_();
   c.CLOSED = isClosed_();

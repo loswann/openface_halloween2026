@@ -214,6 +214,11 @@ footer .fine{font-size:11px;color:#b9bdc6;line-height:1.7}
 .bk .fixbox{padding:10px 12px;border-radius:12px;background:var(--badbg);border:1.5px solid var(--bad);font-size:14px;line-height:1.6}
 .bk .fixbox .fix{color:var(--gold-d);font-weight:600}
 .bk .upmsg{font-size:13px;font-weight:600;line-height:1.5}
+footer .ver{font-size:11px;color:#8b91a0;letter-spacing:.3px;font-variant-numeric:tabular-nums}
+footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
+.newver{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:80;width:calc(100% - 32px);max-width:448px;display:flex;align-items:center;gap:10px;padding:10px 12px 10px 16px;border-radius:14px;background:var(--ink);color:var(--cream);border:2px solid var(--gold);box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:13px;line-height:1.45}
+.newver span{flex-grow:1}.newver button{flex-shrink:0;min-height:40px;padding:0 14px;border-radius:999px;border:0;background:var(--gold);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer}
+.newver .x{background:transparent;color:var(--cream);padding:0 6px;font-size:18px}
 .overlay{position:fixed;inset:0;background:rgba(47,54,64,.88);color:var(--cream);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:70;font-weight:600}
 </style>
 </head>
@@ -402,13 +407,20 @@ footer .fine{font-size:11px;color:#b9bdc6;line-height:1.7}
 <div class="collab">No Judgment Gathering &nbsp;×&nbsp; openface</div>
 <div class="links"><a class="line" id="lineLink" href="#" target="_blank" rel="noopener">LINE <span id="lineId"></span></a><a id="telLink" href="#"><span id="phoneTxt"></span></a><a id="igLink" href="#" target="_blank" rel="noopener">Instagram</a></div>
 <div class="fine">86/2 ถ.รามคำแหง 21 (ซ.นวศรี 15) วังทองหลาง กรุงเทพฯ<br>ดื่มอย่างรับผิดชอบ · Please drink responsibly – don't drink and drive</div>
+<div class="ver" id="verLine"></div>
 </footer>
 </main>
 
+<div class="newver hidden" id="newVer" role="status"><span id="newVerMsg"></span><button type="button" id="newVerBtn">รีเฟรช</button><button type="button" class="x" id="newVerX" aria-label="ปิด">×</button></div>
 <div class="overlay hidden" id="loading"><div data-mascot="dj" data-size="120"></div><div>กำลังส่งข้อมูล…</div></div>
 
 <script>
 'use strict';
+/* ================= version =================
+   Bump on every release: MAJOR = booking process changes · MINOR = feature / wording / flow · PATCH = fix only.
+   Keep CODE_VERSION in apps-script/Code.gs on the same MAJOR.MINOR.                                         */
+const APP_VERSION = '2.1.0';
+const APP_DATE = '14 Oct 2026';
 /* ================= the croissant-ghost DJ (from the poster) =================
    croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),
    'happy' (all good), 'oops' (something's wrong), 'chill' (idle bob)          */
@@ -898,6 +910,42 @@ function demoStatus(phone) {
 }
 $('stForm').addEventListener('submit', checkStatus);
 
+/* ================= version footer + "new version" notice ================= */
+let backendState = 'loading';                       // loading | ok | offline
+const verParts = v => String(v || '').split('.').map(n => parseInt(n, 10) || 0);
+const newer = (a, b) => { const x = verParts(a), y = verParts(b); for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] > y[i]; return false; };
+const sameMinor = (a, b) => verParts(a).slice(0, 2).join('.') === verParts(b).slice(0, 2).join('.');
+function renderVersion() {
+  const mode = DEMO ? 'DEMO' : SOON ? 'SOON' : 'LIVE';
+  let be = '';
+  if (mode === 'LIVE') {
+    if (backendState === 'offline') be = ' · <span class="warn">backend offline ⚠</span>';
+    else if (!CFG.VERSION) be = backendState === 'ok' ? ' · <span class="warn">backend old version ⚠</span>' : ' · backend …';
+    else be = sameMinor(CFG.VERSION, APP_VERSION) ? ` · backend v${esc(CFG.VERSION)} ✓`
+                                                   : ` · <span class="warn">backend v${esc(CFG.VERSION)} ⚠</span>`;
+  }
+  $('verLine').innerHTML = `<b>v${APP_VERSION}</b> · ${APP_DATE} · ${mode}${be}`;
+}
+let lastVerCheck = 0, verDismissed = '';
+async function checkForUpdate(force) {
+  if (!force && Date.now() - lastVerCheck < 60000) return;
+  lastVerCheck = Date.now();
+  try {
+    const html = await (await fetch('/?vcheck=' + Date.now(), { cache: 'no-store' })).text();
+    const m = html.match(/const APP_VERSION = '([\d.]+)'/);
+    if (!m || !newer(m[1], APP_VERSION) || verDismissed === m[1]) return;
+    const busy = !$('step2').classList.contains('hidden') || !!($('name').value || $('phone').value);
+    $('newVerMsg').textContent = `มีเวอร์ชันใหม่ v${m[1]}` + (busy ? ' · ลงทะเบียนให้เสร็จก่อน แล้วค่อยรีเฟรช (ข้อมูลที่กรอกจะหายถ้ารีเฟรชตอนนี้)' : ' · กดรีเฟรชเพื่อใช้เวอร์ชันล่าสุด');
+    $('newVer').dataset.v = m[1];
+    $('newVer').classList.remove('hidden');
+  } catch (x) { /* offline – try again later */ }
+}
+$('newVerBtn').onclick = () => location.reload();
+$('newVerX').onclick = () => { verDismissed = $('newVer').dataset.v; $('newVer').classList.add('hidden'); };
+setInterval(() => checkForUpdate(true), 10 * 60000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(false); });
+window.addEventListener('focus', () => checkForUpdate(false));
+
 /* ================= wire up ================= */
 $('minus').onclick = () => setQty(qty - 1);
 $('plus').onclick = () => setQty(qty + 1);
@@ -908,6 +956,7 @@ $('again').onclick = () => location.reload();
 
 document.querySelectorAll('[data-mascot]').forEach(el => { el.innerHTML = croissant(el.dataset.mascot, Number(el.dataset.size) || 100); });
 render({});
+renderVersion();
 if (DEMO) $('demoBar').classList.remove('hidden');
 if (SOON) {
   document.querySelector('.steps').classList.add('hidden');
@@ -916,7 +965,8 @@ if (SOON) {
     + '<p style="margin:0;line-height:1.7">ติดตามประกาศและลิงก์ลงทะเบียนได้ทาง LINE <b>' + esc(CFG.CONTACT_LINE) + '</b> และ Instagram</p>'
     + '<a class="btn line" href="' + esc(CFG.LINE_URL) + '" target="_blank" rel="noopener">เพิ่มเพื่อน LINE ' + esc(CFG.CONTACT_LINE) + '</a>';
 } else if (!DEMO) {
-  api('getConfig').then(render).catch(() => {});
+  api('getConfig').then(c => { backendState = 'ok'; render(c); renderVersion(); })
+    .catch(() => { backendState = 'offline'; renderVersion(); });
 }
 function showStatusFromHash() {
   if (location.hash !== '#status' || SOON) return;
