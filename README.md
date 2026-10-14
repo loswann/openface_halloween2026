@@ -93,6 +93,7 @@ The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`
 
 | Version | Change |
 |---|---|
+| v2.9.0 | Main contact everywhere is nojudgmentgathering@gmail.com (site, status page, slip hints, problem reasons, guest emails); LINE kept as a footer link |
 | v2.8.1 | Slip-problem help button emails nojudgmentgathering@gmail.com (prefilled) instead of LINE |
 | v2.8.0 | Animated "LET'S GET / FREE FLOW!" lines on the hero poster |
 | v2.7.0 | Free slip reader on the guest's phone (Thai + English): amount, receiver, time, re-used slip. Approval stays manual |

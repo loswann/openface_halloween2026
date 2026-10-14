@@ -64,7 +64,7 @@ const CONFIG = {
    * Templates are placeholders until the final letters are supplied – edit SUBJECT/BODY below.
    * BODY is simple HTML; {{placeholders}} are filled in automatically:
    *   {{name}} {{ref}} {{entryCode}} {{qty}} {{amount}} {{event}} {{date}} {{time}} {{venue}} {{mapUrl}}
-   *   {{problem}} {{fix}} {{note}} {{statusLink}} {{line}} {{lineUrl}} {{phone}}
+   *   {{problem}} {{fix}} {{note}} {{statusLink}} {{contactEmail}} {{phone}} {{line}} {{lineUrl}}
    * The letter is wrapped in the poster-style frame (logo, event band, footer) automatically.  */
   EMAIL: {
     // false = MANUAL: nothing is emailed to guests. Approving / flagging a row writes a ready-to-send draft into
@@ -99,7 +99,7 @@ const CONFIG = {
           + '<p style="padding:10px 14px;border:2px solid #a8412f;border-radius:10px;background:#f7dcd2"><b>{{problem}}</b><br>{{note}}</p>'
           + '<p><b>วิธีแก้ไข:</b> {{fix}}</p>'
           + '<p>แก้ไข / แนบสลิปใหม่ได้ที่: <a href="{{statusLink}}">{{statusLink}}</a> (ใช้เบอร์โทรที่ลงทะเบียน)</p>'
-          + '<p>หากมีข้อสงสัย ทัก LINE <a href="{{lineUrl}}">{{line}}</a></p>'
+          + '<p>หากมีข้อสงสัย ตอบกลับอีเมลนี้ หรืออีเมลถึง <a href="mailto:{{contactEmail}}">{{contactEmail}}</a></p>'
       }
     }
   },
@@ -109,15 +109,15 @@ const CONFIG = {
    * reupload: show the "upload a new slip" button on the status page                                  */
   PROBLEMS: [
     { key: 'Amount short – โอนไม่ครบ',             th: 'ยอดโอนไม่ครบตามจำนวนผู้เข้าร่วม',                fix: 'โอนส่วนที่ขาดผ่าน QR เดิม แล้วแนบสลิปเพิ่มในหน้าตรวจสอบสถานะ', reupload: true },
-    { key: 'Amount over – โอนเกิน',                th: 'ยอดโอนเกินจากยอดที่ต้องชำระ',                   fix: 'ทีมงานจะติดต่อกลับเพื่อคืนส่วนต่างหรือปรับจำนวนผู้เข้าร่วม ทัก LINE ได้เลย', reupload: false },
+    { key: 'Amount over – โอนเกิน',                th: 'ยอดโอนเกินจากยอดที่ต้องชำระ',                   fix: 'ทีมงานจะติดต่อกลับเพื่อคืนส่วนต่างหรือปรับจำนวนผู้เข้าร่วม หรืออีเมล nojudgmentgathering@gmail.com', reupload: false },
     { key: 'Not received – ไม่พบยอดเงินเข้า',      th: 'ไม่พบยอดเงินเข้าบัญชีตามสลิป',                   fix: 'ตรวจกับธนาคารว่าการโอนสำเร็จ แล้วแนบสลิปที่ถูกต้องอีกครั้ง', reupload: true },
     { key: 'Wrong account – โอนผิดบัญชี',          th: 'สลิปนี้ไม่ได้โอนเข้าบัญชี บจก. โอเพ่น คิทเช่น',     fix: 'ติดต่อธนาคารของคุณเรื่องรายการเดิม แล้วชำระใหม่ด้วย QR บนเว็บ และแนบสลิปใหม่', reupload: true },
     { key: 'Unclear slip – สลิปไม่ชัด/ไม่ครบ',      th: 'สลิปไม่ชัดหรือข้อมูลไม่ครบ ตรวจสอบไม่ได้',           fix: 'แนบรูปสลิปต้นฉบับที่บันทึกจากแอปธนาคารอีกครั้ง (ไม่ครอป ไม่ถ่ายจากหน้าจอ)', reupload: true },
     { key: 'Duplicate slip – สลิปซ้ำ',             th: 'สลิปนี้ถูกใช้กับการลงทะเบียนอื่นแล้ว',              fix: 'หากเป็นการลงทะเบียนซ้ำของคุณเอง ไม่ต้องทำอะไรเพิ่ม หากไม่ใช่ กรุณาแนบสลิปของรายการนี้', reupload: true },
     { key: 'Wrong slip / date – สลิปไม่ใช่รายการนี้', th: 'วันที่หรือรายการในสลิปไม่ตรงกับการลงทะเบียน',        fix: 'แนบสลิปที่โอนสำหรับงานนี้', reupload: true },
-    { key: 'Guest count – จำนวนคนไม่ตรงยอด',        th: 'จำนวนผู้เข้าร่วมไม่ตรงกับยอดที่โอน',                fix: 'ทัก LINE เพื่อปรับจำนวนผู้เข้าร่วมให้ตรงกับยอดโอน', reupload: false },
-    { key: 'Contact info – ข้อมูลติดต่อไม่ถูกต้อง',   th: 'ข้อมูลชื่อ/เบอร์/อีเมลไม่ถูกต้องหรือไม่ครบ',          fix: 'ทัก LINE เพื่อยืนยันข้อมูลให้ถูกต้อง', reupload: false },
-    { key: 'Other – อื่น ๆ (ดู Note to Guest)',         th: 'มีรายละเอียดที่ต้องตรวจสอบเพิ่มเติม',                fix: 'ดูรายละเอียดด้านบน หรือทัก LINE', reupload: true }
+    { key: 'Guest count – จำนวนคนไม่ตรงยอด',        th: 'จำนวนผู้เข้าร่วมไม่ตรงกับยอดที่โอน',                fix: 'อีเมล nojudgmentgathering@gmail.com เพื่อปรับจำนวนผู้เข้าร่วมให้ตรงกับยอดโอน', reupload: false },
+    { key: 'Contact info – ข้อมูลติดต่อไม่ถูกต้อง',   th: 'ข้อมูลชื่อ/เบอร์/อีเมลไม่ถูกต้องหรือไม่ครบ',          fix: 'อีเมล nojudgmentgathering@gmail.com เพื่อยืนยันข้อมูลให้ถูกต้อง', reupload: false },
+    { key: 'Other – อื่น ๆ (ดู Note to Guest)',         th: 'มีรายละเอียดที่ต้องตรวจสอบเพิ่มเติม',                fix: 'ดูรายละเอียดด้านบน หรืออีเมล nojudgmentgathering@gmail.com', reupload: true }
   ],
 
   CONTACT_LINE:     '@openfacebkk',
@@ -142,7 +142,7 @@ const CONFIG = {
 };
 
 // Must match APP_VERSION in index.html (major.minor). Bump both together, then Deploy → New version.
-const CODE_VERSION = '2.8.0';
+const CODE_VERSION = '2.9.0';
 
 // "Email Status" column – the guest-email confirmation status (emails are sent by hand)
 const MAIL = { WAITING: 'Waiting – payment check',
@@ -331,8 +331,8 @@ function evaluateSlip_(slip, qty) {
     fix: amountOk ? '' : (suggestQty
       ? 'ถ้าโอนสำหรับ ' + suggestQty + ' ท่าน กดปุ่ม "เปลี่ยนเป็น ' + suggestQty + ' ท่าน" ด้านล่างได้เลย'
       : (slip.amount < expected
-          ? 'ยังขาดอีก ' + fmt_(expected - slip.amount) + ' ฿ กรุณาทัก LINE ' + CONFIG.CONTACT_LINE + ' ให้ทีมงานช่วยนะคะ'
-          : 'โอนเกินมา ' + fmt_(slip.amount - expected) + ' ฿ กรุณาทัก LINE ' + CONFIG.CONTACT_LINE + ' ให้ทีมงานช่วยนะคะ')) });
+          ? 'ยังขาดอีก ' + fmt_(expected - slip.amount) + ' ฿ กรุณาอีเมล ' + CONFIG.CONTACT_EMAIL + ' ให้ทีมงานช่วยนะคะ'
+          : 'โอนเกินมา ' + fmt_(slip.amount - expected) + ' ฿ กรุณาอีเมล ' + CONFIG.CONTACT_EMAIL + ' ให้ทีมงานช่วยนะคะ')) });
 
   // 2) Receiver = openface's account
   const blob = (String(slip.refs || '') + ' ' + String(slip.receiverAccount || '')).toUpperCase().replace(/[^A-Z0-9 ]/g, '');
@@ -363,7 +363,7 @@ function evaluateSlip_(slip, qty) {
   if (t) {
     if (t.getTime() > now.getTime() + 10 * 60000) { timeOk = false; timeFix = 'เวลาในสลิปอยู่ในอนาคต กรุณาแนบสลิปจริงจากแอปธนาคาร'; }
     else if (sc.NOT_BEFORE && t < new Date(sc.NOT_BEFORE)) { timeOk = false; timeFix = 'สลิปนี้เป็นรายการก่อนเปิดรับลงทะเบียน กรุณาแนบสลิปที่โอนสำหรับงานนี้'; }
-    else if (sc.MAX_AGE_HOURS && now - t > sc.MAX_AGE_HOURS * 3600000) { timeOk = false; timeFix = 'สลิปนี้เก่าเกิน ' + sc.MAX_AGE_HOURS + ' ชั่วโมง กรุณาแนบสลิปล่าสุด หรือทัก LINE ' + CONFIG.CONTACT_LINE; }
+    else if (sc.MAX_AGE_HOURS && now - t > sc.MAX_AGE_HOURS * 3600000) { timeOk = false; timeFix = 'สลิปนี้เก่าเกิน ' + sc.MAX_AGE_HOURS + ' ชั่วโมง กรุณาแนบสลิปล่าสุด หรืออีเมล ' + CONFIG.CONTACT_EMAIL; }
   } else { timeFix = 'อ่านเวลาในสลิปไม่ได้'; }
   checks.push({ key: 'time', ok: timeOk,
     label: t ? 'เวลาโอน ' + Utilities.formatDate(t, TZ, 'd/MM/yyyy HH:mm') + ' น.' : 'ไม่พบเวลาในสลิป',
@@ -373,7 +373,7 @@ function evaluateSlip_(slip, qty) {
   const dupId = slip.transRef ? findTransRef_(slip.transRef) : null;
   checks.push({ key: 'duplicate', ok: !dupId,
     label: dupId ? 'สลิปนี้ถูกใช้ลงทะเบียนไปแล้ว (' + dupId + ')' : 'สลิปนี้ยังไม่เคยใช้ลงทะเบียน',
-    fix: dupId ? 'ถ้าคุณลงทะเบียนไปแล้ว ไม่ต้องทำซ้ำ ตรวจสถานะด้วยเบอร์โทรได้เลย หรือทัก LINE ' + CONFIG.CONTACT_LINE : '' });
+    fix: dupId ? 'ถ้าคุณลงทะเบียนไปแล้ว ไม่ต้องทำซ้ำ ตรวจสถานะด้วยเบอร์โทรได้เลย หรืออีเมล ' + CONFIG.CONTACT_EMAIL : '' });
 
   const anyFail = checks.some(c => c.ok === false);
   const anyUnknown = checks.some(c => c.ok === null);
@@ -654,7 +654,7 @@ function checkStatus(d) {
       out.push(b);
     });
   }
-  return { found: out.length > 0, bookings: out.reverse(), line: CONFIG.CONTACT_LINE, lineUrl: CONFIG.LINE_URL };
+  return { found: out.length > 0, bookings: out.reverse(), contactEmail: CONFIG.CONTACT_EMAIL };
 }
 
 function resubmitSlip(d) {
@@ -725,7 +725,7 @@ function buildEmail_(kind, r) {
     name: r.name, ref: r.ref, entryCode: r.entryCode || '', qty: r.qty, amount: fmt_(r.amount),
     event: CONFIG.EVENT_NAME, date: CONFIG.EVENT_DATE, time: CONFIG.EVENT_TIME, venue: CONFIG.VENUE,
     mapUrl: CONFIG.MAP_URL, problem: p.th, fix: p.fix, note: r.note || '', statusLink: statusLink,
-    line: CONFIG.CONTACT_LINE, lineUrl: CONFIG.LINE_URL, phone: CONFIG.CONTACT_PHONE
+    line: CONFIG.CONTACT_LINE, lineUrl: CONFIG.LINE_URL, phone: CONFIG.CONTACT_PHONE, contactEmail: CONFIG.CONTACT_EMAIL
   };
   const fill = (s, html) => String(s).replace(/\{\{(\w+)\}\}/g, (m, k) => {
     if (!(k in vars)) return m;
@@ -735,8 +735,7 @@ function buildEmail_(kind, r) {
   const titles = { RECEIVED: 'ได้รับการลงทะเบียนแล้ว', APPROVED: "YOU'RE IN! · ยืนยันการชำระเงินแล้ว", PROBLEM: 'ต้องแก้ไขการชำระเงิน' };
   const body = fill(t.BODY, true);
   const text = htmlToText_(body) + '\n\n—\n' + CONFIG.HOUSE_RULES + '\n' + CONFIG.REFUND_POLICY
-    + '\nLINE ' + CONFIG.CONTACT_LINE + ' (' + CONFIG.LINE_URL + ') · โทร ' + CONFIG.CONTACT_PHONE
-    + (CONFIG.CONTACT_EMAIL ? ' · ' + CONFIG.CONTACT_EMAIL : '') + '\n' + CONFIG.BRAND + ' × ' + CONFIG.CO_HOST;
+    + '\nติดต่อทีมงาน: ' + CONFIG.CONTACT_EMAIL + ' · โทร ' + CONFIG.CONTACT_PHONE + '\n' + CONFIG.BRAND + ' × ' + CONFIG.CO_HOST;
   return { subject: fill(t.SUBJECT, false), html: wrapEmail_(titles[kind] || '', body), text: text };
 }
 
@@ -773,7 +772,7 @@ function wrapEmail_(title, inner) {
    + (title ? '<h2 style="margin:0 0 10px;color:' + ink + ';font-family:Impact,\'Arial Narrow Bold\',sans-serif;font-weight:normal;font-size:24px;letter-spacing:.5px">' + title + '</h2>' : '')
    + inner
    + '<p style="color:#5b5d62;font-size:12px;margin-top:18px">' + CONFIG.HOUSE_RULES + '<br>' + CONFIG.REFUND_POLICY + '</p>'
-   + '<p style="color:#5b5d62;font-size:13px">LINE <a href="' + CONFIG.LINE_URL + '" style="color:' + gold + '">' + CONFIG.CONTACT_LINE + '</a> · โทร ' + CONFIG.CONTACT_PHONE + (CONFIG.CONTACT_EMAIL ? ' · <a href="mailto:' + CONFIG.CONTACT_EMAIL + '" style="color:' + gold + '">' + CONFIG.CONTACT_EMAIL + '</a>' : '') + '</p>'
+   + '<p style="color:#5b5d62;font-size:13px">ติดต่อทีมงาน <a href="mailto:' + CONFIG.CONTACT_EMAIL + '" style="color:' + gold + '">' + CONFIG.CONTACT_EMAIL + '</a> · โทร ' + CONFIG.CONTACT_PHONE + '</p>'
    + '</div>'
    + '<div style="background:' + slate + ';color:' + cream + ';text-align:center;padding:12px;font-family:Impact,\'Arial Narrow Bold\',sans-serif;font-size:22px;letter-spacing:1px">AT OPENFACE BKK</div>'
    + '</div></div>';
@@ -895,7 +894,7 @@ function logEmail_(sh, row, text) {
 
 function problemOf_(key) {
   return CONFIG.PROBLEMS.filter(p => p.key === key)[0]
-      || { key: String(key), th: String(key), fix: 'ทัก LINE ' + CONFIG.CONTACT_LINE, reupload: true };
+      || { key: String(key), th: String(key), fix: 'อีเมล ' + CONFIG.CONTACT_EMAIL, reupload: true };
 }
 
 function newEntryCode_(sh) {

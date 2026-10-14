@@ -220,7 +220,7 @@
 
   /**
    * analyze(ocrText, qrText, { qty, price, cfg, now })
-   * cfg: { SHOP_CODES, NAME_KEYWORDS, SHOP_NAME, NOT_BEFORE, MAX_AGE_HOURS, CONTACT_LINE }
+   * cfg: { SHOP_CODES, NAME_KEYWORDS, SHOP_NAME, NOT_BEFORE, MAX_AGE_HOURS, CONTACT }
    * → { status: 'good'|'unsure'|'bad', checks:[{key,ok,label,fix}], suggestQty, slip:{...}, transRef }
    */
   function analyze(ocrText, qrText, o) {
@@ -241,8 +241,8 @@
       checks.push({ key: 'amount', ok: a.weak ? null : false,
         label: 'ยอดในสลิป ' + fmt(a.value) + ' ฿ ไม่ตรงกับยอดที่ต้องโอน ' + fmt(expected) + ' ฿ · Amount differs',
         fix: suggestQty ? 'ถ้าโอนสำหรับ ' + suggestQty + ' ท่าน กด "เปลี่ยนเป็น ' + suggestQty + ' ท่าน" ด้านล่าง'
-           : a.value < expected ? 'โอนส่วนที่ขาด ' + fmt(expected - a.value) + ' ฿ ด้วย QR เดิม แล้วแนบสลิปทั้งสองใบให้ทีมงาน (ทัก LINE)'
-           : 'ตรวจจำนวนผู้เข้าร่วม หรือทัก LINE ' + (cfg.CONTACT_LINE || '') });
+           : a.value < expected ? 'โอนส่วนที่ขาด ' + fmt(expected - a.value) + ' ฿ ด้วย QR เดิม แล้วอีเมลสลิปทั้งสองใบถึงทีมงาน ' + (cfg.CONTACT || '')
+           : 'ตรวจจำนวนผู้เข้าร่วม หรืออีเมลทีมงาน ' + (cfg.CONTACT || '') });
     }
 
     // receiver

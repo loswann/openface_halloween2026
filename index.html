@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Black+Han+Sans&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="vendor/jsQR-1.4.0.js" defer></script>
-<script src="slipcheck.js?v=271" defer></script>
+<script src="slipcheck.js?v=290" defer></script>
 <script src="config.js"></script>
 <style>
 /* Poster palette: cream paper, charcoal ink, slate band, croissant gold */
@@ -218,6 +218,7 @@ footer .at{font-family:var(--display);font-size:clamp(34px,11vw,52px);white-spac
 footer .collab{font-size:14px;font-weight:600;letter-spacing:.5px;color:#e2dcb2}
 footer .links{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 footer .links a{display:flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid #8b91a0;color:var(--cream);font-size:14px;text-decoration:none}
+footer .links a.primary{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:700}
 footer .links a.line{background:var(--line-green);border-color:var(--line-green);color:#fff}
 footer .fine{font-size:11px;color:#b9bdc6;line-height:1.7}
 /* quick links + status check */
@@ -403,7 +404,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 <div class="summary" id="summary"></div>
 <div style="font-size:13px;line-height:1.6" id="doneNote"></div>
 <a class="btn" id="doneStatus" href="#status">ตรวจสถานะด้วยเบอร์โทร · Check status</a>
-<a class="btn line" id="doneLine" href="#" target="_blank" rel="noopener">เพิ่มเพื่อน LINE</a>
+<a class="btn ghost" id="doneLine" href="#">อีเมลทีมงาน · Email us</a>
 <button type="button" class="btn ghost" id="again">ลงทะเบียนเพิ่ม · Register another</button>
 </section>
 </div>
@@ -428,7 +429,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 <div class="at">AT OPENFACE BKK</div>
 <img class="flogo" src="assets/logo-cream.png" width="900" height="223" alt="openface – all day brunch &amp; bakery">
 <div class="collab">No Judgment Gathering &nbsp;×&nbsp; openface</div>
-<div class="links"><a class="line" id="lineLink" href="#" target="_blank" rel="noopener">LINE <span id="lineId"></span></a><a id="telLink" href="#"><span id="phoneTxt"></span></a><a id="mailLink" href="#">อีเมล · Email</a><a id="igLink" href="#" target="_blank" rel="noopener">Instagram</a></div>
+<div class="links"><a class="primary" id="mailLink" href="#">อีเมล · Email</a><a id="telLink" href="#"><span id="phoneTxt"></span></a><a id="lineLink" href="#" target="_blank" rel="noopener">LINE <span id="lineId"></span></a><a id="igLink" href="#" target="_blank" rel="noopener">Instagram</a></div>
 <div class="fine">86/2 ถ.รามคำแหง 21 (ซ.นวศรี 15) วังทองหลาง กรุงเทพฯ<br>ดื่มอย่างรับผิดชอบ · Please drink responsibly – don't drink and drive</div>
 <div class="ver" id="verLine"></div>
 </footer>
@@ -442,7 +443,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 /* ================= version =================
    Bump on every release: MAJOR = booking process changes · MINOR = feature / wording / flow · PATCH = fix only.
    Keep CODE_VERSION in apps-script/Code.gs on the same MAJOR.MINOR.                                         */
-const APP_VERSION = '2.8.1';
+const APP_VERSION = '2.9.0';
 const APP_DATE = '14 Oct 2026';
 /* ================= the croissant DJ · crescent + record halo (from the poster) =================
    croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),
@@ -555,7 +556,7 @@ function render(c) {
   $('qrShop').textContent = CFG.SHOP_NAME || CFG.ACCOUNT_NAME || '';
   $('qrAcc').textContent = CFG.SHOP_NAME ? (CFG.ACCOUNT_NAME || '') : '';
   $('lineId').textContent = CFG.CONTACT_LINE || ''; $('lineLink').href = CFG.LINE_URL || '#';
-  $('doneLine').href = CFG.LINE_URL || '#'; $('doneLine').textContent = 'เพิ่มเพื่อน LINE ' + (CFG.CONTACT_LINE || '');
+  $('doneLine').href = 'mailto:' + (CFG.CONTACT_EMAIL || ''); $('doneLine').textContent = 'อีเมลทีมงาน · ' + (CFG.CONTACT_EMAIL || '');
   $('phoneTxt').textContent = CFG.CONTACT_PHONE || ''; $('telLink').href = 'tel:' + String(CFG.CONTACT_PHONE || '').replace(/\D/g, '');
   $('igLink').href = CFG.IG_URL || '#';
   $('mailLink').href = 'mailto:' + (CFG.CONTACT_EMAIL || ''); $('mailLink').title = CFG.CONTACT_EMAIL || '';
@@ -563,11 +564,11 @@ function render(c) {
   document.title = name + ' · openface';
   $('stRefWrap').classList.toggle('hidden', !CFG.STATUS_REQUIRE_REF);
   if (CFG.CLOSED) {
-    $('step1').querySelector('section').innerHTML = '<h2>ปิดรับลงทะเบียนแล้ว</h2><p class="lbl">Registration is closed – please contact us on LINE.</p>';
+    $('step1').querySelector('section').innerHTML = '<h2>ปิดรับลงทะเบียนแล้ว</h2><p class="lbl">Registration is closed – please email ' + esc(CFG.CONTACT_EMAIL) + '</p>';
   } else if (CFG.CAPACITY > 0) {
     const left = CFG.CAPACITY - CFG.SEATS_TAKEN;
     $('seatsInfo').textContent = left > 0 ? `เหลือ ${left} ที่นั่ง · ${left} seats left` : '';
-    if (left <= 0) $('step1').querySelector('section').innerHTML = '<h2>ที่นั่งเต็มแล้ว · Sold out</h2><p class="lbl">ติดต่อ LINE เพื่อเข้าคิวสำรอง</p>';
+    if (left <= 0) $('step1').querySelector('section').innerHTML = '<h2>ที่นั่งเต็มแล้ว · Sold out</h2><p class="lbl">อีเมล ' + esc(CFG.CONTACT_EMAIL) + ' เพื่อเข้าคิวสำรอง</p>';
   }
   setQty(qty);
 }
@@ -753,7 +754,7 @@ function ocrImage(img) {               // sharper copy for reading (max 2200 px)
   return new Promise(res => c.toBlob(b => b.arrayBuffer().then(res), 'image/jpeg', 0.92));
 }
 function prescreenCfg() {
-  return Object.assign({ SHOP_NAME: CFG.SHOP_NAME, CONTACT_LINE: CFG.CONTACT_LINE }, CFG.PRESCREEN || {});
+  return Object.assign({ SHOP_NAME: CFG.SHOP_NAME, CONTACT: CFG.CONTACT_EMAIL }, CFG.PRESCREEN || {});
 }
 async function runPrescreen() {
   if (!slip) return;
@@ -921,10 +922,10 @@ function demoEvaluate(d, q) {
   const timeOk = (Date.now() - t) < 48 * 3600000;
   const checks = [
     { key: 'amount', ok: amountOk, label: amountOk ? `ยอดเงินถูกต้อง ${fmt(exp)} ฿` : `ยอดในสลิป ${fmt(d.amount)} ฿ ไม่ตรงกับยอดที่ต้องชำระ ${fmt(exp)} ฿`,
-      fix: amountOk ? '' : (sq ? `ถ้าโอนสำหรับ ${sq} ท่าน กดปุ่ม "เปลี่ยนเป็น ${sq} ท่าน" ด้านล่างได้เลย` : 'กรุณาทัก LINE ให้ทีมงานช่วยนะคะ') },
+      fix: amountOk ? '' : (sq ? `ถ้าโอนสำหรับ ${sq} ท่าน กดปุ่ม "เปลี่ยนเป็น ${sq} ท่าน" ด้านล่างได้เลย` : 'กรุณาอีเมลให้ทีมงานช่วยนะคะ') },
     { key: 'receiver', ok: d.receiverOk, label: d.receiverOk ? `โอนเข้าบัญชี ${d.receiverName} ถูกต้อง` : `สลิปนี้โอนเข้าบัญชี "${d.receiverName}" ไม่ใช่บัญชีของ openface`,
       fix: d.receiverOk ? '' : 'กรุณาตรวจว่าโอนเข้าบัญชีของ openface แล้วแนบสลิปที่ถูกต้อง หากโอนผิดบัญชีกรุณาติดต่อธนาคารของคุณ' },
-    { key: 'time', ok: timeOk, label: `เวลาโอน ${tStr} น.`, fix: timeOk ? '' : 'สลิปนี้เก่าเกิน 48 ชั่วโมง กรุณาแนบสลิปล่าสุด หรือทัก LINE' },
+    { key: 'time', ok: timeOk, label: `เวลาโอน ${tStr} น.`, fix: timeOk ? '' : 'สลิปนี้เก่าเกิน 48 ชั่วโมง กรุณาแนบสลิปล่าสุด หรืออีเมลทีมงาน' },
     { key: 'duplicate', ok: !d.dup, label: d.dup ? `สลิปนี้ถูกใช้ลงทะเบียนไปแล้ว (${d.dup})` : 'สลิปนี้ยังไม่เคยใช้ลงทะเบียน',
       fix: d.dup ? 'ถ้าคุณลงทะเบียนไปแล้ว ไม่ต้องทำซ้ำ ตรวจอีเมลยืนยันได้เลย' : '' }
   ];
@@ -1013,7 +1014,7 @@ function renderStatus(r) {
   const box = $('stResults');
   if (!stBookings.length) {
     box.innerHTML = `<div class="bk"><div class="bk-top"><div>${croissant('oops', 56)}</div><div class="who"><b>ไม่พบการลงทะเบียนจากเบอร์นี้</b>`
-      + `<span class="bk-meta">ตรวจว่าใช้เบอร์เดียวกับตอนลงทะเบียน หรือทัก LINE ${esc(CFG.CONTACT_LINE)}</span></div></div></div>`;
+      + `<span class="bk-meta">ตรวจว่าใช้เบอร์เดียวกับตอนลงทะเบียน หรืออีเมล ${esc(CFG.CONTACT_EMAIL)}</span></div></div></div>`;
     return;
   }
   box.innerHTML = (DEMO ? '<p class="lbl" style="margin:0">⚠ โหมดทดลอง: ข้อมูลจำลอง (ลองเบอร์ลงท้าย 1 = อนุมัติ, 2 = มีปัญหา, อื่น ๆ = รอตรวจ)</p>' : '')
@@ -1027,9 +1028,9 @@ function renderStatus(r) {
       body = `<div class="fixbox"><b>${esc(b.problem.th)}</b>${b.problem.note ? '<br>' + esc(b.problem.note) : ''}`
         + `<div class="fix">วิธีแก้: ${esc(b.problem.fix)}</div></div>`
         + (b.problem.reupload ? `<button type="button" class="btn" data-re="${i}">แนบสลิปใหม่ · Upload new slip</button><div class="upmsg" id="upmsg${i}"></div>` : '')
-        + `<a class="btn line" href="${esc(CFG.LINE_URL)}" target="_blank" rel="noopener">ทัก LINE ${esc(CFG.CONTACT_LINE)}</a>`;
+        + `<a class="btn mailhelp" href="${esc('mailto:' + (CFG.CONTACT_EMAIL || '') + '?subject=' + encodeURIComponent('[' + b.ref + '] ' + (CFG.EVENT_NAME || '')))}"><span>อีเมลทีมงาน · Email us</span><small>${esc(CFG.CONTACT_EMAIL)}</small></a>`;
     } else if (b.status === 'Cancelled') {
-      body = `<p>การจองนี้ถูกยกเลิก หากมีข้อสงสัยทัก LINE ${esc(CFG.CONTACT_LINE)}</p>`;
+      body = `<p>การจองนี้ถูกยกเลิก หากมีข้อสงสัยอีเมล ${esc(CFG.CONTACT_EMAIL)}</p>`;
     } else {
       body = '<p>ทีมงานกำลังตรวจสลิปกับบัญชีธนาคาร เมื่ออนุมัติแล้วจะส่งอีเมลพร้อมรหัสเข้างาน และรหัสจะแสดงที่หน้านี้ค่ะ</p>';
     }
@@ -1136,8 +1137,8 @@ if (SOON) {
   document.querySelector('.steps').classList.add('hidden');
   $('status').classList.add('hidden'); $('cta').classList.add('hidden');
   $('step1').querySelector('section').innerHTML = '<h2>Registration opens soon<small>เปิดรับลงทะเบียนเร็ว ๆ นี้</small></h2>'
-    + '<p style="margin:0;line-height:1.7">ติดตามประกาศและลิงก์ลงทะเบียนได้ทาง LINE <b>' + esc(CFG.CONTACT_LINE) + '</b> และ Instagram</p>'
-    + '<a class="btn line" href="' + esc(CFG.LINE_URL) + '" target="_blank" rel="noopener">เพิ่มเพื่อน LINE ' + esc(CFG.CONTACT_LINE) + '</a>';
+    + '<p style="margin:0;line-height:1.7">ติดตามประกาศได้ทาง Instagram · สอบถามทางอีเมล <b>' + esc(CFG.CONTACT_EMAIL) + '</b></p>'
+    + '<a class="btn" href="mailto:' + esc(CFG.CONTACT_EMAIL) + '">อีเมลทีมงาน · Email us</a>';
 } else if (!DEMO) {
   api('getConfig').then(c => { backendState = 'ok'; render(c); renderVersion(); })
     .catch(() => { backendState = 'offline'; renderVersion(); });
