@@ -40,8 +40,11 @@ const CONFIG = {
     ENABLED:          true,
     SLIPOK_BRANCH_ID: '',          // TODO from SlipOK dashboard (API key → Script properties SLIPOK_API_KEY)
     // How we recognise YOUR account on the slip (banks mask most digits, e.g. xxx-x-x1234-x):
-    // From the K SHOP QR. Confirm with a 1 THB test transfer what the slip actually shows as receiver.
-    RECEIVER_ACCOUNT_DIGITS: ['2299567', '010753600031501'],   // K SHOP ref / biller ID
+    // openface's own K SHOP shop code ("รหัสร้านค้า" on slips). This is the reliable identifier.
+    // NOTE: the Biller ID 010753600031501 is KBank's SHARED K SHOP biller – every K SHOP shop has it,
+    // so it must NOT be used to recognise openface.
+    RECEIVER_SHOP_CODES:     ['KB000002299567'],
+    RECEIVER_ACCOUNT_DIGITS: [],   // only for a normal bank account: the digits banks leave visible, e.g. ['1234']
     RECEIVER_NAME_KEYWORDS:  ['โอเพ่นคิทเช่น', 'โอเพ่นเฟซ', 'openkitchen', 'openface'],
     NOT_BEFORE:       '2026-09-28T00:00:00+07:00',  // slips older than registration opening are rejected
     MAX_AGE_HOURS:    48,          // slip must be from the last 48 h
@@ -210,7 +213,8 @@ function normalizeSlip_(d) {
     senderBank: bankName_(d.sendingBank),
     receiverName: receiver.displayName || receiver.name || '',
     receiverAccount: acc,
-    receiverBank: bankName_(d.receivingBank)
+    receiverBank: bankName_(d.receivingBank),
+    refs: [d.ref1, d.ref2, d.ref3, d.toMerchantId].filter(Boolean).join(' ')
   };
 }
 
@@ -235,14 +239,19 @@ function evaluateSlip_(slip, qty) {
           : 'โอนเกินมา ' + fmt_(slip.amount - expected) + ' ฿ กรุณาทัก LINE ' + CONFIG.CONTACT_LINE + ' ให้ทีมงานช่วยนะคะ')) });
 
   // 2) Receiver = openface's account
-  const digits = String(slip.receiverAccount).replace(/\D/g, '');
-  const accCfg = (sc.RECEIVER_ACCOUNT_DIGITS || []).map(x => String(x).replace(/\D/g, '')).filter(Boolean);
+  const blob = (String(slip.refs || '') + ' ' + String(slip.receiverAccount || '')).toUpperCase().replace(/[^A-Z0-9 ]/g, '');
+  const digits = String(slip.receiverAccount || '').replace(/\D/g, '');
+  const shopCfg = (sc.RECEIVER_SHOP_CODES || []).map(x => String(x).toUpperCase().replace(/[^A-Z0-9]/g, '')).filter(Boolean);
+  const accCfg = (sc.RECEIVER_ACCOUNT_DIGITS || []).map(x => String(x).replace(/\D/g, '')).filter(x => x.length >= 4);
   const nameCfg = (sc.RECEIVER_NAME_KEYWORDS || []).map(norm_).filter(Boolean);
-  let receiverOk = null;   // null = cannot decide (not configured) → staff review
-  if (accCfg.length || nameCfg.length) {
-    const accMatch = digits && accCfg.some(a => digits.indexOf(a) >= 0 || a.indexOf(digits) >= 0 && digits.length >= 4);
+  let receiverOk = null;   // null = cannot decide (not configured / nothing on the slip) → staff review
+  if (shopCfg.length || accCfg.length || nameCfg.length) {
+    const shopMatch = shopCfg.some(c => blob.indexOf(c) >= 0 || blob.indexOf(c.replace(/^[A-Z]+/, '')) >= 0);
+    const otherShop = !shopMatch && /KB\d{12}/.test(blob);           // paid to a DIFFERENT K SHOP shop
+    const accMatch = !!digits && accCfg.some(a => digits.indexOf(a) >= 0);
     const nameMatch = nameCfg.some(k => norm_(slip.receiverName).indexOf(k) >= 0);
-    receiverOk = !!(accMatch || nameMatch);
+    receiverOk = otherShop ? false : (shopMatch || accMatch || nameMatch);
+    if (!receiverOk && !otherShop && !slip.receiverName && !blob.trim()) receiverOk = null;   // slip shows nothing to compare
   }
   checks.push({ key: 'receiver', ok: receiverOk,
     label: receiverOk === false
