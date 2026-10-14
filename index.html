@@ -198,6 +198,22 @@ footer .links{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 footer .links a{display:flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid #8b91a0;color:var(--cream);font-size:14px;text-decoration:none}
 footer .links a.line{background:var(--line-green);border-color:var(--line-green);color:#fff}
 footer .fine{font-size:11px;color:#b9bdc6;line-height:1.7}
+/* quick links + status check */
+.cta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.cta .btn{min-height:50px;font-size:15px}
+.badge.bad{background:var(--badbg);border-color:var(--bad);color:#7a2a1c}
+.badge.grey{background:#e6e4d2;border-color:#8a876f;color:#5b5d62}
+.bk{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:16px;background:var(--field);border:2px solid var(--ink);animation:rowin .35s ease-out both}
+.bk-top{display:flex;align-items:center;gap:12px}
+.bk-top .who{flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.bk-ref{font-family:var(--display);font-size:22px;letter-spacing:1px;line-height:1}
+.bk-meta{font-size:13px;color:var(--ink2)}
+.bk .code{align-self:center;text-align:center}
+.bk .code .regid{font-size:36px;letter-spacing:4px}
+.bk p{margin:0;font-size:14px;line-height:1.6}
+.bk .fixbox{padding:10px 12px;border-radius:12px;background:var(--badbg);border:1.5px solid var(--bad);font-size:14px;line-height:1.6}
+.bk .fixbox .fix{color:var(--gold-d);font-weight:600}
+.bk .upmsg{font-size:13px;font-weight:600;line-height:1.5}
 .overlay{position:fixed;inset:0;background:rgba(47,54,64,.88);color:var(--cream);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:70;font-weight:600}
 </style>
 </head>
@@ -244,6 +260,7 @@ footer .fine{font-size:11px;color:#b9bdc6;line-height:1.7}
 <div class="row-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#33363c" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><div><b>openface BKK</b> · <span id="evVenue"></span> · <a id="mapLink" href="#" target="_blank" rel="noopener">เปิดแผนที่ ↗</a></div></div>
 <div class="pills"><span class="pill hot">20+ ตรวจบัตร · ID check</span><span class="pill">งดเด็ก · No kids</span><span class="pill">งดสัตว์เลี้ยง · No pets</span><span class="pill">ไม่คืนเงิน · Non-refundable</span></div>
 <span class="sr" id="evTheme"></span>
+<div class="cta" id="cta"><a class="btn" href="#register">ลงทะเบียน · Register</a><a class="btn ghost" href="#status">ตรวจสถานะ · Status</a></div>
 </section>
 
 <!-- ============ Steps ============ -->
@@ -304,11 +321,11 @@ footer .fine{font-size:11px;color:#b9bdc6;line-height:1.7}
 </section>
 
 <section class="card">
-<h2>Slip<small>แนบสลิป · ระบบตรวจให้อัตโนมัติ</small></h2>
+<h2>Slip<small>แนบสลิป · ทีมงานตรวจกับบัญชีธนาคาร</small></h2>
 <label class="upload" for="slipInput" id="drop">
 <span class="ghost-slot" data-mascot="look" data-size="70"></span>
 <span class="t" id="dropTitle">แตะเพื่อแนบสลิปจากแอปธนาคาร</span>
-<span class="s">ระบบจะตรวจยอดเงิน บัญชีผู้รับ และเวลาโอนให้อัตโนมัติ · ไม่ต้องกรอกอะไรเพิ่ม</span>
+<span class="s" id="dropSub">ระบบช่วยเช็กยอดเงิน บัญชีผู้รับ และเวลาโอนเบื้องต้น แล้วทีมงานจะตรวจกับบัญชีธนาคารอีกครั้ง</span>
 </label>
 <input id="slipInput" type="file" accept="image/*" class="hidden">
 
@@ -351,16 +368,30 @@ footer .fine{font-size:11px;color:#b9bdc6;line-height:1.7}
 <div class="dj" data-mascot="dj" data-size="220"></div>
 </div>
 <section class="card" style="margin-top:0;align-items:center;text-align:center">
-<h2 style="font-size:36px">You're in!<small>ลงทะเบียนสำเร็จ · 할로윈에 만나요</small></h2>
-<div class="lbl" style="margin-top:4px">รหัสลงทะเบียน / Registration ID</div>
+<h2 style="font-size:36px">Registered!<small>ส่งข้อมูลเรียบร้อย · 할로윈에 만나요</small></h2>
+<div class="lbl" style="margin-top:4px">เลขที่การจอง / Booking ref</div>
 <div class="regid stamp" id="regId"></div>
 <span class="badge" id="doneBadge">รอตรวจสอบการชำระเงิน · Pending check</span>
 <div class="summary" id="summary"></div>
 <div style="font-size:13px;line-height:1.6" id="doneNote"></div>
+<a class="btn" id="doneStatus" href="#status">ตรวจสถานะด้วยเบอร์โทร · Check status</a>
 <a class="btn line" id="doneLine" href="#" target="_blank" rel="noopener">เพิ่มเพื่อน LINE</a>
 <button type="button" class="btn ghost" id="again">ลงทะเบียนเพิ่ม · Register another</button>
 </section>
 </div>
+
+<!-- ============ STATUS · check payment + get entry code ============ -->
+<section class="card" id="status" aria-labelledby="stH">
+<h2 id="stH">Check status<small>ตรวจสถานะการชำระเงิน · รับรหัสเข้างาน</small></h2>
+<form id="stForm" style="display:flex;flex-direction:column;gap:12px" novalidate>
+<div class="field"><label for="stPhone">เบอร์โทรที่ใช้ลงทะเบียน / Registered phone</label><input id="stPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxx"></div>
+<div class="field hidden" id="stRefWrap"><label for="stRef">เลขที่การจอง / Booking ref</label><input id="stRef" type="text" autocapitalize="characters" placeholder="OF-HW26-0001"></div>
+<div class="err" id="stErr" role="alert"></div>
+<button type="submit" class="btn" id="stBtn">ตรวจสถานะ · Check</button>
+</form>
+<div id="stResults" style="display:flex;flex-direction:column;gap:12px" aria-live="polite"></div>
+<input id="reInput" type="file" accept="image/*" class="hidden">
+</section>
 
 <footer>
 <div class="marquee rev" aria-hidden="true" style="align-self:stretch;margin:-26px -16px 6px;border-top:0"><div class="marquee-track">
@@ -464,6 +495,7 @@ function render(c) {
   $('phoneTxt').textContent = CFG.CONTACT_PHONE || ''; $('telLink').href = 'tel:' + String(CFG.CONTACT_PHONE || '').replace(/\D/g, '');
   $('igLink').href = CFG.IG_URL || '#';
   document.title = name + ' · openface';
+  $('stRefWrap').classList.toggle('hidden', !CFG.STATUS_REQUIRE_REF);
   if (CFG.CLOSED) {
     $('step1').querySelector('section').innerHTML = '<h2>ปิดรับลงทะเบียนแล้ว</h2><p class="lbl">Registration is closed – please contact us on LINE.</p>';
   } else if (CFG.CAPACITY > 0) {
@@ -601,6 +633,7 @@ $('slipInput').addEventListener('change', async e => {
     const img = await loadImg(await readAsDataURL(f));
     slip = { data: compress(img), mime: 'image/jpeg', qr: decodeQR(img) };
     $('slipThumb').src = slip.data;
+    if (!DEMO && CFG.SLIP_CHECK_ON === false) return attachedOnly();
     runVerify();
   } catch (x) {
     renderResult({ status: 'noqr', title: 'เปิดรูปนี้ไม่ได้', message: 'ลองบันทึกสลิปจากแอปธนาคารใหม่ แล้วแนบอีกครั้งนะคะ' });
@@ -614,6 +647,15 @@ function showChecking() {
   $('chkTitle').textContent = 'กำลังตรวจสลิป…'; $('chkMsg').textContent = 'ใช้เวลาไม่กี่วินาทีค่ะ';
   $('chkList').innerHTML = CHECK_LABELS.map(([k, l]) => `<li class="pending" data-k="${k}"><span class="ic"></span><div>${l}</div></li>`).join('');
   $('chkSlip').textContent = ''; $('chkActions').innerHTML = '';
+}
+function attachedOnly(title) {
+  vs = { status: 'not-checked', manual: true };
+  $('scanline').classList.add('hidden');
+  $('mascot').innerHTML = MASCOTS.happy;
+  $('chkTitle').textContent = title || 'แนบสลิปแล้ว';
+  $('chkMsg').textContent = 'กดยืนยันด้านล่าง ทีมงานจะตรวจสลิปกับบัญชีธนาคาร แล้วส่งผลทางอีเมลค่ะ';
+  $('chkList').innerHTML = ''; $('chkSlip').textContent = ''; $('chkActions').innerHTML = '';
+  updateSubmit();
 }
 async function runVerify() {
   if (!slip) return;
@@ -630,6 +672,7 @@ async function recheck() {
   try { renderResult(await api('recheckSlip', { token: vs.token, qty })); } catch (x) { runVerify(); }
 }
 function renderResult(r) {
+  if (r.status === 'unavailable') return attachedOnly('แนบสลิปแล้ว · ทีมงานจะตรวจให้');   // pre-check down → straight to the team
   vs = Object.assign({ manual: false }, r);
   const good = r.status === 'verified' || r.status === 'review';
   $('scanline').classList.add('hidden');
@@ -668,7 +711,7 @@ $('chkActions').addEventListener('click', e => {
     vs = Object.assign({}, vs || {}, { manual: true });
     $('mascot').innerHTML = MASCOTS.happy;
     $('chkTitle').textContent = 'ส่งให้ทีมงานตรวจแทนได้เลย';
-    $('chkMsg').textContent = 'กดยืนยันด้านล่าง ทีมงานจะตรวจสลิปและส่งอีเมลยืนยันให้ภายใน 24 ชม.ค่ะ';
+    $('chkMsg').textContent = 'กดยืนยันด้านล่าง ทีมงานจะตรวจสลิปกับบัญชีธนาคาร แล้วส่งผลทางอีเมลค่ะ';
     $('chkActions').innerHTML = ''; updateSubmit();
   }
 });
@@ -677,7 +720,7 @@ function updateSubmit() {
   const b = $('submitBtn');
   b.disabled = !slipReady();
   b.textContent = !slip ? 'แนบสลิปก่อนนะคะ' : !vs ? 'กำลังตรวจสลิป…' : slipReady()
-    ? (vs.status === 'verified' && !vs.manual ? 'ยืนยันการลงทะเบียน ✓' : 'ยืนยันการลงทะเบียน') : 'แก้ไขสลิปก่อนนะคะ';
+    ? 'ส่งลงทะเบียน · Submit' : 'แก้ไขสลิปก่อนนะคะ';
 }
 
 /* ---------- demo-only simulation (mirrors the server rules) ---------- */
@@ -709,7 +752,7 @@ function demoEvaluate(d, q) {
   const fail = checks.some(c => c.ok === false);
   return { status: fail ? 'failed' : 'verified', token: 'demo', suggestQty: sq, checks,
     title: fail ? 'สลิปยังไม่ผ่าน' : 'สลิปถูกต้องครบทุกข้อ!',
-    message: fail ? 'ดูรายการที่ขึ้นเครื่องหมาย ✕ และวิธีแก้ด้านล่างนะคะ' : 'กดยืนยันด้านล่างได้เลย ระบบจะยืนยันที่นั่งให้ทันที',
+    message: fail ? 'ดูรายการที่ขึ้นเครื่องหมาย ✕ และวิธีแก้ด้านล่างนะคะ' : 'กดยืนยันด้านล่างได้เลย ทีมงานจะตรวจกับบัญชีธนาคารและส่งอีเมลยืนยันพร้อมรหัสเข้างานให้ค่ะ',
     slip: { amount: d.amount, time: tStr, senderName: d.senderName, senderBank: d.senderBank, receiverName: d.receiverName } };
 }
 
@@ -731,20 +774,20 @@ async function submitForm() {
   $('loading').classList.remove('hidden'); $('submitBtn').disabled = true;
   try {
     const r = DEMO
-      ? await new Promise(res => setTimeout(() => res({ regId: 'DEMO-0000', qty, amount: qty * CFG.PRICE_PER_PERSON, confirmed: vs.status === 'verified' && !vs.manual }), 900))
+      ? await new Promise(res => setTimeout(() => res({ regId: 'DEMO-0000', qty, amount: qty * CFG.PRICE_PER_PERSON, status: 'Pending' }), 900))
       : await api('submitRegistration', payload);
     $('regId').textContent = r.regId;
     const b = $('doneBadge');
     if (DEMO) {
       b.className = 'badge'; b.textContent = 'DEMO · ไม่ได้บันทึก ไม่ใช่การลงทะเบียนจริง';
       $('doneNote').innerHTML = 'นี่คือการทดลองระบบเท่านั้น ไม่มีการบันทึกข้อมูลหรือยืนยันการชำระเงิน';
-    } else if (r.confirmed) {
-      b.className = 'badge ok'; b.textContent = '✓ ชำระเงินเรียบร้อย · Payment confirmed';
-      $('doneNote').innerHTML = 'ส่งอีเมลยืนยันให้แล้ว ลงทะเบียนหน้างาน 22:00 แสดงรหัสนี้พร้อมบัตรประชาชน<br>อย่าลืมแต่งชุด Korean Halloween มานะคะ';
     } else {
       b.className = 'badge'; b.textContent = 'รอตรวจสอบการชำระเงิน · Pending check';
-      $('doneNote').innerHTML = 'แคปหน้าจอนี้ไว้ ทีมงานจะตรวจสลิปและส่งอีเมลยืนยันให้ภายใน 24 ชม.<br>อย่าลืมแต่งชุด Korean Halloween และพกบัตรประชาชนมานะคะ';
+      $('doneNote').innerHTML = `ทีมงานจะตรวจสลิปกับบัญชีธนาคาร แล้วส่งผลไปที่ <b>${esc(payload.email)}</b><br>`
+        + 'เมื่ออนุมัติแล้วจะได้ <b>รหัสเข้างาน</b> ทางอีเมล หรือดูเองได้ที่ "ตรวจสถานะ" ด้วยเบอร์โทรที่ลงทะเบียน<br>อย่าลืมแต่งชุด Korean Halloween และพกบัตรประชาชนมานะคะ';
     }
+    $('stPhone').value = payload.phone;
+    $('stRef').value = r.regId;
     $('summary').innerHTML = `<div><span>ชื่อ</span><span>${esc(payload.name)}</span></div><div><span>จำนวน</span><span>${r.qty} ท่าน</span></div>`
       + `<div><span>ยอดชำระ</span><span style="color:var(--amber);font-weight:600">${fmt(r.amount)} ฿</span></div><div><span>วันงาน</span><span>Sat 31 Oct · 22:00</span></div>`;
     go(3);
@@ -755,6 +798,105 @@ async function submitForm() {
     $('loading').classList.add('hidden');
   }
 }
+
+/* ================= status check (phone → payment status + entry code) ================= */
+const ST_LABEL = {
+  Approved:  ['badge ok',  '✓ อนุมัติแล้ว · Approved', 'happy'],
+  Pending:   ['badge',     'รอตรวจสอบ · Pending check', 'look'],
+  Problem:   ['badge bad', '✕ ต้องแก้ไข · Action needed', 'oops'],
+  Cancelled: ['badge grey','ยกเลิกแล้ว · Cancelled', 'chill']
+};
+let stBookings = [], reTarget = null;
+
+async function checkStatus(ev) {
+  if (ev) ev.preventDefault();
+  const err = $('stErr'); err.textContent = '';
+  const phone = $('stPhone').value.replace(/\D/g, '');
+  const ref = $('stRef').value.trim();
+  if (phone.length < 9) return err.textContent = 'กรุณากรอกเบอร์โทรที่ใช้ลงทะเบียน';
+  if (CFG.STATUS_REQUIRE_REF && !ref) return err.textContent = 'กรุณากรอกเลขที่การจอง (อยู่ในอีเมลที่ได้รับ)';
+  const btn = $('stBtn'); btn.disabled = true; btn.textContent = 'กำลังตรวจ…';
+  try {
+    const r = DEMO ? await new Promise(res => setTimeout(() => res(demoStatus(phone)), 600))
+                   : await api('checkStatus', { phone, ref });
+    stBookings = r.bookings || [];
+    renderStatus(r);
+  } catch (x) {
+    err.textContent = x.message || 'ตรวจสถานะไม่ได้ กรุณาลองใหม่';
+  } finally {
+    btn.disabled = false; btn.textContent = 'ตรวจสถานะ · Check';
+  }
+}
+function renderStatus(r) {
+  const box = $('stResults');
+  if (!stBookings.length) {
+    box.innerHTML = `<div class="bk"><div class="bk-top"><div>${croissant('oops', 56)}</div><div class="who"><b>ไม่พบการลงทะเบียนจากเบอร์นี้</b>`
+      + `<span class="bk-meta">ตรวจว่าใช้เบอร์เดียวกับตอนลงทะเบียน หรือทัก LINE ${esc(CFG.CONTACT_LINE)}</span></div></div></div>`;
+    return;
+  }
+  box.innerHTML = (DEMO ? '<p class="lbl" style="margin:0">⚠ โหมดทดลอง: ข้อมูลจำลอง (ลองเบอร์ลงท้าย 1 = อนุมัติ, 2 = มีปัญหา, อื่น ๆ = รอตรวจ)</p>' : '')
+    + stBookings.map((b, i) => {
+    const L = ST_LABEL[b.status] || ST_LABEL.Pending;
+    let body = '';
+    if (b.status === 'Approved') {
+      body = `<div class="code"><div class="lbl">รหัสเข้างาน / Entry code</div><div class="regid stamp">${esc(b.entryCode || '-')}</div></div>`
+        + '<p>แสดงรหัสนี้พร้อมบัตรประชาชนที่หน้างาน (ทุกท่าน 20+) · ลงทะเบียน 22:00 · DJ 22:30<br>Dress code: Everything Korean 👻</p>';
+    } else if (b.status === 'Problem' && b.problem) {
+      body = `<div class="fixbox"><b>${esc(b.problem.th)}</b>${b.problem.note ? '<br>' + esc(b.problem.note) : ''}`
+        + `<div class="fix">วิธีแก้: ${esc(b.problem.fix)}</div></div>`
+        + (b.problem.reupload ? `<button type="button" class="btn" data-re="${i}">แนบสลิปใหม่ · Upload new slip</button><div class="upmsg" id="upmsg${i}"></div>` : '')
+        + `<a class="btn line" href="${esc(CFG.LINE_URL)}" target="_blank" rel="noopener">ทัก LINE ${esc(CFG.CONTACT_LINE)}</a>`;
+    } else if (b.status === 'Cancelled') {
+      body = `<p>การจองนี้ถูกยกเลิก หากมีข้อสงสัยทัก LINE ${esc(CFG.CONTACT_LINE)}</p>`;
+    } else {
+      body = '<p>ทีมงานกำลังตรวจสลิปกับบัญชีธนาคาร เมื่ออนุมัติแล้วจะส่งอีเมลพร้อมรหัสเข้างาน และรหัสจะแสดงที่หน้านี้ค่ะ</p>';
+    }
+    return `<div class="bk"><div class="bk-top"><div>${croissant(L[2], 56)}</div><div class="who">`
+      + `<span class="bk-ref">${esc(b.ref)}</span><span class="bk-meta">${esc(b.name)} · ${esc(b.qty)} ท่าน · ${fmt(b.amount)} ฿${b.submitted ? ' · ' + esc(b.submitted) : ''}</span>`
+      + `<span class="${L[0]}" style="align-self:flex-start">${L[1]}</span></div></div>${body}</div>`;
+  }).join('');
+}
+$('stResults').addEventListener('click', e => {
+  const b = e.target.closest('[data-re]'); if (!b) return;
+  reTarget = Number(b.dataset.re); $('reInput').click();
+});
+$('reInput').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  const i = reTarget, bk = stBookings[i]; if (!f || !bk) return;
+  const msg = $('upmsg' + i), btn = document.querySelector(`[data-re="${i}"]`);
+  const say = (t, bad) => { msg.textContent = t; msg.style.color = bad ? 'var(--bad)' : 'var(--ok)'; };
+  if (!f.type.startsWith('image/')) return say('กรุณาแนบเป็นรูปภาพสลิป (JPG/PNG)', true);
+  btn.disabled = true; say('กำลังส่งสลิป…');
+  try {
+    const img = await loadImg(await readAsDataURL(f));
+    const data = compress(img), qr = decodeQR(img);
+    let token = '';
+    if (!DEMO && CFG.SLIP_CHECK_ON !== false) {
+      try {
+        const v = await api('verifySlip', { qr, image: qr ? '' : data, mime: 'image/jpeg', qty: bk.qty });
+        const dup = (v.checks || []).find(c => c.key === 'duplicate' && c.ok === false);
+        if (dup) { btn.disabled = false; return say(dup.label + ' – กรุณาแนบสลิปของรายการนี้', true); }
+        token = v.token || '';
+      } catch (x) { /* pre-check is optional */ }
+    }
+    if (DEMO) await new Promise(res => setTimeout(res, 700));
+    else await api('resubmitSlip', { ref: bk.ref, phone: $('stPhone').value.replace(/\D/g, ''), slipData: data, slipMime: 'image/jpeg', slipToken: token });
+    bk.status = 'Pending'; delete bk.problem;
+    renderStatus({});
+    const top = document.querySelectorAll('#stResults .bk')[i];
+    if (top) top.insertAdjacentHTML('beforeend', '<div class="upmsg" style="color:var(--ok)">✓ ได้รับสลิปใหม่แล้ว ทีมงานจะตรวจอีกครั้งและแจ้งผลทางอีเมลค่ะ</div>');
+  } catch (x) {
+    btn.disabled = false; say(x.message || 'ส่งสลิปไม่สำเร็จ กรุณาลองใหม่', true);
+  }
+});
+function demoStatus(phone) {
+  const last = phone.slice(-1), base = { ref: 'DEMO-0001', name: 'ทดสอบ ร.', qty: 2, amount: 2 * CFG.PRICE_PER_PERSON, submitted: '14 Oct 2026 20:15' };
+  if (last === '1') return { bookings: [Object.assign(base, { status: 'Approved', entryCode: 'ANN-7KQ3' })] };
+  if (last === '2') return { bookings: [Object.assign(base, { status: 'Problem', problem: { th: 'ยอดโอนไม่ครบตามจำนวนผู้เข้าร่วม', note: 'ยอดขาด 1,200 บาท', fix: 'โอนส่วนที่ขาดผ่าน QR เดิม แล้วแนบสลิปเพิ่มในหน้าตรวจสอบสถานะ', reupload: true } })] };
+  if (last === '0') return { bookings: [] };
+  return { bookings: [Object.assign(base, { status: 'Pending' })] };
+}
+$('stForm').addEventListener('submit', checkStatus);
 
 /* ================= wire up ================= */
 $('minus').onclick = () => setQty(qty - 1);
@@ -769,12 +911,25 @@ render({});
 if (DEMO) $('demoBar').classList.remove('hidden');
 if (SOON) {
   document.querySelector('.steps').classList.add('hidden');
+  $('status').classList.add('hidden'); $('cta').classList.add('hidden');
   $('step1').querySelector('section').innerHTML = '<h2>Registration opens soon<small>เปิดรับลงทะเบียนเร็ว ๆ นี้</small></h2>'
     + '<p style="margin:0;line-height:1.7">ติดตามประกาศและลิงก์ลงทะเบียนได้ทาง LINE <b>' + esc(CFG.CONTACT_LINE) + '</b> และ Instagram</p>'
     + '<a class="btn line" href="' + esc(CFG.LINE_URL) + '" target="_blank" rel="noopener">เพิ่มเพื่อน LINE ' + esc(CFG.CONTACT_LINE) + '</a>';
 } else if (!DEMO) {
   api('getConfig').then(render).catch(() => {});
 }
+function showStatusFromHash() {
+  if (location.hash !== '#status' || SOON) return;
+  $('status').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => $('stPhone').focus({ preventScroll: true }), 500);
+}
+window.addEventListener('hashchange', showStatusFromHash);
+document.addEventListener('click', e => {             // same-hash clicks don't fire hashchange
+  const a = e.target.closest('a[href="#status"]'); if (!a || location.hash !== '#status') return;
+  e.preventDefault(); showStatusFromHash();
+});
+$('doneStatus').addEventListener('click', () => setTimeout(() => { if ($('stPhone').value) checkStatus(); }, 400));
+showStatusFromHash();
 
 </script>
 </body>

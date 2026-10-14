@@ -1,9 +1,17 @@
 /**
  * openface × No Judgment Gathering – ANNYONG SPOOKY HALLOWEEN NIGHT (31 Oct 2026)
- * Backend API for the Vercel registration site: Google Sheet + Drive slips + emails + SlipOK slip checker.
+ * Backend for the Vercel registration site (Google Apps Script, bound to the event Google Sheet).
  *
- * Values marked  // TODO  still need your input. Run setup() once after pasting.
- * Slip checker API key goes in Project Settings → Script properties → SLIPOK_API_KEY (never in code).
+ * PROCESS
+ *   1. Guest registers + uploads slip on the site          → row added, Payment Status = "Pending"
+ *   2. Admin checks the slip against the bank statement    → sets Payment Status in the Sheet
+ *   3a. "Approved"  → entry code issued + APPROVED email   (with the status-check link)
+ *   3b. "Problem"   → choose a Problem Reason → PROBLEM email (with the link to fix / re-upload)
+ *       (picking a Problem Reason on a Pending row sets it to Problem automatically)
+ *   4. Guest enters their phone number on the site          → sees status + entry code (when approved)
+ *
+ * Setup: paste this file, fill the // TODO values, run setup() once, deploy as Web app (Execute as Me, Anyone).
+ * SlipOK key (optional pre-check) goes in Project Settings → Script properties → SLIPOK_API_KEY.
  */
 
 const CONFIG = {
@@ -21,72 +29,132 @@ const CONFIG = {
   PRICE_INCLUDES:   'DJ · Free-flow alcohol · Korean bites',
   DRESS_CODE:       'Everything Korean',
   MIN_AGE:          20,
-  MAX_PER_BOOKING:  50,            // "no max" – kept at 50 only as a typo guard
+  MAX_PER_BOOKING:  50,
   CAPACITY:         0,             // 0 = unlimited
-  CLOSE_AT:         '',            // no deadline
+  CLOSE_AT:         '',            // e.g. '2026-10-31T18:00:00+07:00' to stop registrations
 
-  // Payment – openface K SHOP (KBank) Thai QR, decoded from the shop's QR image.
-  // The page re-issues this QR with the exact amount filled in (guests × price).
+  // Payment – openface K SHOP (KBank) Thai QR. The site re-issues it with the exact amount filled in.
   PAY_QR_PAYLOAD:   '00020101021130810016A00000067701011201150107536000315010214KB0000022995670320KPS004KB00000229956731690016A00000067701011301030040214KB0000022995670420KPS004KB00000229956753037645802TH63044D15',
-  PROMPTPAY_ID:     '',            // not used while PAY_QR_PAYLOAD is set
+  PROMPTPAY_ID:     '',
   SHOP_NAME:        'โอเพ่น เฟซ',
   BANK_NAME:        'กสิกรไทย (K SHOP)',
   ACCOUNT_NAME:     'บจก. โอเพ่น คิทเช่น',
-  ACCOUNT_NO:       '',            // K SHOP pays by QR only – leave blank to hide the account-number row
+  ACCOUNT_NO:       '',
   PAY_REF:          'KPS004KB000002299567',
 
-  // Automatic slip checker (SlipOK – verifies the slip's QR against real bank data)
+  // Optional automatic PRE-check of slips (SlipOK). It only helps the guest catch mistakes and gives the
+  // admin a hint in the "Auto Check" column – it never approves anything. Leave the branch ID empty to turn it off.
   SLIP_CHECK: {
     ENABLED:          true,
-    SLIPOK_BRANCH_ID: '',          // TODO from SlipOK dashboard (API key → Script properties SLIPOK_API_KEY)
-    // How we recognise YOUR account on the slip (banks mask most digits, e.g. xxx-x-x1234-x):
-    // openface's own K SHOP shop code ("รหัสร้านค้า" on slips). This is the reliable identifier.
-    // NOTE: the Biller ID 010753600031501 is KBank's SHARED K SHOP biller – every K SHOP shop has it,
-    // so it must NOT be used to recognise openface.
+    SLIPOK_BRANCH_ID: '',          // TODO (optional)
+    // openface's own K SHOP shop code ("รหัสร้านค้า" on slips). Do NOT use the Biller ID 010753600031501 –
+    // that is KBank's shared K SHOP biller and every K SHOP shop has it.
     RECEIVER_SHOP_CODES:     ['KB000002299567'],
-    RECEIVER_ACCOUNT_DIGITS: [],   // only for a normal bank account: the digits banks leave visible, e.g. ['1234']
+    RECEIVER_ACCOUNT_DIGITS: [],
     RECEIVER_NAME_KEYWORDS:  ['โอเพ่นคิทเช่น', 'โอเพ่นเฟซ', 'openkitchen', 'openface'],
-    NOT_BEFORE:       '2026-09-28T00:00:00+07:00',  // slips older than registration opening are rejected
-    MAX_AGE_HOURS:    48,          // slip must be from the last 48 h
-    AUTO_CONFIRM:     true         // all 4 checks pass → Status "Confirmed" + confirmation email instantly
+    NOT_BEFORE:       '2026-09-28T00:00:00+07:00',
+    MAX_AGE_HOURS:    48
   },
+
+  /* ---------- Emails ----------
+   * Templates are placeholders until the final letters are supplied – edit SUBJECT/BODY below.
+   * BODY is simple HTML; {{placeholders}} are filled in automatically:
+   *   {{name}} {{ref}} {{entryCode}} {{qty}} {{amount}} {{event}} {{date}} {{time}} {{venue}} {{mapUrl}}
+   *   {{problem}} {{fix}} {{note}} {{statusLink}} {{line}} {{lineUrl}} {{phone}}
+   * The letter is wrapped in the poster-style frame (logo, event band, footer) automatically.  */
+  EMAIL: {
+    SEND:           true,
+    FROM_ALIAS:     '',            // TODO e.g. 'hello@openfacebkk.com' – must be a "Send mail as" alias of the Google account running this script
+    SENDER_NAME:    'openface × No Judgment Gathering',
+    REPLY_TO:       'openfacebkk@gmail.com',
+    SEND_RECEIVED:  true,          // short "we got your registration" email right after registering
+    TEMPLATES: {
+      RECEIVED: {
+        SUBJECT: '[{{ref}}] ได้รับการลงทะเบียนแล้ว – {{event}}',
+        BODY: '<p>สวัสดีคุณ {{name}},</p>'
+          + '<p>เราได้รับการลงทะเบียนและสลิปของคุณแล้ว ทีมงานจะตรวจสอบการชำระเงินกับบัญชีธนาคาร และส่งอีเมลแจ้งผลอีกครั้ง (โดยปกติภายใน 24 ชม.)</p>'
+          + '<p>เลขที่การจอง: <b>{{ref}}</b> · {{qty}} ท่าน · {{amount}} บาท</p>'
+          + '<p>ตรวจสอบสถานะได้ตลอดด้วยเบอร์โทรที่ลงทะเบียน: <a href="{{statusLink}}">{{statusLink}}</a></p>'
+      },
+      APPROVED: {
+        SUBJECT: "[{{ref}}] You're in! ยืนยันการชำระเงินเรียบร้อย – {{event}}",
+        BODY: '<p>สวัสดีคุณ {{name}},</p>'
+          + '<p>ทีมงานตรวจสอบการชำระเงินของคุณเรียบร้อยแล้ว พบกันคืนวันเสาร์ที่ 31 ต.ค. นี้!</p>'
+          + '<p style="font-size:13px;color:#5b5d62;margin-bottom:4px">รหัสเข้างาน / Entry code</p>'
+          + '<p style="font-size:30px;font-weight:bold;letter-spacing:3px;margin:0 0 12px">{{entryCode}}</p>'
+          + '<p>แสดงรหัสนี้พร้อมบัตรประชาชนที่หน้างาน (ผู้เข้าร่วมทุกท่านอายุ 20+) · {{qty}} ท่าน · {{amount}} บาท</p>'
+          + '<p>{{date}} · {{time}}<br>{{venue}} · <a href="{{mapUrl}}">แผนที่</a><br>Dress code: Everything Korean</p>'
+          + '<p>ดูรหัสเข้างานได้ตลอดที่ <a href="{{statusLink}}">{{statusLink}}</a></p>'
+      },
+      PROBLEM: {
+        SUBJECT: '[{{ref}}] ต้องแก้ไขการชำระเงิน – {{event}}',
+        BODY: '<p>สวัสดีคุณ {{name}},</p>'
+          + '<p>ทีมงานตรวจสอบการชำระเงินสำหรับเลขที่การจอง <b>{{ref}}</b> แล้ว พบปัญหาดังนี้:</p>'
+          + '<p style="padding:10px 14px;border:2px solid #a8412f;border-radius:10px;background:#f7dcd2"><b>{{problem}}</b><br>{{note}}</p>'
+          + '<p><b>วิธีแก้ไข:</b> {{fix}}</p>'
+          + '<p>แก้ไข / แนบสลิปใหม่ได้ที่: <a href="{{statusLink}}">{{statusLink}}</a> (ใช้เบอร์โทรที่ลงทะเบียน)</p>'
+          + '<p>หากมีข้อสงสัย ทัก LINE <a href="{{lineUrl}}">{{line}}</a></p>'
+      }
+    }
+  },
+
+  /* ---------- Common payment problems (admin picks one in "Problem Reason") ----------
+   * key: what appears in the Sheet dropdown · th: what the guest sees · fix: what the guest should do
+   * reupload: show the "upload a new slip" button on the status page                                  */
+  PROBLEMS: [
+    { key: 'Amount short – โอนไม่ครบ',             th: 'ยอดโอนไม่ครบตามจำนวนผู้เข้าร่วม',                fix: 'โอนส่วนที่ขาดผ่าน QR เดิม แล้วแนบสลิปเพิ่มในหน้าตรวจสอบสถานะ', reupload: true },
+    { key: 'Amount over – โอนเกิน',                th: 'ยอดโอนเกินจากยอดที่ต้องชำระ',                   fix: 'ทีมงานจะติดต่อกลับเพื่อคืนส่วนต่างหรือปรับจำนวนผู้เข้าร่วม ทัก LINE ได้เลย', reupload: false },
+    { key: 'Not received – ไม่พบยอดเงินเข้า',      th: 'ไม่พบยอดเงินเข้าบัญชีตามสลิป',                   fix: 'ตรวจกับธนาคารว่าการโอนสำเร็จ แล้วแนบสลิปที่ถูกต้องอีกครั้ง', reupload: true },
+    { key: 'Wrong account – โอนผิดบัญชี',          th: 'สลิปนี้ไม่ได้โอนเข้าบัญชี บจก. โอเพ่น คิทเช่น',     fix: 'ติดต่อธนาคารของคุณเรื่องรายการเดิม แล้วชำระใหม่ด้วย QR บนเว็บ และแนบสลิปใหม่', reupload: true },
+    { key: 'Unclear slip – สลิปไม่ชัด/ไม่ครบ',      th: 'สลิปไม่ชัดหรือข้อมูลไม่ครบ ตรวจสอบไม่ได้',           fix: 'แนบรูปสลิปต้นฉบับที่บันทึกจากแอปธนาคารอีกครั้ง (ไม่ครอป ไม่ถ่ายจากหน้าจอ)', reupload: true },
+    { key: 'Duplicate slip – สลิปซ้ำ',             th: 'สลิปนี้ถูกใช้กับการลงทะเบียนอื่นแล้ว',              fix: 'หากเป็นการลงทะเบียนซ้ำของคุณเอง ไม่ต้องทำอะไรเพิ่ม หากไม่ใช่ กรุณาแนบสลิปของรายการนี้', reupload: true },
+    { key: 'Wrong slip / date – สลิปไม่ใช่รายการนี้', th: 'วันที่หรือรายการในสลิปไม่ตรงกับการลงทะเบียน',        fix: 'แนบสลิปที่โอนสำหรับงานนี้', reupload: true },
+    { key: 'Guest count – จำนวนคนไม่ตรงยอด',        th: 'จำนวนผู้เข้าร่วมไม่ตรงกับยอดที่โอน',                fix: 'ทัก LINE เพื่อปรับจำนวนผู้เข้าร่วมให้ตรงกับยอดโอน', reupload: false },
+    { key: 'Contact info – ข้อมูลติดต่อไม่ถูกต้อง',   th: 'ข้อมูลชื่อ/เบอร์/อีเมลไม่ถูกต้องหรือไม่ครบ',          fix: 'ทัก LINE เพื่อยืนยันข้อมูลให้ถูกต้อง', reupload: false },
+    { key: 'Other – อื่น ๆ (ดู Note to Guest)',         th: 'มีรายละเอียดที่ต้องตรวจสอบเพิ่มเติม',                fix: 'ดูรายละเอียดด้านบน หรือทัก LINE', reupload: true }
+  ],
 
   CONTACT_LINE:     '@openfacebkk',
   LINE_URL:         'https://lin.ee/9pQIgO3',
   CONTACT_PHONE:    '082-556-3659',
   IG_URL:           'https://www.instagram.com/openfacebkk/',
-  SITE_URL:         '',            // your Vercel address, e.g. 'https://annyong.vercel.app' – shows the logo in emails
-  ADMIN_EMAIL:      'openfacebkk@gmail.com',
+  SITE_URL:         'https://openface-halloween2026.vercel.app',
+  ADMIN_EMAIL:      'openfacebkk@gmail.com',   // gets a notice for every new registration / re-uploaded slip
   REFUND_POLICY:    'ไม่รับยกเลิกและไม่คืนเงินทุกกรณี · No cancellation, no refund',
   HOUSE_RULES:      'ผู้เข้าร่วมต้องอายุ 20 ปีขึ้นไป (ตรวจบัตรหน้างาน) · งดเด็กและสัตว์เลี้ยงสำหรับงานนี้ · 20+ only (ID check at the door) · No kids, no pets',
 
-  SEND_EMAIL:       true,
   SLIP_FOLDER_ID:   '',
-  SPREADSHEET_ID:   '128yKL_9i4V_-R6YXYeiU3kYDy_uKV57sGoe0DQKAr8k',   // openface Halloween Google Sheet
+  SPREADSHEET_ID:   '128yKL_9i4V_-R6YXYeiU3kYDy_uKV57sGoe0DQKAr8k',
   SHEET_NAME:       'Registrations',
-  ID_PREFIX:        'OF-HW26-'
+  ID_PREFIX:        'OF-HW26-',
+  CODE_PREFIX:      'ANN-',
+
+  // Status lookup on the site. false = phone number only (as requested). true = phone + booking ref
+  // (safer: anyone who knows a guest's phone number could otherwise see their entry code).
+  STATUS_REQUIRE_REF: false
 };
 
+const STATUS = { PENDING: 'Pending', APPROVED: 'Approved', PROBLEM: 'Problem', CANCELLED: 'Cancelled' };
+
 const HEADERS = [
-  'Timestamp', 'Registration ID', 'Full Name', 'Phone', 'Email', 'LINE ID',
-  'Attendees', 'Guest Names', 'Parking', 'Amount (THB)',
-  'Slip Amount', 'Slip Time', 'Sender', 'Sender Bank', 'Receiver on Slip', 'Trans Ref', 'Verification',
-  'Slip Link', 'Notes', 'Status', 'Admin Remark'
+  'Timestamp', 'Booking Ref', 'Full Name', 'Phone', 'Email', 'LINE ID',
+  'Attendees', 'Guest Names', 'Parking', 'Amount (THB)', 'Slip Link',
+  'Slip Amount', 'Slip Time', 'Sender', 'Sender Bank', 'Receiver on Slip', 'Trans Ref', 'Auto Check',
+  'Notes', 'Payment Status', 'Problem Reason', 'Note to Guest', 'Entry Code', 'Email Log', 'Internal Note', 'Updated At'
 ];
 const COL = name => HEADERS.indexOf(name) + 1;
 const TZ = 'Asia/Bangkok';
 
-/* ---------- Web app ---------- */
-
-/* ---------- JSON API for the Vercel site ----------
- * The page on Vercel POSTs {action, data} as text/plain (no CORS preflight) to this
- * web app's /exec URL and gets {ok, result} or {ok:false, error} back.             */
-
+/* ======================================================================
+ *  JSON API for the Vercel site – POST {action, data} as text/plain
+ * ====================================================================== */
 const API = {
   getConfig:          () => getConfig(),
   verifySlip:         d  => verifySlip(d),
   recheckSlip:        d  => recheckSlip(d.token, d.qty),
-  submitRegistration: d  => submitRegistration(d)
+  submitRegistration: d  => submitRegistration(d),
+  checkStatus:        d  => checkStatus(d),
+  resubmitSlip:       d  => resubmitSlip(d)
 };
 
 function doPost(e) {
@@ -104,7 +172,6 @@ function doPost(e) {
   return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
 }
 
-// Opening the /exec URL in a browser just confirms the API is alive.
 function doGet() {
   return ContentService.createTextOutput(JSON.stringify({ ok: true, service: CONFIG.BRAND + ' registration API', event: CONFIG.EVENT_NAME }))
     .setMimeType(ContentService.MimeType.JSON);
@@ -112,7 +179,7 @@ function doGet() {
 
 function getConfig() {
   const c = JSON.parse(JSON.stringify(CONFIG));
-  delete c.ADMIN_EMAIL; delete c.SITE_URL; delete c.SLIP_FOLDER_ID; delete c.SHEET_NAME; delete c.SPREADSHEET_ID; delete c.SEND_EMAIL; delete c.SLIP_CHECK;
+  ['ADMIN_EMAIL', 'SLIP_FOLDER_ID', 'SHEET_NAME', 'SPREADSHEET_ID', 'SLIP_CHECK', 'EMAIL', 'PROBLEMS'].forEach(k => delete c[k]);
   c.SLIP_CHECK_ON = slipCheckReady_();
   c.SEATS_TAKEN = countSeats_();
   c.CLOSED = isClosed_();
@@ -277,30 +344,34 @@ function evaluateSlip_(slip, qty) {
   const dupId = slip.transRef ? findTransRef_(slip.transRef) : null;
   checks.push({ key: 'duplicate', ok: !dupId,
     label: dupId ? 'สลิปนี้ถูกใช้ลงทะเบียนไปแล้ว (' + dupId + ')' : 'สลิปนี้ยังไม่เคยใช้ลงทะเบียน',
-    fix: dupId ? 'ถ้าคุณลงทะเบียนไปแล้ว ไม่ต้องทำซ้ำ ตรวจอีเมลยืนยันได้เลย หรือทัก LINE ' + CONFIG.CONTACT_LINE : '' });
+    fix: dupId ? 'ถ้าคุณลงทะเบียนไปแล้ว ไม่ต้องทำซ้ำ ตรวจสถานะด้วยเบอร์โทรได้เลย หรือทัก LINE ' + CONFIG.CONTACT_LINE : '' });
 
   const anyFail = checks.some(c => c.ok === false);
   const anyUnknown = checks.some(c => c.ok === null);
   const status = anyFail ? 'failed' : (anyUnknown ? 'review' : 'verified');
+  // If ONLY the receiver looks wrong, our matching may be at fault – let the guest send it for admin review.
+  const onlyReceiver = anyFail && checks.filter(c => c.ok === false).every(c => c.key === 'receiver');
   return {
-    status: status, canManual: false, suggestQty: suggestQty, checks: checks,
+    status: status, canManual: onlyReceiver, suggestQty: suggestQty, checks: checks,
     title: status === 'verified' ? 'สลิปถูกต้องครบทุกข้อ!' : status === 'review' ? 'สลิปผ่านการตรวจเบื้องต้น' : 'สลิปยังไม่ผ่าน',
-    message: status === 'verified' ? 'กดยืนยันด้านล่างได้เลย ระบบจะยืนยันที่นั่งให้ทันที'
-           : status === 'review' ? 'กดยืนยันได้เลย ทีมงานจะตรวจอีกรอบและส่งอีเมลยืนยันให้ค่ะ'
-           : 'ดูรายการที่ขึ้นเครื่องหมาย ✕ และวิธีแก้ด้านล่างนะคะ',
+    message: status === 'failed'
+      ? (onlyReceiver ? 'บัญชีผู้รับดูไม่ตรง ถ้าแน่ใจว่าโอนเข้า openface กด "ส่งให้ทีมงานตรวจแทน" ได้ค่ะ' : 'ดูรายการที่ขึ้นเครื่องหมาย ✕ และวิธีแก้ด้านล่างนะคะ')
+      : 'กดยืนยันด้านล่างได้เลย ทีมงานจะตรวจกับบัญชีธนาคารและส่งอีเมลยืนยันพร้อมรหัสเข้างานให้ค่ะ',
     slip: { amount: slip.amount, time: t ? Utilities.formatDate(t, TZ, 'd/MM/yyyy HH:mm') : '',
             senderName: slip.senderName, senderBank: slip.senderBank, receiverName: slip.receiverName }
   };
 }
 
-/* ---------- Submit ---------- */
+/* ======================================================================
+ *  1 · REGISTRATION  – every booking lands as "Pending" for the admin
+ * ====================================================================== */
 
 function submitRegistration(f) {
   if (isClosed_()) throw new Error('ปิดรับลงทะเบียนแล้ว / Registration is closed');
 
-  const name  = String(f.name || '').trim();
+  const name  = String(f.name || '').trim().slice(0, 120);
   const phone = String(f.phone || '').replace(/[^\d+]/g, '');
-  const email = String(f.email || '').trim();
+  const email = String(f.email || '').trim().slice(0, 160);
   const qty   = parseInt(f.qty, 10);
 
   if (!name) throw new Error('กรุณากรอกชื่อ-นามสกุล / Please enter your name');
@@ -313,100 +384,443 @@ function submitRegistration(f) {
 
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
+  let regId, amount, fileUrl, autoCheck, row;
   try {
     if (CONFIG.CAPACITY > 0 && countSeats_() + qty > CONFIG.CAPACITY) throw new Error('ที่นั่งไม่พอ / Not enough seats left');
 
-    // Re-check the slip on the server (never trust the browser)
-    let slip = null, ev = null, verification, status = 'Pending';
-    if (f.slipToken) {
-      slip = getCachedSlip_(f.slipToken);
-      if (!slip) throw new Error('หมดเวลาตรวจสลิป กรุณาแนบสลิปอีกครั้ง / Slip check expired, please re-upload');
-      ev = evaluateSlip_(slip, qty);                       // includes duplicate check, under lock
-      if (ev.status === 'failed') throw new Error(ev.checks.filter(c => c.ok === false)[0].label);
-      if (ev.status === 'verified' && CONFIG.SLIP_CHECK.AUTO_CONFIRM) { status = 'Confirmed'; verification = 'Auto ✓ SlipOK'; }
-      else verification = 'Review: ' + ev.checks.filter(c => c.ok === null).map(c => c.key).join(', ');
-    } else {
-      verification = 'Manual review – auto check unavailable' + (f.manualReason ? ' (' + String(f.manualReason).slice(0, 60) + ')' : '');
-    }
+    // Optional automatic pre-check – a hint for the admin, never an approval
+    const pre = preCheck_(f.slipToken, qty, f.manualReason, true);
+    const slip = pre.slip;
+    autoCheck = pre.text;
 
     const props = PropertiesService.getScriptProperties();
     const seq = Number(props.getProperty('SEQ') || 0) + 1;
     props.setProperty('SEQ', String(seq));
-    const regId  = CONFIG.ID_PREFIX + ('0000' + seq).slice(-4);
-    const amount = qty * CONFIG.PRICE_PER_PERSON;
+    regId  = CONFIG.ID_PREFIX + ('0000' + seq).slice(-4);
+    amount = qty * CONFIG.PRICE_PER_PERSON;
 
-    const mime = f.slipMime || 'image/jpeg';
-    const b64  = String(f.slipData).split(',').pop();
-    const blob = Utilities.newBlob(Utilities.base64Decode(b64), mime, regId + '_' + name + '.jpg');
-    const file = getFolder_().createFile(blob);
+    fileUrl = saveSlip_(f.slipData, f.slipMime, regId + '_' + name);
+    const now = new Date();
 
-    getSheet_().appendRow([
-      new Date(), regId, name, "'" + phone, email, String(f.line || ''),
-      qty, String(f.guests || ''), String(f.parking || 'No'), amount,
-      slip ? slip.amount : '', slip && slip.time ? new Date(slip.time) : '',
-      slip ? slip.senderName : '', slip ? slip.senderBank : '',
-      slip ? (slip.receiverName + (slip.receiverAccount ? ' ' + slip.receiverAccount : '')) : '',
-      slip ? "'" + slip.transRef : '', verification,
-      file.getUrl(), String(f.notes || ''), status, ''
-    ]);
+    const rec = {
+      'Timestamp': now, 'Booking Ref': regId, 'Full Name': name, 'Phone': "'" + phone, 'Email': email,
+      'LINE ID': String(f.line || '').slice(0, 80), 'Attendees': qty, 'Guest Names': String(f.guests || '').slice(0, 1000),
+      'Parking': String(f.parking || 'No'), 'Amount (THB)': amount, 'Slip Link': fileUrl,
+      'Slip Amount': slip ? slip.amount : '', 'Slip Time': slip && slip.time ? new Date(slip.time) : '',
+      'Sender': slip ? slip.senderName : '', 'Sender Bank': slip ? slip.senderBank : '',
+      'Receiver on Slip': slip ? (slip.receiverName + (slip.receiverAccount ? ' ' + slip.receiverAccount : '')) : '',
+      'Trans Ref': slip && slip.transRef ? "'" + slip.transRef : '', 'Auto Check': autoCheck,
+      'Notes': String(f.notes || '').slice(0, 1000), 'Payment Status': STATUS.PENDING, 'Problem Reason': '',
+      'Note to Guest': '', 'Entry Code': '', 'Email Log': '', 'Internal Note': '', 'Updated At': now
+    };
+    const sh = getSheet_();
+    sh.appendRow(HEADERS.map(h => rec[h] === undefined ? '' : rec[h]));
+    row = sh.getLastRow();
     if (f.slipToken) CacheService.getScriptCache().remove('slip_' + f.slipToken);
+  } finally {
+    lock.releaseLock();
+  }
 
-    const confirmed = status === 'Confirmed';
-    if (CONFIG.SEND_EMAIL) {
-      try {
-        MailApp.sendEmail({
-          to: email, replyTo: CONFIG.ADMIN_EMAIL, name: CONFIG.BRAND,
-          subject: '[' + regId + '] ' + (confirmed ? 'ยืนยันการชำระเงินเรียบร้อย' : 'ได้รับการลงทะเบียนแล้ว') + ' – ' + CONFIG.BRAND + ' ' + CONFIG.EVENT_NAME,
-          htmlBody: emailHtml_(name, regId, qty, amount, confirmed)
-        });
-        if (CONFIG.ADMIN_EMAIL) {
-          MailApp.sendEmail({
-            to: CONFIG.ADMIN_EMAIL, name: CONFIG.BRAND + ' registration',
-            subject: (confirmed ? '✅ Auto-confirmed' : '⚠️ Needs review') + ': ' + regId + ' · ' + name + ' · ' + qty + ' pax · ' + amount.toLocaleString() + ' THB',
-            htmlBody: '<b>' + regId + '</b> · ' + name + ' · ' + phone + ' · ' + qty + ' pax · ' + amount.toLocaleString() + ' THB<br>'
-              + 'Verification: ' + verification + '<br>'
-              + 'Slip: <a href="' + file.getUrl() + '">open</a> · Sheet: <a href="' + ss_().getUrl() + '">open</a>'
-          });
-        }
-      } catch (e) { console.warn('Email failed: ' + e); }
-    }
-    return { regId: regId, amount: amount, qty: qty, confirmed: confirmed };
+  // Emails (outside the lock)
+  const sh = getSheet_();
+  if (CONFIG.EMAIL.SEND && CONFIG.EMAIL.SEND_RECEIVED) {
+    const r = rowObj_(sh, row);
+    logEmail_(sh, row, sendTemplate_('RECEIVED', r) ? 'RECEIVED → ' + r.email : 'RECEIVED FAILED');
+  }
+  notifyAdmin_('🆕 New booking – check payment: ' + regId,
+    regId + ' · ' + name + ' · ' + phone + ' · ' + qty + ' pax · ' + fmt_(amount) + ' THB', autoCheck, fileUrl);
+
+  return { regId: regId, amount: amount, qty: qty, status: STATUS.PENDING };
+}
+
+/** Turns the optional SlipOK result into the "Auto Check" text. Blocks only slips that are clearly wrong. */
+function preCheck_(token, qty, manualReason, isNew) {
+  if (!token) {
+    return { slip: null, text: 'Not auto-checked' + (manualReason ? ' – guest: ' + String(manualReason).slice(0, 80) : '') };
+  }
+  const slip = getCachedSlip_(token);
+  if (!slip) return { slip: null, text: 'Not auto-checked (check expired)' };
+  const ev = evaluateSlip_(slip, qty);                          // includes the duplicate check (under lock)
+  const bad = ev.checks.filter(c => c.ok === false);
+  const dup = bad.filter(c => c.key === 'duplicate')[0];
+  if (dup) throw new Error(dup.label);
+  if (isNew && bad.length && !(ev.canManual && manualReason)) throw new Error(bad[0].label);
+  const keys = arr => arr.map(c => c.key).join(', ');
+  const unsure = ev.checks.filter(c => c.ok === null);
+  let text;
+  if (!bad.length && !unsure.length) text = '✓ SlipOK: amount / receiver / time OK';
+  else if (!bad.length) text = '? SlipOK – please check: ' + keys(unsure);
+  else text = '✕ SlipOK flagged: ' + keys(bad) + (manualReason ? ' – guest: ' + String(manualReason).slice(0, 80) : '');
+  return { slip: slip, text: text };
+}
+
+/* ======================================================================
+ *  2–4 · ADMIN APPROVAL IN THE SHEET  (installable onEdit trigger → setup())
+ *  Payment Status = Approved → entry code + APPROVED email
+ *  Payment Status = Problem + Problem Reason → PROBLEM email
+ * ====================================================================== */
+
+function onAdminEdit(e) {
+  if (!e || !e.range) return;
+  const sh = e.range.getSheet();
+  if (sh.getName() !== CONFIG.SHEET_NAME) return;
+  const c1 = e.range.getColumn(), c2 = c1 + e.range.getNumColumns() - 1;
+  const watch = [COL('Payment Status'), COL('Problem Reason'), COL('Note to Guest')];
+  if (!watch.some(c => c >= c1 && c <= c2)) return;
+  const reasonEdited = COL('Problem Reason') >= c1 && COL('Problem Reason') <= c2;
+  const r1 = Math.max(2, e.range.getRow()), r2 = e.range.getRow() + e.range.getNumRows() - 1;
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    for (let r = r1; r <= r2; r++) processRow_(sh, r, false, reasonEdited);
   } finally {
     lock.releaseLock();
   }
 }
 
-/* ---------- Admin: confirmation email when Status is changed to Confirmed by hand ---------- */
+/** Sends whatever email the row's status calls for – once per status (force = resend). */
+function processRow_(sh, row, force, reasonEdited) {
+  const r = rowObj_(sh, row);
+  if (!r.ref) return 'empty row';
+  let status = r.status;
 
-function onStatusEdit(e) {
-  const sh = e.range.getSheet();
-  if (sh.getName() !== CONFIG.SHEET_NAME) return;
-  if (e.range.getColumn() !== COL('Status') || e.range.getRow() < 2) return;
-  if (e.value !== 'Confirmed' || !CONFIG.SEND_EMAIL) return;
+  // Picking a reason on a Pending row means "Problem"
+  if (reasonEdited && r.reason && (status === STATUS.PENDING || !status)) {
+    status = STATUS.PROBLEM;
+    sh.getRange(row, COL('Payment Status')).setValue(status);
+  }
 
-  const r = sh.getRange(e.range.getRow(), 1, 1, HEADERS.length).getValues()[0];
-  const email = r[COL('Email') - 1];
-  if (!email) return;
-  MailApp.sendEmail({
-    to: email, replyTo: CONFIG.ADMIN_EMAIL, name: CONFIG.BRAND,
-    subject: '[' + r[COL('Registration ID') - 1] + '] ยืนยันการชำระเงินเรียบร้อย – ' + CONFIG.BRAND + ' ' + CONFIG.EVENT_NAME,
-    htmlBody: emailHtml_(r[COL('Full Name') - 1], r[COL('Registration ID') - 1],
-                         r[COL('Attendees') - 1], r[COL('Amount (THB)') - 1], true)
-  });
+  const since = r.log.split('SLIP RE-UPLOADED').pop();          // only look after the latest re-upload
+  let result = 'nothing to send';
+
+  if (status === STATUS.APPROVED) {
+    if (!r.entryCode) {
+      r.entryCode = newEntryCode_(sh);
+      sh.getRange(row, COL('Entry Code')).setValue(r.entryCode);
+    }
+    sh.getRange(row, COL('Problem Reason')).clearNote();
+    if (force || since.indexOf('APPROVED →') < 0) {
+      result = sendTemplate_('APPROVED', r) ? 'APPROVED → ' + r.email + ' (' + r.entryCode + ')' : 'APPROVED FAILED';
+      logEmail_(sh, row, result);
+    }
+  } else if (status === STATUS.PROBLEM) {
+    const cell = sh.getRange(row, COL('Problem Reason'));
+    if (!r.reason) {
+      cell.setNote('เลือก Problem Reason เพื่อส่งอีเมลแจ้งลูกค้า / Pick a reason to send the email');
+      result = 'waiting for Problem Reason';
+    } else {
+      cell.clearNote();
+      const tag = 'PROBLEM [' + problemOf_(r.reason).key + '] →';
+      if (force || since.indexOf(tag) < 0) {
+        result = sendTemplate_('PROBLEM', r) ? tag + ' ' + r.email : 'PROBLEM FAILED';
+        logEmail_(sh, row, result);
+      }
+    }
+  }
+  sh.getRange(row, COL('Updated At')).setValue(new Date());
+  return result;
 }
 
-/* ---------- One-time setup ---------- */
+/* ======================================================================
+ *  5 · STATUS CHECK BY PHONE  (+ re-upload a slip when there is a problem)
+ * ====================================================================== */
+
+function checkStatus(d) {
+  const digits = phoneKey_(d && d.phone);
+  if (digits.length < 9) throw new Error('กรุณากรอกเบอร์โทรที่ใช้ลงทะเบียน / Please enter the phone number you registered with');
+  const ref = String((d && d.ref) || '').trim().toUpperCase();
+  if (CONFIG.STATUS_REQUIRE_REF && !ref) throw new Error('กรุณากรอกเลขที่การจอง / Please enter your booking ref');
+  throttle_('cs_' + digits, 12, 600);
+
+  const sh = getSheet_();
+  const n = sh.getLastRow() - 1;
+  const out = [];
+  if (n > 0) {
+    const data = sh.getRange(2, 1, n, HEADERS.length).getValues();
+    data.forEach(v => {
+      const get = h => v[COL(h) - 1];
+      if (phoneKey_(get('Phone')) !== digits) return;
+      if (ref && String(get('Booking Ref')).toUpperCase() !== ref) return;
+      const status = String(get('Payment Status') || STATUS.PENDING);
+      const b = {
+        ref: get('Booking Ref'), name: maskName_(get('Full Name')), qty: get('Attendees'),
+        amount: get('Amount (THB)'), status: status,
+        submitted: get('Timestamp') instanceof Date ? Utilities.formatDate(get('Timestamp'), TZ, 'd MMM yyyy HH:mm') : ''
+      };
+      if (status === STATUS.APPROVED) b.entryCode = get('Entry Code');
+      if (status === STATUS.PROBLEM) {
+        const reason = String(get('Problem Reason') || '');
+        if (reason) {
+          const p = problemOf_(reason);
+          b.problem = { th: p.th, fix: p.fix, reupload: !!p.reupload, note: String(get('Note to Guest') || '') };
+        } else {
+          b.status = STATUS.PENDING;                                  // admin hasn't picked a reason yet
+        }
+      }
+      out.push(b);
+    });
+  }
+  return { found: out.length > 0, bookings: out.reverse(), line: CONFIG.CONTACT_LINE, lineUrl: CONFIG.LINE_URL };
+}
+
+function resubmitSlip(d) {
+  const digits = phoneKey_(d && d.phone);
+  const ref = String((d && d.ref) || '').trim().toUpperCase();
+  if (!ref || digits.length < 9) throw new Error('ข้อมูลไม่ครบ / Missing booking ref or phone');
+  if (!d.slipData) throw new Error('กรุณาแนบสลิป / Please attach the slip');
+  throttle_('rs_' + digits, 6, 600);
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  let row, r, autoText, fileUrl;
+  const sh = getSheet_();
+  try {
+    row = findRowByRef_(ref);
+    if (!row) throw new Error('ไม่พบการจองนี้ / Booking not found');
+    r = rowObj_(sh, row);
+    if (phoneKey_(r.phone) !== digits) throw new Error('ไม่พบการจองนี้ / Booking not found');
+    if (r.status !== STATUS.PROBLEM) throw new Error('การจองนี้ไม่ต้องแนบสลิปเพิ่ม / This booking does not need a new slip');
+
+    const pre = preCheck_(d.slipToken, r.qty, '', false);
+    autoText = pre.text;
+    fileUrl = saveSlip_(d.slipData, d.slipMime, ref + '_reupload_' + r.name);
+
+    const set = (h, v) => sh.getRange(row, COL(h)).setValue(v);
+    const stamp = Utilities.formatDate(new Date(), TZ, 'd/MM HH:mm');
+    set('Slip Link', [r.slipLink, fileUrl].filter(Boolean).join('\n'));
+    if (pre.slip && pre.slip.transRef) set('Trans Ref', "'" + [String(r.transRef).replace(/^'/, ''), pre.slip.transRef].filter(Boolean).join(', '));
+    set('Auto Check', [r.autoCheck, stamp + ' re-upload: ' + autoText + (pre.slip ? ' (' + fmt_(pre.slip.amount) + ' THB)' : '')].filter(Boolean).join('\n'));
+    set('Internal Note', [r.internal, stamp + ' previous problem: ' + r.reason + (r.note ? ' – ' + r.note : '')].filter(Boolean).join('\n'));
+    set('Problem Reason', '');
+    set('Note to Guest', '');
+    set('Payment Status', STATUS.PENDING);
+    set('Updated At', new Date());
+    logEmail_(sh, row, 'SLIP RE-UPLOADED by guest');
+    if (d.slipToken) CacheService.getScriptCache().remove('slip_' + d.slipToken);
+  } finally {
+    lock.releaseLock();
+  }
+  notifyAdmin_('🔁 New slip uploaded – check again: ' + ref,
+    ref + ' · ' + r.name + ' · ' + r.qty + ' pax · ' + fmt_(r.amount) + ' THB · previous problem: ' + r.reason, autoText, fileUrl);
+  return { ref: ref, status: STATUS.PENDING };
+}
+
+/* ======================================================================
+ *  EMAILS
+ * ====================================================================== */
+
+function sendTemplate_(kind, r) {
+  if (!CONFIG.EMAIL.SEND || !r.email) return false;
+  const t = CONFIG.EMAIL.TEMPLATES[kind];
+  const p = r.reason ? problemOf_(r.reason) : { th: '', fix: '' };
+  const statusLink = CONFIG.SITE_URL.replace(/\/$/, '') + '/#status';
+  const vars = {
+    name: r.name, ref: r.ref, entryCode: r.entryCode || '', qty: r.qty, amount: fmt_(r.amount),
+    event: CONFIG.EVENT_NAME, date: CONFIG.EVENT_DATE, time: CONFIG.EVENT_TIME, venue: CONFIG.VENUE,
+    mapUrl: CONFIG.MAP_URL, problem: p.th, fix: p.fix, note: r.note || '', statusLink: statusLink,
+    line: CONFIG.CONTACT_LINE, lineUrl: CONFIG.LINE_URL, phone: CONFIG.CONTACT_PHONE
+  };
+  const fill = (s, html) => String(s).replace(/\{\{(\w+)\}\}/g, (m, k) => {
+    if (!(k in vars)) return m;
+    const v = String(vars[k] === undefined || vars[k] === null ? '' : vars[k]);
+    return html && !/Url$|Link$/.test(k) ? esc_(v) : v;
+  });
+  const titles = { RECEIVED: 'ได้รับการลงทะเบียนแล้ว', APPROVED: "YOU'RE IN! · ยืนยันการชำระเงินแล้ว", PROBLEM: 'ต้องแก้ไขการชำระเงิน' };
+  const html = wrapEmail_(titles[kind] || '', fill(t.BODY, true));
+  const subject = fill(t.SUBJECT, false);
+  try {
+    if (CONFIG.EMAIL.FROM_ALIAS) {
+      GmailApp.sendEmail(r.email, subject, '', { htmlBody: html, from: CONFIG.EMAIL.FROM_ALIAS,
+        name: CONFIG.EMAIL.SENDER_NAME, replyTo: CONFIG.EMAIL.REPLY_TO || CONFIG.EMAIL.FROM_ALIAS });
+    } else {
+      MailApp.sendEmail({ to: r.email, subject: subject, htmlBody: html,
+        name: CONFIG.EMAIL.SENDER_NAME, replyTo: CONFIG.EMAIL.REPLY_TO || undefined });
+    }
+    return true;
+  } catch (e) {
+    console.warn(kind + ' email failed for ' + r.ref + ': ' + e);
+    return false;
+  }
+}
+
+function notifyAdmin_(subject, line, autoCheck, slipUrl) {
+  if (!CONFIG.ADMIN_EMAIL) return;
+  try {
+    MailApp.sendEmail({ to: CONFIG.ADMIN_EMAIL, name: CONFIG.BRAND + ' registration', subject: subject,
+      htmlBody: esc_(line) + '<br>Auto check: ' + esc_(autoCheck || '-') + '<br>'
+        + 'Slip: <a href="' + slipUrl + '">open</a> · Sheet: <a href="' + ss_().getUrl() + '">open</a><br>'
+        + '<small>Set "Payment Status" in the Sheet to Approved or Problem (+ Problem Reason). The guest email goes out automatically.</small>' });
+  } catch (e) { console.warn('Admin email failed: ' + e); }
+}
+
+function wrapEmail_(title, inner) {
+  const ink = '#33363c', slate = '#2f3640', cream = '#f2efc4', gold = '#8f5626';
+  const logo = CONFIG.SITE_URL
+    ? '<img src="' + CONFIG.SITE_URL.replace(/\/$/, '') + '/assets/logo.png" width="200" alt="openface" style="display:block;margin:0 auto 6px;width:200px;height:auto">'
+    : '<div style="text-align:center;font-family:\'Courier New\',monospace;font-weight:bold;letter-spacing:4px;font-size:26px;color:' + ink + '">openface</div>';
+  return '<div style="background:' + cream + ';padding:28px 16px;font-family:Helvetica,Arial,sans-serif">'
+   + '<div style="max-width:520px;margin:0 auto;background:#f8f5d8;border:3px solid ' + ink + ';border-radius:16px;overflow:hidden">'
+   + '<div style="padding:22px 24px 10px">' + logo
+   + '<div style="text-align:center;font-size:11px;letter-spacing:3px;color:#5b5d62">× ' + (CONFIG.CO_HOST || '').toUpperCase() + '</div></div>'
+   + '<div style="background:' + slate + ';color:' + cream + ';text-align:center;padding:14px 12px;font-family:Impact,\'Arial Narrow Bold\',sans-serif;font-size:26px;letter-spacing:1px">' + CONFIG.EVENT_NAME + '</div>'
+   + '<div style="padding:22px 24px;color:' + ink + ';font-size:15px;line-height:1.55">'
+   + (title ? '<h2 style="margin:0 0 10px;color:' + ink + ';font-family:Impact,\'Arial Narrow Bold\',sans-serif;font-weight:normal;font-size:24px;letter-spacing:.5px">' + title + '</h2>' : '')
+   + inner
+   + '<p style="color:#5b5d62;font-size:12px;margin-top:18px">' + CONFIG.HOUSE_RULES + '<br>' + CONFIG.REFUND_POLICY + '</p>'
+   + '<p style="color:#5b5d62;font-size:13px">LINE <a href="' + CONFIG.LINE_URL + '" style="color:' + gold + '">' + CONFIG.CONTACT_LINE + '</a> · โทร ' + CONFIG.CONTACT_PHONE + '</p>'
+   + '</div>'
+   + '<div style="background:' + slate + ';color:' + cream + ';text-align:center;padding:12px;font-family:Impact,\'Arial Narrow Bold\',sans-serif;font-size:22px;letter-spacing:1px">AT OPENFACE BKK</div>'
+   + '</div></div>';
+}
+
+/** Preview every template to ADMIN_EMAIL with sample data (run from the editor or the menu). */
+function sendTestEmails() {
+  const sample = { ref: CONFIG.ID_PREFIX + '0000', name: 'ทดสอบ Test', email: CONFIG.ADMIN_EMAIL, qty: 2,
+                   amount: 2 * CONFIG.PRICE_PER_PERSON, entryCode: CONFIG.CODE_PREFIX + 'TEST',
+                   reason: CONFIG.PROBLEMS[0].key, note: 'ตัวอย่างข้อความถึงลูกค้า' };
+  ['RECEIVED', 'APPROVED', 'PROBLEM'].forEach(k => sendTemplate_(k, sample));
+}
+
+/* ======================================================================
+ *  SHEET MENU + ONE-TIME SETUP
+ * ====================================================================== */
+
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('openface')
+    .addItem('ส่งอีเมลซ้ำ (แถวที่เลือก) · Resend email for selected rows', 'menuResend')
+    .addItem('ส่งอีเมลที่ยังค้าง · Send any missing emails', 'menuSweep')
+    .addItem('ส่งอีเมลตัวอย่างหาแอดมิน · Send test emails to admin', 'sendTestEmails')
+    .addSeparator()
+    .addItem('Setup / repair sheet', 'setup')
+    .addToUi();
+}
+
+function menuResend() {
+  const sh = SpreadsheetApp.getActiveSheet();
+  if (sh.getName() !== CONFIG.SHEET_NAME) return SpreadsheetApp.getUi().alert('เปิดชีต ' + CONFIG.SHEET_NAME + ' ก่อน');
+  const rg = sh.getActiveRange();
+  const res = [];
+  for (let r = Math.max(2, rg.getRow()); r < rg.getRow() + rg.getNumRows(); r++) res.push('Row ' + r + ': ' + processRow_(sh, r, true, false));
+  SpreadsheetApp.getUi().alert(res.join('\n'));
+}
+
+/** Catches rows edited while the trigger was off, or pasted in bulk. */
+function menuSweep() {
+  const sh = getSheet_();
+  const res = [];
+  for (let r = 2; r <= sh.getLastRow(); r++) {
+    const x = processRow_(sh, r, false, false);
+    if (/→|FAILED/.test(x)) res.push('Row ' + r + ': ' + x);
+  }
+  SpreadsheetApp.getUi().alert(res.length ? res.join('\n') : 'ไม่มีอีเมลค้าง · Nothing to send');
+}
 
 function setup() {
-  getSheet_();
+  const sh = getSheet_();
   getFolder_();
+  styleSheet_(sh);
   ScriptApp.getProjectTriggers()
-    .filter(t => t.getHandlerFunction() === 'onStatusEdit')
+    .filter(t => ['onStatusEdit', 'onAdminEdit'].indexOf(t.getHandlerFunction()) >= 0)
     .forEach(t => ScriptApp.deleteTrigger(t));
-  ScriptApp.newTrigger('onStatusEdit').forSpreadsheet(ss_()).onEdit().create();
+  ScriptApp.newTrigger('onAdminEdit').forSpreadsheet(ss_()).onEdit().create();
 }
 
-/* ---------- Helpers ---------- */
+function styleSheet_(sh) {
+  const N = 2000;
+  sh.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold').setBackground('#33363c').setFontColor('#f2efc4');
+  ['Payment Status', 'Problem Reason', 'Note to Guest'].forEach(h =>
+    sh.getRange(1, COL(h)).setBackground('#c98a3c').setFontColor('#2f3640'));
+  sh.getRange(2, COL('Payment Status'), N, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInList([STATUS.PENDING, STATUS.APPROVED, STATUS.PROBLEM, STATUS.CANCELLED], true).build());
+  sh.getRange(2, COL('Problem Reason'), N, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInList(CONFIG.PROBLEMS.map(p => p.key), true).setAllowInvalid(false).build());
+  const rng = sh.getRange(2, COL('Payment Status'), N, 1);
+  const colors = [[STATUS.APPROVED, '#d4ecd1', '#1e5a2a'], [STATUS.PENDING, '#fbe6bf', '#7a4b0c'],
+                  [STATUS.PROBLEM, '#f7d2c8', '#8a2b1a'], [STATUS.CANCELLED, '#e1e1e1', '#666666']];
+  const keep = sh.getConditionalFormatRules().filter(rule =>
+    !rule.getRanges().some(r => r.getColumn() === COL('Payment Status')));
+  sh.setConditionalFormatRules(keep.concat(colors.map(c => SpreadsheetApp.newConditionalFormatRule()
+    .whenTextEqualTo(c[0]).setBackground(c[1]).setFontColor(c[2]).setRanges([rng]).build())));
+  sh.getRange(2, COL('Slip Time'), N, 1).setNumberFormat('d/mm/yyyy hh:mm');
+  sh.getRange(2, COL('Updated At'), N, 1).setNumberFormat('d/mm/yyyy hh:mm');
+  sh.setColumnWidth(COL('Problem Reason'), 240);
+  sh.setColumnWidth(COL('Email Log'), 260);
+}
+
+/* ======================================================================
+ *  HELPERS
+ * ====================================================================== */
+
+function rowObj_(sh, row) {
+  const v = sh.getRange(row, 1, 1, HEADERS.length).getValues()[0];
+  const g = h => v[COL(h) - 1];
+  return {
+    row: row, ref: String(g('Booking Ref') || ''), name: String(g('Full Name') || ''), phone: String(g('Phone') || ''),
+    email: String(g('Email') || '').trim(), qty: g('Attendees'), amount: g('Amount (THB)'),
+    status: String(g('Payment Status') || ''), reason: String(g('Problem Reason') || ''), note: String(g('Note to Guest') || ''),
+    entryCode: String(g('Entry Code') || ''), log: String(g('Email Log') || ''), internal: String(g('Internal Note') || ''),
+    slipLink: String(g('Slip Link') || ''), transRef: String(g('Trans Ref') || ''), autoCheck: String(g('Auto Check') || '')
+  };
+}
+
+function logEmail_(sh, row, text) {
+  const cell = sh.getRange(row, COL('Email Log'));
+  const prev = String(cell.getValue() || '');
+  cell.setValue((prev ? prev + '\n' : '') + Utilities.formatDate(new Date(), TZ, 'd/MM HH:mm') + ' ' + text);
+}
+
+function problemOf_(key) {
+  return CONFIG.PROBLEMS.filter(p => p.key === key)[0]
+      || { key: String(key), th: String(key), fix: 'ทัก LINE ' + CONFIG.CONTACT_LINE, reupload: true };
+}
+
+function newEntryCode_(sh) {
+  const n = sh.getLastRow() - 1;
+  const used = n > 0 ? sh.getRange(2, COL('Entry Code'), n, 1).getValues().map(x => String(x[0])) : [];
+  const abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  for (let i = 0; i < 50; i++) {
+    let c = CONFIG.CODE_PREFIX;
+    for (let j = 0; j < 4; j++) c += abc.charAt(Math.floor(Math.random() * abc.length));
+    if (used.indexOf(c) < 0) return c;
+  }
+  throw new Error('Could not create a unique entry code');
+}
+
+function findRowByRef_(ref) {
+  const sh = getSheet_();
+  const n = sh.getLastRow() - 1;
+  if (n <= 0) return 0;
+  const ids = sh.getRange(2, COL('Booking Ref'), n, 1).getValues();
+  for (let i = 0; i < n; i++) if (String(ids[i][0]).toUpperCase() === ref) return i + 2;
+  return 0;
+}
+
+function saveSlip_(dataUrl, mime, baseName) {
+  const m = mime || 'image/jpeg';
+  const ext = /png/.test(m) ? '.png' : /pdf/.test(m) ? '.pdf' : '.jpg';
+  const b64 = String(dataUrl).split(',').pop();
+  const blob = Utilities.newBlob(Utilities.base64Decode(b64), m, String(baseName).slice(0, 80) + ext);
+  return getFolder_().createFile(blob).getUrl();
+}
+
+/** Last 9 digits, so 0812345678, 081-234-5678 and +66812345678 all match. */
+function phoneKey_(p) { return String(p || '').replace(/\D/g, '').slice(-9); }
+
+function maskName_(s) {
+  const parts = String(s || '').trim().split(/\s+/);
+  return parts[0] + (parts[1] ? ' ' + parts[1].charAt(0) + '.' : '');
+}
+
+function throttle_(key, max, seconds) {
+  const cache = CacheService.getScriptCache();
+  const n = Number(cache.get(key) || 0) + 1;
+  if (n > max) throw new Error('ลองใหม่อีกครั้งในอีกสักครู่ / Too many tries, please wait a few minutes');
+  cache.put(key, String(n), seconds);
+}
+
+function esc_(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 
 function slipCheckReady_() {
   const sc = CONFIG.SLIP_CHECK;
@@ -420,15 +834,17 @@ function getCachedSlip_(token) {
   return s ? JSON.parse(s) : null;
 }
 
+/** Booking ref that already used this bank transaction (ignores Cancelled rows). */
 function findTransRef_(ref) {
   const sh = getSheet_();
   const n = sh.getLastRow() - 1;
-  if (n <= 0) return null;
-  const refs = sh.getRange(2, COL('Trans Ref'), n, 1).getValues();
-  const ids  = sh.getRange(2, COL('Registration ID'), n, 1).getValues();
-  const sts  = sh.getRange(2, COL('Status'), n, 1).getValues();
+  if (n <= 0 || !ref) return null;
+  const data = sh.getRange(2, 1, n, HEADERS.length).getValues();
   for (let i = 0; i < n; i++) {
-    if (String(refs[i][0]).replace(/^'/, '') === ref && sts[i][0] !== 'Rejected') return ids[i][0];
+    const v = data[i];
+    if (v[COL('Payment Status') - 1] === STATUS.CANCELLED) continue;
+    const refs = String(v[COL('Trans Ref') - 1]).replace(/^'/, '').split(/[,\s]+/);
+    if (refs.indexOf(ref) >= 0) return v[COL('Booking Ref') - 1];
   }
   return null;
 }
@@ -461,17 +877,22 @@ function ss_() {
   return CONFIG.SPREADSHEET_ID ? SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
 }
 
+/** Returns the Registrations sheet with the current headers. An older layout is renamed, never deleted. */
 function getSheet_() {
   const ss = ss_();
-  let sh = ss.getSheetByName(CONFIG.SHEET_NAME) || ss.insertSheet(CONFIG.SHEET_NAME);
+  let sh = ss.getSheetByName(CONFIG.SHEET_NAME);
+  if (sh && sh.getLastRow() > 0) {
+    const head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    if (head.slice(0, HEADERS.length).join('|') !== HEADERS.join('|')) {
+      if (sh.getLastRow() === 1) { sh.clear(); }
+      else { sh.setName(CONFIG.SHEET_NAME + ' (old ' + Utilities.formatDate(new Date(), TZ, 'd MMM HH:mm') + ')'); sh = null; }
+    }
+  }
+  if (!sh) sh = ss.insertSheet(CONFIG.SHEET_NAME);
   if (sh.getLastRow() === 0) {
     sh.appendRow(HEADERS);
     sh.setFrozenRows(1);
-    sh.getRange(1, 1, 1, HEADERS.length)
-      .setFontWeight('bold').setBackground('#2b2622').setFontColor('#f4efdf');
-    const rule = SpreadsheetApp.newDataValidation()
-      .requireValueInList(['Pending', 'Confirmed', 'Rejected', 'Refunded'], true).build();
-    sh.getRange(2, COL('Status'), 2000, 1).setDataValidation(rule);
+    styleSheet_(sh);
   }
   return sh;
 }
@@ -491,44 +912,6 @@ function countSeats_() {
   const n = sh.getLastRow() - 1;
   if (n <= 0) return 0;
   const data = sh.getRange(2, 1, n, HEADERS.length).getValues();
-  return data.reduce((sum, r) => {
-    const st = r[COL('Status') - 1];
-    return (st === 'Rejected' || st === 'Refunded') ? sum : sum + (Number(r[COL('Attendees') - 1]) || 0);
-  }, 0);
-}
-
-function emailHtml_(name, regId, qty, amount, confirmed) {
-  const title = confirmed ? "YOU'RE IN! · ยืนยันการชำระเงินเรียบร้อย" : 'ได้รับการลงทะเบียนแล้ว';
-  const body  = confirmed
-    ? 'เราตรวจสอบการชำระเงินของคุณเรียบร้อยแล้ว กรุณาแสดงรหัสลงทะเบียนนี้และบัตรประชาชนที่หน้างาน แล้วพบกันคืนฮาโลวีนค่ะ'
-    : 'เราได้รับข้อมูลและสลิปของคุณแล้ว ทีมงานจะตรวจสอบและส่งอีเมลยืนยันอีกครั้งค่ะ';
-  const ink = '#33363c', slate = '#2f3640', cream = '#f2efc4', gold = '#8f5626';
-  const row = (k, v) => '<tr><td style="padding:6px 16px 6px 0;color:#5b5d62">' + k + '</td><td style="padding:6px 0;color:' + ink + '">' + v + '</td></tr>';
-  const logo = CONFIG.SITE_URL
-    ? '<img src="' + CONFIG.SITE_URL.replace(/\/$/, '') + '/assets/logo.png" width="200" alt="openface" style="display:block;margin:0 auto 6px;width:200px;height:auto">'
-    : '<div style="text-align:center;font-family:\'Courier New\',monospace;font-weight:bold;letter-spacing:4px;font-size:26px;color:' + ink + '">openface</div>';
-  return '<div style="background:' + cream + ';padding:28px 16px;font-family:Helvetica,Arial,sans-serif">'
-   + '<div style="max-width:520px;margin:0 auto;background:#f8f5d8;border:3px solid ' + ink + ';border-radius:16px;overflow:hidden">'
-   + '<div style="padding:22px 24px 10px">' + logo
-   + '<div style="text-align:center;font-size:11px;letter-spacing:3px;color:#5b5d62">× ' + (CONFIG.CO_HOST || '').toUpperCase() + '</div></div>'
-   + '<div style="background:' + slate + ';color:' + cream + ';text-align:center;padding:14px 12px;font-family:Impact,\'Arial Narrow Bold\',sans-serif;font-size:26px;letter-spacing:1px">' + CONFIG.EVENT_NAME + '</div>'
-   + '<div style="padding:22px 24px">'
-   + '<h2 style="margin:0 0 8px;color:' + ink + ';font-family:Impact,\'Arial Narrow Bold\',sans-serif;font-weight:normal;font-size:24px;letter-spacing:.5px">' + title + '</h2>'
-   + '<p style="color:' + ink + '">สวัสดีคุณ ' + name + ',</p>'
-   + '<p style="color:' + ink + '">' + body + '</p>'
-   + '<table style="font-size:14px;border-collapse:collapse">'
-   + row('Registration ID', '<b style="font-size:18px;letter-spacing:1px">' + regId + '</b>')
-   + row('Date / Time', 'Sat 31 Oct 2026 · ' + (CONFIG.TIME_EN || CONFIG.EVENT_TIME))
-   + row('Schedule', CONFIG.EVENT_TIME)
-   + row('Venue', 'openface BKK · ' + CONFIG.VENUE.replace(/^openface · /, '') + ' · <a href="' + CONFIG.MAP_URL + '" style="color:' + gold + '">Map</a>')
-   + row('Includes', CONFIG.PRICE_INCLUDES)
-   + row('Dress code', CONFIG.DRESS_CODE)
-   + row('Attendees', qty)
-   + row('Amount', Number(amount).toLocaleString() + ' THB')
-   + '</table>'
-   + '<p style="color:#5b5d62;font-size:12px;margin-top:16px">' + CONFIG.HOUSE_RULES + '<br>' + CONFIG.REFUND_POLICY + '</p>'
-   + '<p style="color:#5b5d62;font-size:13px;margin-top:16px">LINE <a href="' + CONFIG.LINE_URL + '" style="color:' + gold + '">' + CONFIG.CONTACT_LINE + '</a> · โทร ' + CONFIG.CONTACT_PHONE + '</p>'
-   + '</div>'
-   + '<div style="background:' + slate + ';color:' + cream + ';text-align:center;padding:12px;font-family:Impact,\'Arial Narrow Bold\',sans-serif;font-size:22px;letter-spacing:1px">AT OPENFACE BKK</div>'
-   + '</div></div>';
+  return data.reduce((sum, r) =>
+    r[COL('Payment Status') - 1] === STATUS.CANCELLED ? sum : sum + (Number(r[COL('Attendees') - 1]) || 0), 0);
 }

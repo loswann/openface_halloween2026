@@ -2,59 +2,80 @@
 
 The registration site for **ANNYONG 안녕 SPOOKY HALLOWEEN NIGHT** at openface BKK: **Sat 31 Oct 2026, 10 PM – 2 AM (register 22:00, DJ 22:30), DJ, free-flow alcohol, Korean bites. Dress code: everything Korean. 1,200 THB.**
 
-The look follows the event poster: cream paper, charcoal ink, the slate bottom band, heavy condensed type, and the croissant-ghost DJ as the animated mascot.
+The page (`index.html`) is hosted on **Vercel**. The **Google Apps Script** (`apps-script/Code.gs`) is the backend: it writes to the Google Sheet, saves slips to Drive and sends the emails.
 
-The page itself (`index.html`) is hosted on **Vercel**. The **Google Apps Script** stays as the backend; it writes to the Google Sheet, saves slips to Drive, sends the emails and runs the SlipOK slip check.
+## How a booking flows
 
-```
-Customer phone ──► Vercel (index.html + config.js)
-                       │  fetch POST {action, data}
-                       ▼
-              Google Apps Script web app (apps-script/Code.gs)
-                 ├─ Google Sheet "Registrations"
-                 ├─ Drive folder (payment slips)
-                 ├─ Gmail (confirmation + admin emails)
-                 └─ SlipOK (verifies slip QR against bank data)
-```
+| # | Who | What happens |
+|---|---|---|
+| 1 | Guest | Registers on the site, pays with the K SHOP QR and uploads the slip. A row is added to the Sheet with **Payment Status = Pending**. The guest gets a "we received your registration" email. The admin gets a notice. |
+| 2 | Admin | Opens the Sheet, opens the slip (`Slip Link`) and checks it against the **bank statement** (amount, time, sender). The `Auto Check` column is only a hint. |
+| 3a | Admin | Sets **Payment Status → Approved**. An entry code (e.g. `ANN-7KQ3`) is created and the **APPROVED** email goes out with it. |
+| 3b | Admin | Sets **Payment Status → Problem** and picks a **Problem Reason** (picking a reason alone also sets Problem). Optional: type a message in **Note to Guest** *first*. The **PROBLEM** email goes out with the reason, how to fix it and the status link. |
+| 4 | Guest | Goes to the site → **Check status** (`/#status`) → types the phone number. They see Pending / Approved + entry code / Problem + what to do. For most problems they can **upload a new slip** there; the row goes back to **Pending** and the admin gets a notice. |
 
+Each email is sent once per status. The `Email Log` column records every email. To send one again, select the row and use **openface ▸ Resend email for selected rows**.
+
+### Sheet columns the admin edits
+| Column | Use |
+|---|---|
+| **Payment Status** | `Pending` · `Approved` · `Problem` · `Cancelled` (colour-coded) |
+| **Problem Reason** | Dropdown, see below |
+| **Note to Guest** | ⚠️ The guest **sees** this in the Problem email and on the status page. Fill it in *before* choosing the reason. |
+| **Internal Note** | Team only. Re-upload history is written here. |
+
+Do not edit: `Booking Ref`, `Phone`, `Entry Code`, `Email Log`.
+
+### Problem reasons (dropdown)
+| Reason | Guest sees | Guest can re-upload |
+|---|---|---|
+| Amount short – โอนไม่ครบ | ยอดโอนไม่ครบ → โอนส่วนที่ขาดแล้วแนบสลิปเพิ่ม | ✓ |
+| Amount over – โอนเกิน | ยอดโอนเกิน → ทีมงานติดต่อกลับ / ทัก LINE | – |
+| Not received – ไม่พบยอดเงินเข้า | ไม่พบยอดเงินเข้า → ตรวจกับธนาคาร แล้วแนบสลิปที่ถูกต้อง | ✓ |
+| Wrong account – โอนผิดบัญชี | โอนผิดบัญชี → ติดต่อธนาคาร ชำระใหม่ด้วย QR บนเว็บ | ✓ |
+| Unclear slip – สลิปไม่ชัด/ไม่ครบ | สลิปไม่ชัด → แนบรูปสลิปต้นฉบับจากแอป | ✓ |
+| Duplicate slip – สลิปซ้ำ | สลิปถูกใช้กับการจองอื่น | ✓ |
+| Wrong slip / date – สลิปไม่ใช่รายการนี้ | วันที่/รายการไม่ตรง → แนบสลิปของงานนี้ | ✓ |
+| Guest count – จำนวนคนไม่ตรงยอด | จำนวนคนไม่ตรงยอด → ทัก LINE | – |
+| Contact info – ข้อมูลติดต่อไม่ถูกต้อง | ข้อมูลติดต่อผิด → ทัก LINE | – |
+| Other – อื่น ๆ (ดู Note to Guest) | Shows your *Note to Guest* | ✓ |
+
+Edit the wording in `CONFIG.PROBLEMS` in Code.gs, then run **setup()** again so the dropdown updates.
+
+## Files
 | File | What it is |
 |---|---|
-| `index.html` | The site: the poster as the hero, scrolling "LET'S GET FREE FLOW!" band, registration form, K SHOP Thai QR with the amount filled in, live slip checker with the croissant-ghost mascot, confirmation page with the croissant DJ |
-| `assets/` | Poster (`poster.jpg`, `poster-540.jpg`, `og.jpg` for link previews) and the openface logo (`logo.png` in dark, `logo-cream.png` for the dark footer) |
-| `config.js` | **`API_URL`** (the Apps Script `/exec` URL) and display defaults. While `API_URL` is empty the site runs in **demo mode**: nothing is saved, and a bar at the top lets you simulate each slip result. |
-| `vercel.json` | Static hosting settings |
-| `apps-script/Code.gs` | The backend. Paste it into Apps Script. Event details, price, QR payload and SlipOK settings live in its `CONFIG`. |
+| `index.html` | The site: poster hero, registration form, K SHOP Thai QR with the amount filled in, slip upload with an optional pre-check, and the **Check status** section |
+| `assets/` | Poster and logos |
+| `config.js` | **`API_URL`** (the Apps Script `/exec` URL) and display defaults. Empty = "Registration opens soon". `?demo=1` = demo with fake data. |
+| `apps-script/Code.gs` | The backend. Event details, email templates (`CONFIG.EMAIL.TEMPLATES`), problem list and sender live in its `CONFIG`. |
 
 ## 1 · Backend (Google Apps Script)
 1. Open the event Sheet → **Extensions → Apps Script**.
-2. Replace `Code.gs` with `apps-script/Code.gs` from this repo. If an `Index` HTML file is left over from the old version, you can delete it.
-3. In **Project Settings → Script properties**, add `SLIPOK_API_KEY`. In `CONFIG.SLIP_CHECK`, set `SLIPOK_BRANCH_ID`.
-4. Run `setup()` once and approve the permissions (Sheets, Drive, Gmail, external requests).
-5. Optional: set `CONFIG.SITE_URL` to your Vercel address so the confirmation emails show the openface logo.
+2. Replace `Code.gs` with `apps-script/Code.gs` from this repo.
+3. Fill in the `// TODO` values:
+   - `EMAIL.FROM_ALIAS`: the address the letters should come from. It must already be set up under Gmail → Settings → *Send mail as* for the Google account that owns the script. Leave it empty to send from that account itself.
+   - `EMAIL.TEMPLATES`: paste the final RECEIVED / APPROVED / PROBLEM letters. They use `{{placeholders}}`; the list is in the comment above them.
+4. Run **setup()** once and approve the permissions (Sheets, Drive, Gmail). This creates the columns, the dropdowns, the colours and the trigger that sends the emails when you change the status.
+   - If the sheet already has rows in the old layout, `setup()` renames it to "Registrations (old …)" and starts a fresh one. Nothing is deleted.
+5. Run **sendTestEmails()** to receive all 3 letters at `ADMIN_EMAIL`.
 6. **Deploy → New deployment → Web app**, with *Execute as:* **Me** and *Who has access:* **Anyone**. Copy the URL ending in `/exec`.
-   - When you change `Code.gs` later, go to **Deploy → Manage deployments → Edit → New version**. That keeps the same URL.
+   - After later edits: **Deploy → Manage deployments → Edit → New version**. That keeps the same URL.
+7. Optional slip pre-check (SlipOK): add `SLIPOK_API_KEY` in Script properties and set `SLIP_CHECK.SLIPOK_BRANCH_ID`. Without it, guests upload the slip and the team checks everything.
 
 ## 2 · Point the site at the backend
-Put the `/exec` URL into `config.js`:
-```js
-API_URL: 'https://script.google.com/macros/s/XXXX/exec',
-```
-Commit it. Vercel redeploys automatically.
+Put the `/exec` URL into `config.js` (`API_URL: '…/exec'`) and commit. Vercel redeploys automatically.
 
-## 3 · Vercel (one-time)
-1. vercel.com → **Add New… → Project → Import Git Repository** → `loswann/openface_halloween2026`.
-2. Framework preset **Other**. Leave the build command and output directory empty, then click **Deploy**.
-3. Optional: add a custom domain in Project → Settings → Domains.
+## 3 · Test before announcing
+- [ ] Scan the QR for 1 guest in KBank, SCB and one other bank app. Each should show **โอเพ่น เฟซ** with 1,200 pre-filled.
+- [ ] Set `PRICE_PER_PERSON: 1` in Code.gs, deploy a new version, register with your own phone/email and pay 1 THB. The row must appear as **Pending** and the RECEIVED email must arrive.
+- [ ] Set it to **Problem** + a reason → PROBLEM email. On the site → Check status → upload a new slip → the row goes back to **Pending**.
+- [ ] Set it to **Approved** → APPROVED email with the entry code, and the code shows on Check status.
+- [ ] Set the price back to 1200 and deploy a new version.
 
-From then on, every push to `main` goes live within about 30 seconds.
-
-## 4 · Test before announcing
-- [ ] Open the site and check the demo bar is gone, which means `API_URL` is set.
-- [ ] Scan the QR for 1 guest (1,200 ฿) in KBank, SCB and one other bank app. Each should show **โอเพ่น เฟซ** with 1,200 pre-filled.
-- [ ] Do one real registration. Temporarily set `PRICE_PER_PERSON: 1` in Code.gs and pay 1 THB. Check that the row lands in the Sheet as **Confirmed**, the slip is in Drive, and both emails arrive. Then set the price back to 1200 and deploy a new version.
-- [ ] Try the same slip again. It must be rejected as a reused slip.
-
-## Notes
-- **This repo is public.** It holds no secrets: the SlipOK key lives in Script Properties, not in code. But the Sheet ID and the shop's payment QR are visible to anyone.
-- **The Apps Script URL is public**, because the site needs to call it. Every submission still has to pass the slip check or land as *Pending* for a person to review. Watch the Sheet for spam.
-- To change event details, edit `CONFIG` in Code.gs and deploy a new version. The site reads them live. `config.js` defaults are only shown for the split second before the live values load.
+## Notes and risks
+- **Status by phone number only** (as requested): anyone who knows a guest's phone number can see that guest's booking and entry code. Names are shortened on screen. To require the booking ref too, set `STATUS_REQUIRE_REF: true`.
+- **Check entry codes against the Sheet at the door.** A screenshot of someone else's code is the main way people would get in without paying.
+- **This repo is public.** It holds no secrets, but the Sheet ID and the payment QR are visible to anyone.
+- **The Apps Script URL is public.** Nothing is ever approved automatically, but watch for spam rows. Status lookups are rate-limited.
+- **Gmail quota:** about 100 emails a day on a free Gmail account, 1,500 on Google Workspace. Each booking uses 2 to 3 emails.
