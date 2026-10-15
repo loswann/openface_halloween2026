@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#2f3640">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Door check-in · ANNYEONG · openface</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M100 8 C66 8 48 38 42 84 C37 122 28 156 16 186 C70 190 130 190 184 186 C172 156 163 122 158 84 C152 38 134 8 100 8 Z' fill='%23ecebe4'/%3E%3Cpath d='M100 27 C84 27 74 47 72 79 C70 111 76 145 84 172 L116 172 C124 145 130 111 128 79 C126 47 116 27 100 27 Z' fill='%23c4823d'/%3E%3Cellipse cx='86' cy='72' rx='12' ry='8.5' fill='%2318191b'/%3E%3Cellipse cx='114' cy='72' rx='12' ry='8.5' fill='%2318191b'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Black+Han+Sans&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<script src="door.js" defer></script>
+<style>
+/* Same poster palette as the registration site */
+:root{
+  --paper:#f2efc4; --paper2:#f8f5d8; --field:#fffcea; --ink:#33363c; --ink2:#5b5d62; --slate:#2f3640; --slate2:#3d4550;
+  --cream:#f6f1c9; --gold:#c98a3c; --gold-d:#8f5626; --line:#d9d4a6;
+  --ok:#17a34a; --warn:#ffb81c; --bad:#e0402b; --grey:#8a8f99;
+  --display:'Anton','Prompt',sans-serif; --kr:'Black Han Sans','Anton',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:'Prompt',system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  min-height:100vh;min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;opacity:.13;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+button,input{font-family:inherit}
+.hidden{display:none!important}
+.page{max-width:480px;margin:0 auto}
+.disp{font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.5px}
+
+/* top band */
+.top{position:sticky;top:0;z-index:20;background:var(--slate);color:var(--cream);border-bottom:3px solid var(--ink);padding:calc(10px + env(safe-area-inset-top)) 16px 10px}
+.top .row{max-width:448px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.top img{height:26px;width:auto;display:block}
+.top .ttl{font-family:var(--display);font-size:22px;letter-spacing:1px;line-height:1;flex-grow:1}
+.top .ttl .kr{font-family:var(--kr);color:var(--gold);font-size:18px;margin-left:4px}
+.net{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#24493a;color:#bff0cf}
+.net::before{content:"";width:8px;height:8px;border-radius:50%;background:#3ddc84}
+.net.off{background:#5a2620;color:#ffd2c9}.net.off::before{background:#ff6a55;animation:pulse 1s infinite}
+.offbar{background:var(--bad);color:#fff;font-weight:700;font-size:14px;line-height:1.45;text-align:center;padding:10px 16px}
+
+.card{margin:16px 16px 0;padding:18px;background:var(--paper2);border:2.5px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 var(--ink);display:flex;flex-direction:column;gap:12px}
+h2{margin:0;font-family:var(--display);font-weight:400;font-size:26px;line-height:1.05;text-transform:uppercase;letter-spacing:.5px}
+h2 small{display:block;font-family:'Prompt',sans-serif;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink2);margin-top:3px}
+.lbl{font-size:13px;font-weight:500;color:var(--ink2)}
+.field{display:flex;flex-direction:column;gap:6px}
+input[type=text],input[type=password],input[type=search],input[type=tel]{width:100%;height:54px;padding:0 14px;border-radius:12px;border:2px solid var(--ink);background:var(--field);color:var(--ink);font-size:18px}
+input:focus{outline:3px solid var(--gold);outline-offset:1px}
+input::placeholder{color:#9a9785}
+.pin{font-family:var(--display);font-size:28px!important;letter-spacing:8px;text-align:center}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:56px;padding:6px 16px;border-radius:999px;border:2.5px solid var(--ink);background:var(--ink);color:var(--cream);font-size:17px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:4px 4px 0 var(--gold-d);transition:transform .1s,box-shadow .1s;-webkit-tap-highlight-color:transparent}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--gold-d)}
+.btn:disabled{background:#d9d4b3;border-color:#b9b494;color:#6f6c5b;box-shadow:none;cursor:default;transform:none}
+.btn.ghost{background:var(--field);color:var(--ink);font-weight:600;min-height:48px;font-size:15px;box-shadow:none}
+.btn.gold{background:var(--gold);color:var(--ink)}
+.btn.sm{min-height:44px;width:auto;font-size:14px;padding:4px 16px;box-shadow:none}
+.err{color:#a8412f;font-size:14px;font-weight:600;min-height:1em;line-height:1.45}
+.hint{font-size:13px;color:var(--ink2);line-height:1.5;margin:0}
+
+/* stats */
+.stats{margin:14px 16px 0;padding:12px 16px;border-radius:16px;background:var(--slate);color:var(--cream);border:2.5px solid var(--ink);display:flex;flex-direction:column;gap:8px}
+.stats .nums{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.stats b{font-family:var(--display);font-weight:400;font-size:40px;line-height:1;color:var(--cream)}
+.stats b span{font-size:24px;color:#b9bdc6}
+.stats .sub{font-size:12px;color:#c9ccd3;text-align:right;line-height:1.4}
+.bar{height:10px;border-radius:99px;background:#4a525e;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--gold);border-radius:99px;transition:width .5s}
+
+/* scanner */
+.cam{position:relative;width:100%;aspect-ratio:1/1;border-radius:14px;overflow:hidden;background:#1d2026;border:2.5px solid var(--ink)}
+.cam video{width:100%;height:100%;object-fit:cover;display:block}
+.cam .frame{position:absolute;inset:16%;pointer-events:none}
+.cam .frame i{position:absolute;width:34px;height:34px;border:5px solid var(--gold)}
+.cam .frame i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0;border-top-left-radius:10px}
+.cam .frame i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0;border-top-right-radius:10px}
+.cam .frame i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0;border-bottom-left-radius:10px}
+.cam .frame i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0;border-bottom-right-radius:10px}
+.cam .laser{position:absolute;left:18%;right:18%;height:3px;background:var(--gold);box-shadow:0 0 12px var(--gold);top:20%;animation:laser 1.8s ease-in-out infinite alternate}
+.cam .idle{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--cream);text-align:center;padding:20px;font-size:14px;line-height:1.5}
+.cam .idle .disp{font-size:24px}
+.cam .busy{position:absolute;inset:0;background:rgba(29,32,38,.6);display:flex;align-items:center;justify-content:center;color:var(--cream);font-weight:700}
+.camrow{display:flex;gap:8px}
+.camrow .btn{flex:1}
+
+/* code entry */
+.code{display:flex;align-items:stretch;border:2px solid var(--ink);border-radius:12px;overflow:hidden;background:var(--field)}
+.code span{display:flex;align-items:center;padding:0 4px 0 14px;font-family:var(--display);font-size:28px;color:var(--ink2)}
+.code input{border:0!important;border-radius:0!important;height:60px!important;font-family:var(--display);font-size:28px!important;letter-spacing:4px;text-transform:uppercase;padding-left:2px!important;background:transparent!important}
+.code input:focus{outline:none}
+.code:focus-within{outline:3px solid var(--gold);outline-offset:1px}
+
+/* search results / history */
+.list{display:flex;flex-direction:column;gap:8px}
+.item{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;background:var(--field);border:2px solid var(--ink)}
+.item .who{flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.item .who b{font-size:16px;line-height:1.25;overflow-wrap:anywhere}
+.item .meta{font-size:12.5px;color:var(--ink2);line-height:1.45}
+.dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;background:var(--grey)}
+.dot.valid{background:var(--ok)}.dot.already{background:var(--warn)}.dot.not_approved,.dot.not_found{background:var(--bad)}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:700;color:#fff;background:var(--grey);margin-right:4px}
+.tag.ok{background:var(--ok)}.tag.warn{background:var(--warn);color:#2b1d00}.tag.bad{background:var(--bad)}
+
+/* result screen */
+.res{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  padding:calc(24px + env(safe-area-inset-top)) 22px calc(24px + env(safe-area-inset-bottom));text-align:center;color:#fff;background:var(--slate);overflow:auto}
+.res.valid{background:var(--ok)}.res.already{background:var(--warn);color:#2b1d00}.res.not_approved,.res.not_found{background:var(--bad)}
+.res.error{background:var(--slate);color:var(--cream)}.res.confirm{background:var(--paper);color:var(--ink)}
+.res .ico{width:120px;height:120px;border-radius:50%;border:6px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:70px;line-height:1;font-weight:700;animation:pop .45s cubic-bezier(.2,1.6,.4,1) both}
+.res h1{margin:6px 0 0;font-family:var(--display);font-weight:400;font-size:clamp(40px,12vw,56px);line-height:.95;text-transform:uppercase;letter-spacing:.5px}
+.res .th{font-size:20px;font-weight:700;margin-top:-2px}
+.res .admit{font-family:var(--display);font-size:clamp(64px,22vw,96px);line-height:.9;margin-top:6px}
+.res .admit small{display:block;font-family:'Prompt',sans-serif;font-size:16px;font-weight:600}
+.res .nm{font-size:24px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+.res .mono{font-family:var(--display);font-size:22px;letter-spacing:2px;opacity:.9}
+.res .note{max-width:380px;font-size:15px;line-height:1.5;padding:10px 14px;border-radius:12px;background:rgba(0,0,0,.18);font-weight:600}
+.res.already .note,.res.confirm .note{background:rgba(255,255,255,.55)}
+.res .acts{width:100%;max-width:380px;display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.res .btn{border-color:rgba(0,0,0,.55);background:#1d2026;color:#fff;box-shadow:none;min-height:64px;font-size:19px}
+.res .btn.ghost{background:transparent;color:inherit;border-color:currentColor;min-height:52px;font-size:16px}
+.res.confirm .btn{background:var(--ok);border-color:var(--ink)}
+.res.confirm .btn.ghost{background:transparent;color:var(--ink)}
+.item .btn.sm{flex-shrink:0;white-space:nowrap}
+.top .offbar{margin:10px -16px -10px}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:70;background:var(--ink);color:var(--cream);padding:12px 18px;border-radius:14px;font-size:14px;font-weight:600;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.3);text-align:center;border:2px solid var(--gold)}
+footer{margin-top:28px;background:var(--slate);color:var(--cream);padding:20px 16px calc(26px + env(safe-area-inset-bottom));text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;border-top:3px solid var(--ink)}
+footer .at{font-family:var(--display);font-size:34px;line-height:1;letter-spacing:.5px}
+footer .ver{font-size:11px;color:#8b91a0;font-variant-numeric:tabular-nums}footer .ver b{color:#b9bdc6}footer .ver .warn{color:#e8a87c}
+footer .who{font-size:13px;color:#d6d2b0}
+footer .btn.sm{background:transparent;color:var(--cream);border-color:#8b91a0}
+.demo{background:var(--gold);color:var(--ink);text-align:center;font-size:13px;font-weight:700;padding:6px}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes laser{from{top:18%}to{top:80%}}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="demo hidden" id="demoBar">โหมดทดลอง · DEMO – ข้อมูลจำลอง ไม่บันทึกจริง (PIN 123456 · ลอง ANN-DEMO01 / DEMO02 / DEMO03)</div>
+<header class="top">
+  <div class="row">
+    <img src="assets/logo-cream.png" alt="openface">
+    <div class="ttl">DOOR<span class="kr">입장</span></div>
+    <span class="net" id="net">ONLINE</span>
+  </div>
+  <div class="offbar hidden" id="offBar" role="alert">ออฟไลน์ · OFFLINE – ตรวจรหัสไม่ได้ อย่าให้เข้างานจากหน้าจอนี้<br>Codes can't be checked. Don't admit anyone from this screen.</div>
+</header>
+
+<main class="page">
+  <!-- LOGIN -->
+  <section id="login" class="hidden">
+    <form class="card" id="loginForm" autocomplete="off">
+      <h2>Staff check-in<small>ANNYEONG SPOOKY HALLOWEEN NIGHT · Sat 31 Oct</small></h2>
+      <div class="field">
+        <label class="lbl" for="staff">ชื่อจุด / ชื่อคุณ · Door or your name</label>
+        <input type="text" id="staff" maxlength="24" placeholder="เช่น Door 1 · Nok" autocomplete="nickname">
+      </div>
+      <div class="field">
+        <label class="lbl" for="pin">PIN ทีมงาน · Staff PIN</label>
+        <input type="password" id="pin" class="pin" inputmode="numeric" autocomplete="current-password" maxlength="40" required placeholder="••••••">
+      </div>
+      <div class="err" id="loginErr" role="alert"></div>
+      <button type="submit" class="btn" id="loginBtn">เข้าสู่ระบบ · Log in</button>
+      <p class="hint">ใช้เฉพาะทีมงานหน้างาน · Door staff only. Login stays on this phone until the night is over, or until you log out.</p>
+    </form>
+  </section>
+
+  <!-- MAIN -->
+  <section id="main" class="hidden">
+    <div class="stats" aria-live="polite">
+      <div class="nums">
+        <b id="stIn">–<span> / –</span></b>
+        <div class="sub" id="stSub">เข้างานแล้ว · guests in</div>
+      </div>
+      <div class="bar"><i id="stBar"></i></div>
+    </div>
+
+    <div class="card">
+      <h2>Scan QR<small>สแกน QR รหัสเข้างานจากมือถือแขก</small></h2>
+      <div class="cam" id="cam">
+        <video id="video" playsinline muted></video>
+        <div class="frame hidden" id="frame"><i></i><i></i><i></i><i></i></div>
+        <div class="laser hidden" id="laser"></div>
+        <div class="idle" id="camIdle"><span class="disp">กล้องปิดอยู่ · Camera off</span><span id="camMsg">กดเปิดกล้องด้านล่าง</span></div>
+        <div class="busy hidden" id="camBusy">กำลังตรวจ… · Checking…</div>
+      </div>
+      <div class="camrow">
+        <button type="button" class="btn" id="camBtn">เปิดกล้อง · Start camera</button>
+        <button type="button" class="btn ghost hidden" id="torchBtn" style="flex:0 0 auto;width:auto" aria-label="Flashlight">🔦</button>
+      </div>
+    </div>
+
+    <form class="card" id="codeForm" autocomplete="off">
+      <h2>Type code<small>พิมพ์รหัสเข้างาน (กรณีสแกนไม่ได้)</small></h2>
+      <div class="code"><span>ANN-</span><input type="text" id="codeIn" maxlength="12" placeholder="7KQ3XP" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="go" aria-label="Entry code"></div>
+      <button type="submit" class="btn">ตรวจรหัส · Check code</button>
+    </form>
+
+    <form class="card" id="searchForm" autocomplete="off">
+      <h2>Find guest<small>ค้นหาด้วยชื่อ เบอร์โทร หรือเลขที่การจอง</small></h2>
+      <input type="search" id="q" maxlength="60" placeholder="ชื่อ / เบอร์ 4 ตัวท้าย / OF-HW26-0012" enterkeyhint="search" aria-label="Search">
+      <button type="submit" class="btn ghost" id="searchBtn">ค้นหา · Search</button>
+      <div class="err" id="searchErr" role="alert"></div>
+      <div class="list" id="results"></div>
+      <p class="hint">ตรวจบัตรประชาชนให้ตรงชื่อก่อนกดเช็คอิน · Match the ID card to the booking name before checking in from search.</p>
+    </form>
+
+    <div class="card">
+      <h2>Recent<small>รายการล่าสุดบนเครื่องนี้ · this phone only</small></h2>
+      <div class="list" id="history"><p class="hint">ยังไม่มี · Nothing yet</p></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="at">AT OPENFACE BKK</div>
+  <div class="who hidden" id="whoLine"></div>
+  <button type="button" class="btn sm hidden" id="logoutBtn">ออกจากระบบ · Log out</button>
+  <div class="ver" id="verLine"></div>
+</footer>
+
+<div class="res hidden" id="res" role="alertdialog" aria-modal="true" aria-live="assertive"></div>
+</body>
+</html>

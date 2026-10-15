@@ -240,6 +240,9 @@ footer .fine{font-size:11px;color:#b9bdc6;line-height:1.7}
 .bk-meta{font-size:13px;color:var(--ink2)}
 .bk .code{align-self:center;text-align:center}
 .bk .code .regid{font-size:36px;letter-spacing:4px}
+.bk .codeqr{align-self:center;padding:14px;background:#fff;border:2.5px solid var(--ink);border-radius:14px;line-height:0}
+.bk .codeqr img,.bk .codeqr canvas{display:block;width:200px;height:200px}
+.bk p.qrcap{text-align:center;font-size:13px;font-weight:600;color:var(--ink2);margin-top:-4px}
 .bk p{margin:0;font-size:14px;line-height:1.6}
 .bk .fixbox{padding:10px 12px;border-radius:12px;background:var(--badbg);border:1.5px solid var(--bad);font-size:14px;line-height:1.6}
 .bk .fixbox .fix{color:var(--gold-d);font-weight:600}
@@ -457,8 +460,8 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 /* ================= version =================
    Bump on every release: MAJOR = booking process changes · MINOR = feature / wording / flow · PATCH = fix only.
    Keep CODE_VERSION in apps-script/Code.gs on the same MAJOR.MINOR.                                         */
-const APP_VERSION = '2.9.2';
-const APP_DATE = '14 Oct 2026';
+const APP_VERSION = '2.10.0';
+const APP_DATE = '15 Oct 2026';
 /* ================= the croissant DJ · crescent + record halo (from the poster) =================
    croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),
    'happy' (all good), 'oops' (something's wrong), 'chill' (idle bob)          */
@@ -1094,6 +1097,7 @@ function renderStatus(r) {
     let body = '';
     if (b.status === 'Approved') {
       body = `<div class="code"><div class="lbl">รหัสเข้างาน / Entry code</div><div class="regid stamp">${esc(b.entryCode || '-')}</div></div>`
+        + (b.entryCode ? `<div class="codeqr" data-qr="${esc(b.entryCode)}" role="img" aria-label="QR ${esc(b.entryCode)}"></div><p class="qrcap">แสดง QR นี้ให้ทีมงานสแกนที่หน้างาน · Show this QR at the door</p>` : '')
         + '<p>แสดงรหัสนี้พร้อมบัตรประชาชนที่หน้างาน (ทุกท่าน 20+) · ลงทะเบียน 22:00 · DJ 22:30<br>Dress code: Everything Korean 👻</p>';
     } else if (b.status === 'Problem' && b.problem) {
       body = `<div class="fixbox"><b>${esc(b.problem.th)}</b>${b.problem.note ? '<br>' + esc(b.problem.note) : ''}`
@@ -1109,6 +1113,17 @@ function renderStatus(r) {
       + `<span class="bk-ref">${esc(b.ref)}</span><span class="bk-meta">${esc(b.name)} · ${esc(b.qty)} ท่าน · ${fmt(b.amount)} ฿${b.submitted ? ' · ' + esc(b.submitted) : ''}</span>`
       + `<span class="${L[0]}" style="align-self:flex-start">${L[1]}</span></div></div>${body}</div>`;
   }).join('');
+  drawCodeQRs();
+}
+/** Entry-code QR for the door scanner (same QR library as the payment QR). */
+function drawCodeQRs() {
+  const boxes = document.querySelectorAll('.codeqr[data-qr]:not([data-done])');
+  if (!boxes.length) return;
+  if (typeof QRCode === 'undefined') return setTimeout(drawCodeQRs, 400);
+  boxes.forEach(el => {
+    el.dataset.done = '1';
+    new QRCode(el, { text: el.dataset.qr, width: 200, height: 200, colorDark: '#1b1815', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  });
 }
 $('stResults').addEventListener('click', e => {
   const b = e.target.closest('[data-re]'); if (!b) return;
@@ -1149,7 +1164,7 @@ $('reInput').addEventListener('change', async e => {
 });
 function demoStatus(phone) {
   const last = phone.slice(-1), base = { ref: 'DEMO-0001', name: 'ทดสอบ ร.', qty: 2, amount: 2 * CFG.PRICE_PER_PERSON, submitted: '14 Oct 2026 20:15' };
-  if (last === '1') return { bookings: [Object.assign(base, { status: 'Approved', entryCode: 'ANN-7KQ3' })] };
+  if (last === '1') return { bookings: [Object.assign(base, { status: 'Approved', entryCode: 'ANN-7KQ3XP' })] };
   if (last === '2') return { bookings: [Object.assign(base, { status: 'Problem', problem: { th: 'ยอดโอนไม่ครบตามจำนวนผู้เข้าร่วม', note: 'ยอดขาด 1,199 บาท', fix: 'โอนส่วนที่ขาดผ่าน QR เดิม แล้วแนบสลิปเพิ่มในหน้าตรวจสอบสถานะ', reupload: true } })] };
   if (last === '0') return { bookings: [] };
   return { bookings: [Object.assign(base, { status: 'Pending' })] };

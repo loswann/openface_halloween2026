@@ -136,13 +136,23 @@ const CONFIG = {
   ID_PREFIX:        'OF-HW26-',
   CODE_PREFIX:      'ANN-',
 
+  // Door check-in page (/door). The staff PIN is NOT kept here (this repo is public):
+  // Apps Script → Project Settings → Script properties → DOOR_PIN (6+ digits). Changing it logs out every phone.
+  DOOR: {
+    TOKEN_HOURS:     14,           // a staff login lasts this long
+    LOGIN_FAILS_MAX: 25,           // wrong PINs (all phones together) before logins pause …
+    LOGIN_LOCK_MIN:  15,           // … for this many minutes. Phones already logged in keep working.
+    SCANS_PER_10MIN: 400,          // per logged-in phone
+    SEARCH_PER_10MIN: 90
+  },
+
   // Status lookup on the site. false = phone number only (as requested). true = phone + booking ref
   // (safer: anyone who knows a guest's phone number could otherwise see their entry code).
   STATUS_REQUIRE_REF: false
 };
 
 // Must match APP_VERSION in index.html (major.minor). Bump both together, then Deploy → New version.
-const CODE_VERSION = '2.9.1';
+const CODE_VERSION = '2.10.0';
 
 // "Email Status" column – the guest-email confirmation status (emails are sent by hand)
 const MAIL = { WAITING: 'Waiting – payment check',
@@ -155,7 +165,8 @@ const HEADERS = [
   'Timestamp', 'Booking Ref', 'Full Name', 'Phone', 'Email', 'LINE ID',
   'Attendees', 'Guest Names', 'Parking', 'Amount (THB)', 'Slip Link',
   'Slip Amount', 'Slip Time', 'Sender', 'Sender Bank', 'Receiver on Slip', 'Trans Ref', 'Auto Check',
-  'Notes', 'Payment Status', 'Problem Reason', 'Note to Guest', 'Entry Code', 'Email Status', 'Email Sent At', 'Email Draft', 'Email Log', 'Internal Note', 'Updated At'
+  'Notes', 'Payment Status', 'Problem Reason', 'Note to Guest', 'Entry Code', 'Email Status', 'Email Sent At', 'Email Draft', 'Email Log', 'Internal Note', 'Updated At',
+  'Checked In', 'Checked In At', 'Checked In By'
 ];
 const COL = name => HEADERS.indexOf(name) + 1;
 const TZ = 'Asia/Bangkok';
@@ -170,7 +181,11 @@ const API = {
   submitRegistration: d  => submitRegistration(d),
   checkStatus:        d  => checkStatus(d),
   checkSlipRef:       d  => checkSlipRef(d),
-  resubmitSlip:       d  => resubmitSlip(d)
+  resubmitSlip:       d  => resubmitSlip(d),
+  doorLogin:          d  => doorLogin(d),
+  doorCheckIn:        d  => doorCheckIn(d),
+  doorSearch:         d  => doorSearch(d),
+  doorStats:          d  => doorStats(d)
 };
 
 function doPost(e) {
@@ -203,7 +218,7 @@ function checkSlipRef(d) {
 
 function getConfig() {
   const c = JSON.parse(JSON.stringify(CONFIG));
-  ['ADMIN_EMAIL', 'SLIP_FOLDER_ID', 'SHEET_NAME', 'SPREADSHEET_ID', 'SLIP_CHECK', 'EMAIL', 'PROBLEMS'].forEach(k => delete c[k]);
+  ['ADMIN_EMAIL', 'SLIP_FOLDER_ID', 'SHEET_NAME', 'SPREADSHEET_ID', 'SLIP_CHECK', 'EMAIL', 'PROBLEMS', 'DOOR'].forEach(k => delete c[k]);
   c.VERSION = CODE_VERSION;
   c.SLIP_CHECK_ON = slipCheckReady_();
   const sc = CONFIG.SLIP_CHECK;
@@ -432,14 +447,14 @@ function submitRegistration(f) {
     const now = new Date();
 
     const rec = {
-      'Timestamp': now, 'Booking Ref': regId, 'Full Name': name, 'Phone': "'" + phone, 'Email': email,
-      'LINE ID': String(f.line || '').slice(0, 80), 'Attendees': qty, 'Guest Names': String(f.guests || '').slice(0, 1000),
-      'Parking': String(f.parking || 'No'), 'Amount (THB)': amount, 'Slip Link': fileUrl,
+      'Timestamp': now, 'Booking Ref': regId, 'Full Name': sheetSafe_(name), 'Phone': "'" + phone, 'Email': sheetSafe_(email),
+      'LINE ID': sheetSafe_(String(f.line || '').slice(0, 80)), 'Attendees': qty, 'Guest Names': sheetSafe_(String(f.guests || '').slice(0, 1000)),
+      'Parking': sheetSafe_(String(f.parking || 'No').slice(0, 40)), 'Amount (THB)': amount, 'Slip Link': fileUrl,
       'Slip Amount': slip ? slip.amount : '', 'Slip Time': slip && slip.time ? new Date(slip.time) : '',
       'Sender': slip ? slip.senderName : '', 'Sender Bank': slip ? slip.senderBank : '',
       'Receiver on Slip': slip ? (slip.receiverName + (slip.receiverAccount ? ' ' + slip.receiverAccount : '')) : '',
       'Trans Ref': slip && slip.transRef ? "'" + slip.transRef : '', 'Auto Check': autoCheck,
-      'Notes': String(f.notes || '').slice(0, 1000), 'Payment Status': STATUS.PENDING, 'Problem Reason': '',
+      'Notes': sheetSafe_(String(f.notes || '').slice(0, 1000)), 'Payment Status': STATUS.PENDING, 'Problem Reason': '',
       'Note to Guest': '', 'Entry Code': '', 'Email Status': CONFIG.EMAIL.SEND ? '' : MAIL.WAITING, 'Email Sent At': '', 'Email Draft': '', 'Email Log': '', 'Internal Note': '', 'Updated At': now
     };
     const sh = getSheet_();
@@ -700,6 +715,215 @@ function resubmitSlip(d) {
 }
 
 /* ======================================================================
+ *  6 · DOOR CHECK-IN  (staff page /door)
+ *  doorLogin   – staff PIN (Script property DOOR_PIN) → signed token for TOKEN_HOURS
+ *  doorCheckIn – entry code (scan / typed) or booking ref (from search) → Valid / Already / Not approved / Not found.
+ *                Valid writes Checked In / At / By under the script lock, so a code can only be used once.
+ *  doorSearch  – find a booking by name, phone, guest name, booking ref or code
+ *  doorStats   – checked-in guests vs approved guests
+ * ====================================================================== */
+
+const DOOR_RESULT = { VALID: 'valid', ALREADY: 'already', NOT_APPROVED: 'not_approved', NOT_FOUND: 'not_found' };
+
+function doorLogin(d) {
+  const props = PropertiesService.getScriptProperties();
+  const pin = String(props.getProperty('DOOR_PIN') || '').trim();
+  if (pin.length < 6) throw new Error('ยังไม่ได้ตั้ง PIN หน้างาน / Door PIN not set up (Script properties → DOOR_PIN, 6+ digits)');
+  const cache = CacheService.getScriptCache();
+  if (cache.get('door_lock')) throw new Error('ใส่ PIN ผิดหลายครั้ง ระบบพักการเข้าสู่ระบบชั่วคราว / Too many wrong PINs – wait ' + CONFIG.DOOR.LOGIN_LOCK_MIN + ' min');
+  throttle_('door_login', 60, 600);
+
+  const given = String((d && d.pin) || '').trim().slice(0, 40);
+  if (!safeEqual_(given, pin)) {
+    const fails = Number(cache.get('door_fails') || 0) + 1;
+    cache.put('door_fails', String(fails), 900);
+    if (fails >= CONFIG.DOOR.LOGIN_FAILS_MAX) {
+      cache.put('door_lock', '1', CONFIG.DOOR.LOGIN_LOCK_MIN * 60);
+      cache.remove('door_fails');
+      console.warn('Door logins paused after ' + fails + ' wrong PINs');
+    }
+    Utilities.sleep(700);                                        // slows down guessing
+    throw new Error('PIN ไม่ถูกต้อง / Wrong PIN');
+  }
+  const staff = staffLabel_(d && d.staff);
+  const exp = Date.now() + CONFIG.DOOR.TOKEN_HOURS * 3600000;
+  const payload = Utilities.base64EncodeWebSafe(JSON.stringify({ s: staff, e: exp, i: Utilities.getUuid().slice(0, 8) }),
+                                                Utilities.Charset.UTF_8).replace(/=+$/, '');
+  return { token: payload + '.' + doorSign_(payload), staff: staff, expires: new Date(exp).toISOString(),
+           version: CODE_VERSION, event: CONFIG.EVENT_NAME, stats: doorStatsOf_(sheetData_()) };
+}
+
+function doorCheckIn(d) {
+  const who = doorAuth_(d && d.token);
+  throttle_('dci_' + who.id, CONFIG.DOOR.SCANS_PER_10MIN, 600);
+  const reqId = /^[A-Za-z0-9-]{8,40}$/.test(String((d && d.reqId) || '')) ? String(d.reqId) : '';
+  const cache = CacheService.getScriptCache();
+  if (reqId) {                                                   // a retry of a request that already went through
+    const seen = cache.get('dreq_' + reqId);
+    if (seen) { const o = JSON.parse(seen); o.replay = true; return o; }
+  }
+  const code = normCode_(d && d.code);
+  const ref = String((d && d.ref) || '').trim().toUpperCase();
+  const byRef = !code && new RegExp('^' + reEsc_(CONFIG.ID_PREFIX) + '\\d{4,6}$').test(ref);
+  if (!code && !byRef) return { result: DOOR_RESULT.NOT_FOUND, input: String((d && (d.code || d.ref)) || '').slice(0, 24), badFormat: true };
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  let out;
+  try {
+    const sh = getSheet_();
+    const data = sheetData_(sh);
+    const key = byRef ? COL('Booking Ref') - 1 : COL('Entry Code') - 1;
+    const want = byRef ? ref : code;
+    const i = data.findIndex(v => String(v[key]).trim().toUpperCase() === want);
+    if (i < 0) {
+      out = { result: DOOR_RESULT.NOT_FOUND, input: want };
+    } else {
+      const v = data[i], get = h => v[COL(h) - 1];
+      const status = String(get('Payment Status') || STATUS.PENDING);
+      out = { ref: String(get('Booking Ref')), code: String(get('Entry Code') || ''), name: maskName_(get('Full Name')),
+              qty: Number(get('Attendees')) || 1, status: status };
+      if (status !== STATUS.APPROVED) {
+        out.result = DOOR_RESULT.NOT_APPROVED;
+      } else if (String(get('Checked In') || '')) {
+        out.result = DOOR_RESULT.ALREADY;
+        out.at = fmtTime_(get('Checked In At'));
+        out.by = String(get('Checked In By') || '');
+      } else {
+        const now = new Date();
+        sh.getRange(i + 2, COL('Checked In'), 1, 3).setValues([['Yes', now, sheetSafe_(who.staff)]]);
+        SpreadsheetApp.flush();                                  // the next scan (after the lock) must see it
+        v[COL('Checked In') - 1] = 'Yes';
+        out.result = DOOR_RESULT.VALID;
+        out.at = fmtTime_(now);
+        out.by = who.staff;
+      }
+    }
+    out.stats = doorStatsOf_(data);
+  } finally {
+    lock.releaseLock();
+  }
+  if (reqId) cache.put('dreq_' + reqId, JSON.stringify(out), 1800);
+  return out;
+}
+
+function doorSearch(d) {
+  const who = doorAuth_(d && d.token);
+  throttle_('dsr_' + who.id, CONFIG.DOOR.SEARCH_PER_10MIN, 600);
+  const q = String((d && d.q) || '').trim().slice(0, 60);
+  if (q.length < 2) throw new Error('พิมพ์อย่างน้อย 2 ตัวอักษร / Type at least 2 characters');
+  const digits = q.replace(/\D/g, '');
+  const up = q.toUpperCase().replace(/\s+/g, '');
+  const nk = norm_(q);
+  const code = normCode_(q);
+  const out = [];
+  sheetData_().forEach(v => {
+    const get = h => v[COL(h) - 1];
+    const ref = String(get('Booking Ref') || '');
+    if (!ref) return;
+    const phone = String(get('Phone') || '').replace(/\D/g, '');
+    const byPhone = digits.length >= 4 && digits.length === q.replace(/[\s\-+]/g, '').length && phone.indexOf(digits.replace(/^0/, '')) >= 0;
+    const byRef = up.length >= 4 && ref.toUpperCase().indexOf(up) >= 0;
+    const byCode = !!code && String(get('Entry Code')).toUpperCase() === code;
+    const byName = nk.length >= 2 && norm_(get('Full Name')).indexOf(nk) >= 0;
+    const byGuest = !byName && nk.length >= 3 && norm_(get('Guest Names')).indexOf(nk) >= 0;
+    if (!(byPhone || byRef || byCode || byName || byGuest)) return;
+    out.push({ ref: ref, name: maskName_(get('Full Name')), phone: phone ? '•••' + phone.slice(-4) : '',
+               qty: Number(get('Attendees')) || 1, status: String(get('Payment Status') || STATUS.PENDING),
+               checkedIn: !!String(get('Checked In') || ''), at: fmtTime_(get('Checked In At')),
+               by: String(get('Checked In By') || ''), viaGuest: byGuest });
+  });
+  const rank = b => (b.status === STATUS.APPROVED ? 0 : 1) + (b.checkedIn ? 0.5 : 0);
+  out.sort((a, b) => rank(a) - rank(b));
+  return { results: out.slice(0, 12), more: Math.max(0, out.length - 12) };
+}
+
+function doorStats(d) {
+  const who = doorAuth_(d && d.token);
+  throttle_('dst_' + who.id, 120, 600);
+  return Object.assign(doorStatsOf_(sheetData_()), { version: CODE_VERSION });
+}
+
+function doorStatsOf_(data) {
+  let bookings = 0, guests = 0, inBookings = 0, inGuests = 0;
+  data.forEach(v => {
+    if (v[COL('Payment Status') - 1] !== STATUS.APPROVED) return;
+    const q = Number(v[COL('Attendees') - 1]) || 1;
+    bookings++; guests += q;
+    if (String(v[COL('Checked In') - 1] || '')) { inBookings++; inGuests += q; }
+  });
+  return { bookings: bookings, guests: guests, inBookings: inBookings, inGuests: inGuests };
+}
+
+/** Verifies the staff token → { staff, id }. The signing key includes the PIN, so changing DOOR_PIN logs everyone out. */
+function doorAuth_(token) {
+  const t = String(token || '');
+  const parts = t.split('.');
+  const bad = () => { throw new Error('DOOR_AUTH: กรุณาเข้าสู่ระบบอีกครั้ง / Please log in again'); };
+  if (parts.length !== 2 || t.length > 600) bad();
+  if (!safeEqual_(parts[1], doorSign_(parts[0]))) bad();
+  let p;
+  try { p = JSON.parse(Utilities.newBlob(Utilities.base64DecodeWebSafe(parts[0] + '==='.slice((parts[0].length + 3) % 4))).getDataAsString()); }
+  catch (e) { bad(); }
+  if (!p || !(p.e > Date.now())) bad();
+  return { staff: String(p.s || 'Door'), id: String(p.i || '') };
+}
+
+function doorSign_(payload) {
+  const props = PropertiesService.getScriptProperties();
+  const pin = String(props.getProperty('DOOR_PIN') || '').trim();
+  if (pin.length < 6) throw new Error('DOOR_AUTH: Door PIN not set up');
+  let secret = props.getProperty('DOOR_SECRET');
+  if (!secret) {
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+      secret = props.getProperty('DOOR_SECRET');
+      if (!secret) { secret = Utilities.getUuid() + Utilities.getUuid(); props.setProperty('DOOR_SECRET', secret); }
+    } finally { lock.releaseLock(); }
+  }
+  return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(payload, secret + '|' + pin)).replace(/=+$/, '');
+}
+
+/** Run from the editor to log every door phone out at once (they log in again with the PIN). */
+function doorLogoutAll() {
+  PropertiesService.getScriptProperties().setProperty('DOOR_SECRET', Utilities.getUuid() + Utilities.getUuid());
+}
+
+/** "ann-7kq3xp", "7KQ3XP", "ANN 7KQ3XP" or a scanned QR → "ANN-7KQ3XP"; '' when it isn't a code. */
+function normCode_(raw) {
+  const s = String(raw || '').toUpperCase().replace(/\s+/g, '').slice(0, 200);
+  const pre = CONFIG.CODE_PREFIX.replace(/-$/, '');
+  let m = s.match(new RegExp('(?:^|[^A-Z0-9])' + reEsc_(pre) + '-?([A-Z0-9]{4,8})(?![A-Z0-9])'));
+  if (!m && /^[A-Z0-9]{4,8}$/.test(s) && s.indexOf(pre) !== 0) m = [s, s];
+  return m ? CONFIG.CODE_PREFIX + m[1] : '';
+}
+
+function staffLabel_(s) {
+  const t = String(s || '').replace(/[^\p{L}\p{M}\p{N} ._#\-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 24);
+  return t || 'Door';
+}
+
+function sheetData_(sh) {
+  sh = sh || getSheet_();
+  const n = sh.getLastRow() - 1;
+  return n > 0 ? sh.getRange(2, 1, n, HEADERS.length).getValues() : [];
+}
+
+function fmtTime_(t) { return t instanceof Date ? Utilities.formatDate(t, TZ, 'HH:mm · d MMM') : String(t || ''); }
+function reEsc_(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+/** Text that starts with = + - @ would run as a formula in the Sheet – store it as plain text. */
+function sheetSafe_(s) { s = String(s == null ? '' : s); return /^[=+\-@\t\r]/.test(s) ? "'" + s : s; }
+
+function safeEqual_(a, b) {
+  a = String(a); b = String(b);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  return diff === 0;
+}
+
+/* ======================================================================
  *  EMAILS
  * ====================================================================== */
 
@@ -835,6 +1059,10 @@ function setup() {
     .filter(t => ['onStatusEdit', 'onAdminEdit'].indexOf(t.getHandlerFunction()) >= 0)
     .forEach(t => ScriptApp.deleteTrigger(t));
   ScriptApp.newTrigger('onAdminEdit').forSpreadsheet(ss_()).onEdit().create();
+  const props = PropertiesService.getScriptProperties();
+  if (!props.getProperty('DOOR_SECRET')) props.setProperty('DOOR_SECRET', Utilities.getUuid() + Utilities.getUuid());
+  if (String(props.getProperty('DOOR_PIN') || '').length < 6)
+    console.warn('Door check-in: add DOOR_PIN (6+ digits) in Project Settings → Script properties before the event.');
 }
 
 function styleSheet_(sh) {
@@ -869,6 +1097,9 @@ function styleSheet_(sh) {
   sh.getRange(2, COL('Updated At'), N, 1).setNumberFormat('d/mm/yyyy hh:mm');
   sh.setColumnWidth(COL('Problem Reason'), 240);
   sh.setColumnWidth(COL('Email Log'), 260);
+  sh.getRange(1, COL('Checked In'), 1, 3).setBackground('#17a34a').setFontColor('#ffffff');
+  sh.getRange(2, COL('Checked In At'), N, 1).setNumberFormat('d/mm/yyyy hh:mm:ss');
+  sh.getRange(1, COL('Checked In')).setNote('Set by the door page (/door). Clear "Checked In" + "Checked In At" to undo a check-in.');
 }
 
 /* ======================================================================
@@ -904,7 +1135,7 @@ function newEntryCode_(sh) {
   const abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   for (let i = 0; i < 50; i++) {
     let c = CONFIG.CODE_PREFIX;
-    for (let j = 0; j < 4; j++) c += abc.charAt(Math.floor(Math.random() * abc.length));
+    for (let j = 0; j < 6; j++) c += abc.charAt(Math.floor(Math.random() * abc.length));
     if (used.indexOf(c) < 0) return c;
   }
   throw new Error('Could not create a unique entry code');
@@ -1035,6 +1266,12 @@ function migrateHeaders_(sh, head) {
   head.forEach((h, i) => { if (RENAMED[h]) sh.getRange(1, i + 1).setValue(RENAMED[h]); });
   HEADERS.forEach((h, i) => {
     if (cur[i] === h) return;
+    if (i >= cur.length) {                                       // new columns at the end: no insert needed
+      if (i + 1 > sh.getMaxColumns()) sh.insertColumnsAfter(sh.getMaxColumns(), 1);
+      sh.getRange(1, i + 1).setValue(h);
+      cur.push(h);
+      return;
+    }
     sh.insertColumnBefore(i + 1);
     sh.getRange(1, i + 1).setValue(h);
     cur.splice(i, 0, h);
