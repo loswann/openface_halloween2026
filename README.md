@@ -14,7 +14,7 @@ The page (`index.html`) is hosted on **Vercel**. The **Google Apps Script** (`ap
 |---|---|---|
 | 1 | Guest | Registers on the site, pays with the K SHOP QR and uploads the slip. A row is added with **Payment Status = Pending**. The admin gets a notice. |
 | 2 | Admin | Opens the slip (`Slip Link`) and checks it against the **KBank statement**: amount, time, sender. `Auto Check` is only a hint. |
-| 3a | Admin | Sets **Payment Status → Approved**. An entry code (e.g. `ANN-7KQ3`) is created, `Email Draft` gets the confirmation letter, and **Email Status** shows `To send – Approved`. |
+| 3a | Admin | Sets **Payment Status → Approved**. An entry code (e.g. `ANN-7KQ3XP`, 6 characters; codes issued before v2.10 keep their 4 characters and still work) is created, `Email Draft` gets the confirmation letter, and **Email Status** shows `To send – Approved`. |
 | 3b | Admin | Types an optional **Note to Guest**, then picks a **Problem Reason**. Picking a reason sets **Payment Status → Problem** on its own. `Email Draft` gets the problem letter, and **Email Status** shows `To send – Problem`. |
 | 4 | Admin | Clicks the `Email Draft` cell and opens the link. A Gmail window opens with the guest's address and the subject filled in. Copy the cell text below the "Subject" line into the email body, send it, then set **Email Status → Sent – …**. |
 | 5 | Guest | On the site → **Check status** (`/#status`), types the phone number and sees Pending, Approved with the entry code, or Problem with what to do. For most problems they can **upload a new slip** there. The row goes back to **Pending** and the admin gets a notice. |
@@ -58,6 +58,7 @@ Edit the wording in `CONFIG.PROBLEMS` in Code.gs, then run **setup()** again so 
 ## Files
 | File | What it is |
 |---|---|
+| `door.html` + `door.js` | **Door check-in for staff** at `/door` (PIN login, type the entry code, search). Not linked from the site, `noindex` |
 | `index.html` | The site: poster hero, registration form, K SHOP Thai QR with the amount filled in, slip upload with an optional pre-check, and the **Check status** section |
 | `assets/` | Poster and logos |
 | `config.js` | **`API_URL`** (the Apps Script `/exec` URL) and display defaults. Empty = "Registration opens soon". `?demo=1` = demo with fake data. |
@@ -94,6 +95,7 @@ The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`
 | Version | Change |
 |---|---|
 | v2.9.1 | Bolder status colours on the site and in the Sheet (amber Pending with pulsing dot, green Approved, red Problem, grey Cancelled) |
+| v2.10.0 | **Door check-in page `/door`**: staff PIN login, type the entry code, search by name/phone/ref, single-use check-in (locked), offline warnings. Entry codes now `ANN-XXXXXX` (no QR tickets: guests show the code). New Sheet columns `Checked In` / `Checked In At` / `Checked In By`. Guest-typed fields can no longer run as Sheet formulas |
 | v2.9.2 | "Save QR" puts the image in Photos/Gallery: iPhone → share sheet → Save Image; Android Chrome → Download album; LINE/FB/IG in-app browsers → full-screen image to press-and-hold. Front-end only (backend stays v2.9.1) |
 | v2.9.0 | Main contact everywhere is nojudgmentgathering@gmail.com (site, status page, slip hints, problem reasons, guest emails); LINE kept as a footer link |
 | v2.8.1 | Slip-problem help button emails nojudgmentgathering@gmail.com (prefilled) instead of LINE |
@@ -110,6 +112,31 @@ The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`
 | v1.2.0 | Slip-check fix (shared K SHOP biller ID), demo only with `?demo=1` |
 | v1.1.0 | Restyled to the ANNYONG poster and openface logo |
 | v1.0.0 | First site |
+
+## Door check-in (`/door`)
+For the door team on 31 Oct: **https://openface-halloween2026.vercel.app/door** (try it with fake data at `/door?demo=1`, PIN `123456`).
+
+**Before the night**
+1. Apps Script → **Project Settings → Script properties → Add**: `DOOR_PIN` = a 6–8 digit PIN. It is never in this repo. Share it only with the door team.
+2. Paste the new Code.gs, run **setup()** once (adds `Checked In`, `Checked In At`, `Checked In By` at the end of the sheet; existing rows stay put), then **Deploy → Manage deployments → Edit → New version**.
+3. On each door phone: open `/door`, type the door name (e.g. `Door 1 · Nok`) and the PIN. Add it to the home screen. A login lasts 14 h.
+
+**At the door**
+| Screen | Meaning | What to do |
+|---|---|---|
+| 🟢 **VALID** · ADMIT *n* | Approved and not used yet. It is now marked checked in. | Check ID (20+) for all *n* guests and let them in |
+| 🟡 **ALREADY IN** | The code was used before (time + door shown) | Don't admit. Call the team lead |
+| 🔴 **NOT APPROVED** | Pending, Problem or Cancelled | Send to the team table to check the payment |
+| 🔴 **NOT FOUND** | No booking with this code | Re-type it, or use **Find guest** |
+| ⬛ **NOT CHECKED** | No connection or no answer | Nothing was recorded. Tap **Retry** (it won't count twice). Never admit from this screen |
+
+- Guests show the entry code from their approval email or **Check status** on the site; staff type the 6 characters after `ANN-` and tap **Check code**. Upper/lower case and spaces don't matter. One code admits the whole booking (*n* guests).
+- **Find guest** searches name, guest names, phone (4+ digits) or booking ref. Check the ID against the booking name before tapping **Check in**.
+- **Undo a check-in:** clear `Checked In` and `Checked In At` on that row in the Sheet.
+- **Lost phone / PIN leaked:** change `DOOR_PIN` (logs every phone out), or run `doorLogoutAll()` in the editor.
+- No signal at the door = no check-ins. Have a hotspot ready, and print the Approved rows (name, phone, code, guests) as a paper backup.
+
+**Security:** PIN is checked on the server; logins are signed tokens (HMAC with a secret in Script properties). 25 wrong PINs pause new logins for 15 min (phones already logged in keep working). Scans and searches are rate-limited per phone. Every check-in runs under the script lock and is flushed before the next one, so two phones checking the same code at once get one VALID and one ALREADY IN. Names are shortened, phones show the last 4 digits only, and everything shown is HTML-escaped. The page sends no-store, noindex, CSP and no-camera permission headers (`vercel.json`).
 
 ## Slip pre-screen (on the guest's phone)
 When a guest attaches a slip, the page reads it **on their phone**. It uses Tesseract OCR with Thai and English, self-hosted in `ocr/v7/`, so there is no API key and no cost. It also reads the slip's bank QR. Then it checks:

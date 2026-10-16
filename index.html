@@ -457,8 +457,8 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 /* ================= version =================
    Bump on every release: MAJOR = booking process changes · MINOR = feature / wording / flow · PATCH = fix only.
    Keep CODE_VERSION in apps-script/Code.gs on the same MAJOR.MINOR.                                         */
-const APP_VERSION = '2.9.2';
-const APP_DATE = '14 Oct 2026';
+const APP_VERSION = '2.10.0';
+const APP_DATE = '15 Oct 2026';
 /* ================= the croissant DJ · crescent + record halo (from the poster) =================
    croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),
    'happy' (all good), 'oops' (something's wrong), 'chill' (idle bob)          */
@@ -1149,7 +1149,7 @@ $('reInput').addEventListener('change', async e => {
 });
 function demoStatus(phone) {
   const last = phone.slice(-1), base = { ref: 'DEMO-0001', name: 'ทดสอบ ร.', qty: 2, amount: 2 * CFG.PRICE_PER_PERSON, submitted: '14 Oct 2026 20:15' };
-  if (last === '1') return { bookings: [Object.assign(base, { status: 'Approved', entryCode: 'ANN-7KQ3' })] };
+  if (last === '1') return { bookings: [Object.assign(base, { status: 'Approved', entryCode: 'ANN-7KQ3XP' })] };
   if (last === '2') return { bookings: [Object.assign(base, { status: 'Problem', problem: { th: 'ยอดโอนไม่ครบตามจำนวนผู้เข้าร่วม', note: 'ยอดขาด 1,199 บาท', fix: 'โอนส่วนที่ขาดผ่าน QR เดิม แล้วแนบสลิปเพิ่มในหน้าตรวจสอบสถานะ', reupload: true } })] };
   if (last === '0') return { bookings: [] };
   return { bookings: [Object.assign(base, { status: 'Pending' })] };
