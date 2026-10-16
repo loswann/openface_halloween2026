@@ -62,9 +62,9 @@ function show(which) {
     $('whoLine').textContent = 'เข้าสู่ระบบเป็น · Logged in as ' + session.staff;
     renderHistory();
     refreshStats();
-    preloadJsQR();
+    keepAwake();
+    setTimeout(() => $('codeIn').focus(), 50);
   } else {
-    stopCam();
     setTimeout(() => $('pin').focus(), 50);
   }
   renderVersion();
@@ -136,7 +136,7 @@ window.addEventListener('offline', renderNet);
 /* ================= check-in ================= */
 let inFlight = false, pending = null;
 
-/** Same rules as the server: "ann-7kq3xp", "7KQ3XP" or a scanned QR → "ANN-7KQ3XP"; '' if not a code. */
+/** Same rules as the server: "ann-7kq3xp", "ANN 7KQ3XP" or "7KQ3XP" → "ANN-7KQ3XP"; '' if not a code. */
 function normCode(raw) {
   const s = String(raw || '').toUpperCase().replace(/\s+/g, '').slice(0, 200);
   const m = s.match(/(?:^|[^A-Z0-9])ANN-?([A-Z0-9]{4,8})(?![A-Z0-9])/);
@@ -154,7 +154,7 @@ async function checkIn(target, source) {
 
 async function send() {
   if (!pending || inFlight) return;
-  inFlight = true; $('camBusy').classList.remove('hidden');
+  inFlight = true; setBusy(true);
   if (pending.source === 'search' || resOpen) showRes('error', { busy: true });
   try {
     const r = await api('doorCheckIn', Object.assign({}, pending.data, { token: session.token }), 20000);
@@ -168,12 +168,16 @@ async function send() {
     buzz(false);
     showRes('error', { net: err instanceof NetError, msg: err.message });
   } finally {
-    inFlight = false; $('camBusy').classList.add('hidden');
+    inFlight = false; setBusy(false);
   }
 }
 
 /* ================= result screen ================= */
-let resOpen = false, lastClosedCode = '', lastClosedAt = 0;
+let resOpen = false;
+function setBusy(on) {
+  const b = $('codeBtn');
+  b.disabled = on; b.textContent = on ? 'กำลังตรวจ… · Checking…' : 'ตรวจรหัส · Check code';
+}
 function showResult(r) {
   const who = r.name ? `<div class="nm">${esc(r.name)}</div>` : '';
   const ids = (r.code || r.ref) ? `<div class="mono">${[r.code, r.ref].filter(Boolean).map(esc).join('<br>')}</div>` : '';
@@ -222,8 +226,7 @@ function showRes(kind, o) {
 function closeRes() {
   if (!resOpen) return;
   $('res').classList.add('hidden'); resOpen = false;
-  lastClosedAt = Date.now();
-  if (!pending) $('codeIn').value = '';
+  if (!pending) { $('codeIn').value = ''; setTimeout(() => $('codeIn').focus(), 30); }
 }
 $('res').addEventListener('click', e => {
   const b = e.target.closest('[data-a]'); if (!b) return;
@@ -305,117 +308,14 @@ function renderHistory() {
   }).join('') : '<p class="hint">ยังไม่มี · Nothing yet</p>';
 }
 
-/* ================= camera + QR ================= */
-let stream = null, track = null, detector = null, scanTimer = 0, torchOn = false, wakeLock = null, wantCam = false;
-const canvas = document.createElement('canvas');
-const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-function preloadJsQR() {
-  if (window.jsQR || document.querySelector('script[data-jsqr]')) return;
-  const s = document.createElement('script'); s.src = 'vendor/jsQR-1.4.0.js'; s.async = true; s.dataset.jsqr = '1';
-  document.head.appendChild(s);
+/* ================= screen ================= */
+let wakeLock = null;
+async function keepAwake() {                     // keep the door phone's screen on while it is in use
+  try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch (e) {}
 }
-async function makeDetector() {
-  if (!('BarcodeDetector' in window)) return null;
-  try {
-    const f = await window.BarcodeDetector.getSupportedFormats();
-    return f.indexOf('qr_code') >= 0 ? new window.BarcodeDetector({ formats: ['qr_code'] }) : null;
-  } catch (e) { return null; }
-}
-function camMsg(t) { $('camMsg').textContent = t; }
-
-async function startCam() {
-  unlockAudio();
-  wantCam = true;
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    camMsg('เบราว์เซอร์นี้เปิดกล้องไม่ได้ ใช้ช่องพิมพ์รหัสแทน · Camera not available here – type the code');
-    return;
-  }
-  $('camBtn').disabled = true; camMsg('กำลังเปิดกล้อง…');
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: false,
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } });
-    const v = $('video');
-    v.srcObject = stream; v.setAttribute('playsinline', ''); v.muted = true;
-    await v.play();
-    track = stream.getVideoTracks()[0];
-    detector = detector || await makeDetector();
-    if (!detector) preloadJsQR();
-    const caps = track.getCapabilities ? track.getCapabilities() : {};
-    $('torchBtn').classList.toggle('hidden', !caps.torch);
-    $('camIdle').classList.add('hidden'); $('frame').classList.remove('hidden'); $('laser').classList.remove('hidden');
-    $('camBtn').textContent = 'ปิดกล้อง · Stop camera';
-    keepAwake();
-    loop();
-  } catch (e) {
-    wantCam = false;
-    camMsg(e && e.name === 'NotAllowedError'
-      ? 'ไม่ได้รับอนุญาตใช้กล้อง เปิดสิทธิ์กล้องในการตั้งค่าเบราว์เซอร์ · Camera blocked – allow it in browser settings'
-      : 'เปิดกล้องไม่ได้ · Could not start the camera (' + (e && e.name || e) + ')');
-  } finally { $('camBtn').disabled = false; }
-}
-function stopCam(keepWish) {
-  if (!keepWish) wantCam = false;
-  clearTimeout(scanTimer);
-  if (stream) stream.getTracks().forEach(t => t.stop());
-  stream = null; track = null; torchOn = false;
-  $('video').srcObject = null;
-  $('camIdle').classList.remove('hidden'); $('frame').classList.add('hidden'); $('laser').classList.add('hidden');
-  $('torchBtn').classList.add('hidden');
-  $('camBtn').textContent = 'เปิดกล้อง · Start camera';
-  camMsg('กดเปิดกล้องด้านล่าง');
-  if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
-}
-$('camBtn').onclick = () => (stream ? stopCam() : startCam());
-$('torchBtn').onclick = async () => {
-  if (!track) return;
-  try { torchOn = !torchOn; await track.applyConstraints({ advanced: [{ torch: torchOn }] }); } catch (e) { torchOn = false; }
-};
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { if (stream) stopCam(true); }
-  else { if (wantCam && validSession()) startCam(); refreshStats(); }
+  if (!document.hidden && validSession()) { keepAwake(); refreshStats(); }
 });
-async function keepAwake() {
-  try { if ('wakeLock' in navigator && !wakeLock) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
-}
-
-let lastBadQr = '', lastBadAt = 0;
-async function loop() {
-  if (!stream) return;
-  const v = $('video');
-  if (!resOpen && !inFlight && v.readyState >= 2) {
-    let text = '';
-    try {
-      if (detector) {
-        const codes = await detector.detect(v);
-        text = codes && codes[0] ? codes[0].rawValue : '';
-      } else if (window.jsQR) {
-        const vw = v.videoWidth, vh = v.videoHeight, side = Math.min(vw, vh) * 0.8;      // centre square = the frame
-        const size = 480;
-        canvas.width = size; canvas.height = size;
-        ctx.drawImage(v, (vw - side) / 2, (vh - side) / 2, side, side, 0, 0, size, size);
-        const c = window.jsQR(ctx.getImageData(0, 0, size, size).data, size, size, { inversionAttempts: 'attemptBoth' });
-        text = c ? c.data : '';
-      }
-    } catch (e) { /* frame not ready */ }
-    if (text) onScan(text);
-  }
-  scanTimer = setTimeout(loop, detector ? 90 : 140);
-}
-function onScan(text) {
-  const code = normCode(text);
-  if (!code) {
-    if (text !== lastBadQr || Date.now() - lastBadAt > 4000) {
-      lastBadQr = text; lastBadAt = Date.now();
-      toast('QR นี้ไม่ใช่รหัสเข้างาน · Not an entry-code QR');
-    }
-    return;
-  }
-  // the guest's phone is often still in front of the camera after "Next" – ignore the same code for a moment
-  if (code === lastClosedCode && Date.now() - lastClosedAt < 4000) return;
-  lastClosedCode = code;
-  checkIn({ code }, 'scan');
-}
 
 /* ================= feedback ================= */
 let audio = null;

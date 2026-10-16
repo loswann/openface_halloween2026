@@ -717,7 +717,7 @@ function resubmitSlip(d) {
 /* ======================================================================
  *  6 · DOOR CHECK-IN  (staff page /door)
  *  doorLogin   – staff PIN (Script property DOOR_PIN) → signed token for TOKEN_HOURS
- *  doorCheckIn – entry code (scan / typed) or booking ref (from search) → Valid / Already / Not approved / Not found.
+ *  doorCheckIn – entry code (typed by staff) or booking ref (from search) → Valid / Already / Not approved / Not found.
  *                Valid writes Checked In / At / By under the script lock, so a code can only be used once.
  *  doorSearch  – find a booking by name, phone, guest name, booking ref or code
  *  doorStats   – checked-in guests vs approved guests
@@ -890,7 +890,7 @@ function doorLogoutAll() {
   PropertiesService.getScriptProperties().setProperty('DOOR_SECRET', Utilities.getUuid() + Utilities.getUuid());
 }
 
-/** "ann-7kq3xp", "7KQ3XP", "ANN 7KQ3XP" or a scanned QR → "ANN-7KQ3XP"; '' when it isn't a code. */
+/** "ann-7kq3xp", "7KQ3XP" or "ANN 7KQ3XP" → "ANN-7KQ3XP"; '' when it isn't a code. */
 function normCode_(raw) {
   const s = String(raw || '').toUpperCase().replace(/\s+/g, '').slice(0, 200);
   const pre = CONFIG.CODE_PREFIX.replace(/-$/, '');
