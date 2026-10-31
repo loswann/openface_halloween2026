@@ -25,7 +25,10 @@ const CONFIG = {
   SCHEDULE:         [['22:00', 'ลงทะเบียน · Registration'], ['22:30', 'DJ ขึ้น · DJ up'], ['02:00', 'ปิดงาน · Till 02:00']],
   VENUE:            'openface · 86/2 ถ.รามคำแหง 21 (ซ.นวศรี 15) แขวงพลับพลา เขตวังทองหลาง กรุงเทพฯ',
   MAP_URL:          'https://share.google/kdPgH8cJINAYblTop',
-  PRICE_PER_PERSON: 1199,          // THB
+  PRICE_PER_PERSON: 1199,          // THB – base (early) price
+  // Timed price changes (Bangkok time). The price in force = the last tier whose FROM has passed.
+  PRICE_TIERS:      [{ FROM: '2026-10-31T21:30:00+07:00', PRICE: 1399, LABEL: 'Walk-in' }],
+  PRICE_GRACE_MIN:  15,            // guests who reached the payment QR before a change keep the old price this long
   PRICE_INCLUDES:   'DJ · Free-flow alcohol · Korean bites',
   DRESS_CODE:       'Everything Korean',
   MIN_AGE:          20,
@@ -142,7 +145,7 @@ const CONFIG = {
 };
 
 // Must match APP_VERSION in index.html (major.minor). Bump both together, then Deploy → New version.
-const CODE_VERSION = '2.9.1';
+const CODE_VERSION = '2.10.0';
 
 // "Email Status" column – the guest-email confirmation status (emails are sent by hand)
 const MAIL = { WAITING: 'Waiting – payment check',
@@ -166,7 +169,7 @@ const TZ = 'Asia/Bangkok';
 const API = {
   getConfig:          () => getConfig(),
   verifySlip:         d  => verifySlip(d),
-  recheckSlip:        d  => recheckSlip(d.token, d.qty),
+  recheckSlip:        d  => recheckSlip(d.token, d.qty, d.price),
   submitRegistration: d  => submitRegistration(d),
   checkStatus:        d  => checkStatus(d),
   checkSlipRef:       d  => checkSlipRef(d),
@@ -201,6 +204,29 @@ function checkSlipRef(d) {
   return { used: !!findTransRef_(ref) };
 }
 
+/* ---------- timed pricing ---------- */
+function tiers_() {
+  return [{ FROM: 0, PRICE: CONFIG.PRICE_PER_PERSON }].concat((CONFIG.PRICE_TIERS || [])
+    .map(t => ({ FROM: new Date(t.FROM).getTime(), PRICE: Number(t.PRICE), LABEL: t.LABEL || '' }))
+    .filter(t => !isNaN(t.FROM) && t.PRICE > 0)).sort((a, b) => a.FROM - b.FROM);
+}
+function priceAt_(ms) {
+  let p = CONFIG.PRICE_PER_PERSON;
+  tiers_().forEach(t => { if (ms >= t.FROM) p = t.PRICE; });
+  return p;
+}
+/** Price to charge now. The guest's page sends the price it showed; an older price is honoured only
+ *  within PRICE_GRACE_MIN minutes after the change (guest was already paying). Never trusts anything else. */
+function priceFor_(claimed, nowMs) {
+  const now = nowMs || Date.now(), cur = priceAt_(now), c = Number(claimed);
+  if (!c || c === cur) return { price: cur, note: '' };
+  const graceMs = (Number(CONFIG.PRICE_GRACE_MIN) || 0) * 60000;
+  const ok = tiers_().some(t => t.FROM > 0 && now >= t.FROM && now < t.FROM + graceMs && priceAt_(t.FROM - 1) === c);
+  if (ok) return { price: c, note: 'Old price ' + fmt_(c) + ' honoured (page opened before the price change, submitted ' +
+                                   Utilities.formatDate(new Date(now), TZ, 'HH:mm') + ')' };
+  return { price: cur, note: '⚠ Guest page showed ' + fmt_(c) + ' THB/person but price now is ' + fmt_(cur) + ' – check slip amount' };
+}
+
 function getConfig() {
   const c = JSON.parse(JSON.stringify(CONFIG));
   ['ADMIN_EMAIL', 'SLIP_FOLDER_ID', 'SHEET_NAME', 'SPREADSHEET_ID', 'SLIP_CHECK', 'EMAIL', 'PROBLEMS'].forEach(k => delete c[k]);
@@ -210,6 +236,8 @@ function getConfig() {
   c.PRESCREEN_ON = sc.PRESCREEN !== false;
   c.PRESCREEN = { SHOP_CODES: sc.RECEIVER_SHOP_CODES, NAME_KEYWORDS: sc.PRESCREEN_NAMES || sc.RECEIVER_NAME_KEYWORDS,
                   NOT_BEFORE: sc.NOT_BEFORE, MAX_AGE_HOURS: sc.MAX_AGE_HOURS };
+  c.SERVER_NOW = Date.now();
+  c.PRICE_NOW = priceAt_(Date.now());
   c.SEATS_TAKEN = countSeats_();
   c.CLOSED = isClosed_();
   return c;
@@ -241,16 +269,16 @@ function verifySlip(req) {
   const slip = normalizeSlip_(body.data);
   const token = Utilities.getUuid();
   CacheService.getScriptCache().put('slip_' + token, JSON.stringify(slip), 1800); // 30 min
-  const ev = evaluateSlip_(slip, qty);
+  const ev = evaluateSlip_(slip, qty, req.bookedPrice || priceFor_(req.price).price);
   ev.token = token;
   return ev;
 }
 
-function recheckSlip(token, qty) {
+function recheckSlip(token, qty, price) {
   const slip = getCachedSlip_(token);
   if (!slip) return { status: 'expired', canManual: false,
     title: 'หมดเวลาตรวจสลิป', message: 'กรุณาแนบสลิปอีกครั้งนะคะ' };
-  const ev = evaluateSlip_(slip, clampQty_(qty));
+  const ev = evaluateSlip_(slip, clampQty_(qty), priceFor_(price).price);
   ev.token = token;
   return ev;
 }
@@ -314,8 +342,8 @@ function normalizeSlip_(d) {
   };
 }
 
-function evaluateSlip_(slip, qty) {
-  const sc = CONFIG.SLIP_CHECK, price = CONFIG.PRICE_PER_PERSON;
+function evaluateSlip_(slip, qty, unitPrice) {
+  const sc = CONFIG.SLIP_CHECK, price = unitPrice || priceAt_(Date.now());
   const expected = qty * price;
   const checks = [];
 
@@ -418,15 +446,16 @@ function submitRegistration(f) {
     if (CONFIG.CAPACITY > 0 && countSeats_() + qty > CONFIG.CAPACITY) throw new Error('ที่นั่งไม่พอ / Not enough seats left');
 
     // Optional automatic pre-check – a hint for the admin, never an approval
-    const pre = preCheck_(f.slipToken, qty, f.manualReason, true, f.precheck);
+    const pr = priceFor_(f.price);
+    const pre = preCheck_(f.slipToken, qty, f.manualReason, true, f.precheck, pr.price);
     const slip = pre.slip;
-    autoCheck = pre.text;
+    autoCheck = [pr.note, pre.text].filter(Boolean).join('\n');
 
     const props = PropertiesService.getScriptProperties();
     const seq = Number(props.getProperty('SEQ') || 0) + 1;
     props.setProperty('SEQ', String(seq));
     regId  = CONFIG.ID_PREFIX + ('0000' + seq).slice(-4);
-    amount = qty * CONFIG.PRICE_PER_PERSON;
+    amount = qty * pr.price;
 
     fileUrl = saveSlip_(f.slipData, f.slipMime, regId + '_' + name);
     const now = new Date();
@@ -459,11 +488,11 @@ function submitRegistration(f) {
   notifyAdmin_('🆕 New booking – check payment: ' + regId,
     regId + ' · ' + name + ' · ' + phone + ' · ' + qty + ' pax · ' + fmt_(amount) + ' THB', autoCheck, fileUrl);
 
-  return { regId: regId, amount: amount, qty: qty, status: STATUS.PENDING };
+  return { regId: regId, amount: amount, qty: qty, price: amount / qty, status: STATUS.PENDING };
 }
 
 /** Turns the optional SlipOK result into the "Auto Check" text. Blocks only slips that are clearly wrong. */
-function preCheck_(token, qty, manualReason, isNew, pre) {
+function preCheck_(token, qty, manualReason, isNew, pre, unitPrice) {
   if (!token) {
     // On-phone pre-screen (OCR): only a hint. The slip's bank reference (from its QR) still blocks re-used slips.
     const ref = pre && /^[A-Za-z0-9]{10,40}$/.test(String(pre.transRef || '')) ? String(pre.transRef) : '';
@@ -477,7 +506,7 @@ function preCheck_(token, qty, manualReason, isNew, pre) {
   }
   const slip = getCachedSlip_(token);
   if (!slip) return { slip: null, text: 'Not auto-checked (check expired)' };
-  const ev = evaluateSlip_(slip, qty);                          // includes the duplicate check (under lock)
+  const ev = evaluateSlip_(slip, qty, unitPrice);               // includes the duplicate check (under lock)
   const bad = ev.checks.filter(c => c.ok === false);
   const dup = bad.filter(c => c.key === 'duplicate')[0];
   if (dup) throw new Error(dup.label);
@@ -675,7 +704,7 @@ function resubmitSlip(d) {
     if (phoneKey_(r.phone) !== digits) throw new Error('ไม่พบการจองนี้ / Booking not found');
     if (r.status !== STATUS.PROBLEM) throw new Error('การจองนี้ไม่ต้องแนบสลิปเพิ่ม / This booking does not need a new slip');
 
-    const pre = preCheck_(d.slipToken, r.qty, '', false, d.precheck);
+    const pre = preCheck_(d.slipToken, r.qty, '', false, d.precheck, r.qty ? Number(r.amount) / r.qty : 0);
     autoText = pre.text;
     fileUrl = saveSlip_(d.slipData, d.slipMime, ref + '_reupload_' + r.name);
 
@@ -779,6 +808,32 @@ function wrapEmail_(title, inner) {
 }
 
 /** Preview every template to ADMIN_EMAIL with sample data (run from the editor or the menu). */
+/** Run from the editor: checks the timed price switch with simulated clocks. Read-only (no Sheet, no email). */
+function testPriceSwitch() {
+  const T = ms => Utilities.formatDate(new Date(ms), TZ, 'd MMM HH:mm:ss');
+  const sw = new Date('2026-10-31T21:30:00+07:00').getTime(), min = 60000;
+  const cases = [
+    ['15:00 normal',                   sw - 390 * min, 1199, 1199],
+    ['21:29:59 last second early',     sw - 1000,      1199, 1199],
+    ['21:30:00 switch',                sw,             1399, 1399],
+    ['21:35 page showed 1,199 (grace)', sw + 5 * min,   1199, 1199],
+    ['21:44 page showed 1,199 (grace)', sw + 14 * min,  1199, 1199],
+    ['21:46 page showed 1,199 (late)',  sw + 16 * min,  1199, 1399],
+    ['21:20 page claims 1,399',        sw - 10 * min,  1399, 1199],
+    ['21:35 page claims 1 THB',        sw + 5 * min,   1,    1399],
+    ['23:00 no price sent',            sw + 90 * min,  0,    1399]
+  ];
+  let pass = 0;
+  cases.forEach(([name, at, claimed, want]) => {
+    const r = priceFor_(claimed, at), ok = r.price === want && priceAt_(at) === (at >= sw ? 1399 : 1199);
+    if (ok) pass++;
+    console.log((ok ? 'PASS ' : 'FAIL ') + name + ' @ ' + T(at) + ' → ' + r.price + (r.note ? '  [' + r.note + ']' : ''));
+  });
+  console.log('Price now (server clock ' + T(Date.now()) + '): ' + priceAt_(Date.now()) + ' THB');
+  console.log(pass + '/' + cases.length + ' passed');
+  return pass + '/' + cases.length;
+}
+
 function sendTestEmails() {
   const sample = { ref: CONFIG.ID_PREFIX + '0000', name: 'ทดสอบ Test', email: CONFIG.ADMIN_EMAIL, qty: 2,
                    amount: 2 * CONFIG.PRICE_PER_PERSON, entryCode: CONFIG.CODE_PREFIX + 'TEST',
