@@ -287,6 +287,19 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 <span>LET'S GET FREE FLOW! <i>✦</i> <b class="kr">안녕</b> <i>✦</i> DJ <i>✦</i> FREEFLOW <i>✦</i> KOREAN BITES <i>✦</i></span>
 </div></div>
 
+<!-- ============ STATUS · check payment + get entry code ============ -->
+<section class="card" id="status" aria-labelledby="stH">
+<h2 id="stH">Check status<small>ตรวจสถานะการชำระเงิน · รับรหัสเข้างาน</small></h2>
+<form id="stForm" style="display:flex;flex-direction:column;gap:12px" novalidate>
+<div class="field"><label for="stPhone">เบอร์โทรที่ใช้ลงทะเบียน / Registered phone</label><input id="stPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxx"></div>
+<div class="field hidden" id="stRefWrap"><label for="stRef">เลขที่การจอง / Booking ref</label><input id="stRef" type="text" autocapitalize="characters" placeholder="OF-HW26-0001"></div>
+<div class="err" id="stErr" role="alert"></div>
+<button type="submit" class="btn" id="stBtn">ตรวจสถานะ · Check</button>
+</form>
+<div id="stResults" style="display:flex;flex-direction:column;gap:12px" aria-live="polite"></div>
+<input id="reInput" type="file" accept="image/*" class="hidden">
+</section>
+
 <!-- ============ Event info ============ -->
 <section class="card" aria-label="รายละเอียดงาน">
 <div class="when"><div class="date">OCT 31<sup>ST</sup> 2026</div><div class="time" id="evTime">10:00 PM – 02:00 AM</div></div>
@@ -427,18 +440,6 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 </section>
 </div>
 
-<!-- ============ STATUS · check payment + get entry code ============ -->
-<section class="card" id="status" aria-labelledby="stH">
-<h2 id="stH">Check status<small>ตรวจสถานะการชำระเงิน · รับรหัสเข้างาน</small></h2>
-<form id="stForm" style="display:flex;flex-direction:column;gap:12px" novalidate>
-<div class="field"><label for="stPhone">เบอร์โทรที่ใช้ลงทะเบียน / Registered phone</label><input id="stPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxx"></div>
-<div class="field hidden" id="stRefWrap"><label for="stRef">เลขที่การจอง / Booking ref</label><input id="stRef" type="text" autocapitalize="characters" placeholder="OF-HW26-0001"></div>
-<div class="err" id="stErr" role="alert"></div>
-<button type="submit" class="btn" id="stBtn">ตรวจสถานะ · Check</button>
-</form>
-<div id="stResults" style="display:flex;flex-direction:column;gap:12px" aria-live="polite"></div>
-<input id="reInput" type="file" accept="image/*" class="hidden">
-</section>
 
 <footer>
 <div class="marquee rev" aria-hidden="true" style="align-self:stretch;margin:-26px -16px 6px;border-top:0"><div class="marquee-track">
@@ -461,7 +462,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 /* ================= version =================
    Bump on every release: MAJOR = booking process changes · MINOR = feature / wording / flow · PATCH = fix only.
    Keep CODE_VERSION in apps-script/Code.gs on the same MAJOR.MINOR.                                         */
-const APP_VERSION = '2.10.1';
+const APP_VERSION = '2.10.2';
 const APP_DATE = '14 Oct 2026';
 /* ================= the croissant DJ · crescent + record halo (from the poster) =================
    croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),
