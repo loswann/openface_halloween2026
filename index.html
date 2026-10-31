@@ -250,6 +250,8 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 .newver span{flex-grow:1}.newver button{flex-shrink:0;min-height:40px;padding:0 14px;border-radius:999px;border:0;background:var(--gold);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer}
 .newver .x{background:transparent;color:var(--cream);padding:0 6px;font-size:18px}
 .overlay{position:fixed;inset:0;background:rgba(47,54,64,.88);color:var(--cream);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:70;font-weight:600}
+.pnote{margin-top:4px;font-size:13px;font-weight:700;color:var(--ink);background:#ffb81c;border:2px solid var(--ink);border-radius:10px;padding:4px 8px;line-height:1.35}
+.pnote.warn{background:#e0402b;color:#fff}
 .savesheet{position:fixed;inset:0;z-index:80;background:rgba(27,24,21,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px 16px;color:var(--cream);text-align:center}
 .savesheet img{max-width:min(78vw,340px);max-height:58vh;border-radius:12px;border:3px solid var(--gold);-webkit-touch-callout:default!important;user-select:auto;-webkit-user-select:auto;pointer-events:auto}
 .savesheet .how{font-size:17px;font-weight:700;line-height:1.5}
@@ -298,6 +300,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 <div class="big"><span id="evPrice" style="font-size:46px;color:var(--ink)">1,199</span> <span>THB</span></div>
 <div style="font-size:12px;font-weight:600;color:var(--gold-d)">ต่อท่าน · per person</div>
 <div style="font-size:14px;font-weight:500" id="evIncludes"></div>
+<div id="priceNote" class="pnote hidden"></div>
 </div>
 </div>
 <div class="row-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#33363c" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><div><b>openface BKK</b> · <span id="evVenue"></span> · <a id="mapLink" href="#" target="_blank" rel="noopener">เปิดแผนที่ ↗</a></div></div>
@@ -345,6 +348,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 <div class="lbl">ยอดที่ต้องโอน · <span id="payQty">1</span> ท่าน</div>
 <div class="big"><span id="payAmt">1,199</span> ฿</div>
 <div style="font-size:13px;color:var(--ink2)">สแกน QR จ่าย แล้วแนบสลิปด้านล่างนะคะ</div>
+<div id="priceChg" class="pnote warn hidden"></div>
 </div>
 </section>
 
@@ -457,7 +461,7 @@ footer .ver b{color:#b9bdc6;font-weight:600}footer .ver .warn{color:#e8a87c}
 /* ================= version =================
    Bump on every release: MAJOR = booking process changes · MINOR = feature / wording / flow · PATCH = fix only.
    Keep CODE_VERSION in apps-script/Code.gs on the same MAJOR.MINOR.                                         */
-const APP_VERSION = '2.9.2';
+const APP_VERSION = '2.10.0';
 const APP_DATE = '14 Oct 2026';
 /* ================= the croissant DJ · crescent + record halo (from the poster) =================
    croissant(mood, size): 'dj' (at the decks), 'look' (checking a slip),
@@ -536,6 +540,51 @@ let CFG = Object.assign({}, APP.DEFAULTS);
 let qty = 1, slip = null, vs = null, demoSlip = null;
 const $ = id => document.getElementById(id);
 const fmt = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+/* ---------- timed pricing (mirrors priceFor_ in Code.gs; the server has the final say) ---------- */
+let skew = 0, lockedPrice = null;                       // skew = server clock − phone clock
+const TEST_CLOCK = DEMO && (location.search.match(/[?&]clock=([^&]+)/) || [])[1];   // ?demo=1&clock=… for testing only
+if (TEST_CLOCK) { const t = Date.parse(decodeURIComponent(TEST_CLOCK)); if (!isNaN(t)) skew = t - Date.now(); }
+const nowMs = () => Date.now() + skew;
+function priceTiers() {
+  return [{ from: 0, price: Number(CFG.PRICE_PER_PERSON) }].concat((CFG.PRICE_TIERS || [])
+    .map(t => ({ from: Date.parse(t.FROM), price: Number(t.PRICE), label: t.LABEL || '' }))
+    .filter(t => !isNaN(t.from) && t.price > 0)).sort((a, b) => a.from - b.from);
+}
+function priceAt(ms) { let p = Number(CFG.PRICE_PER_PERSON); priceTiers().forEach(t => { if (ms >= t.from) p = t.price; }); return p; }
+function nextTier(ms) { return priceTiers().find(t => t.from > ms) || null; }
+/** may a page that locked `p` still pay it now? (only inside the grace window right after a change) */
+function oldPriceOk(p, ms) {
+  const g = (Number(CFG.PRICE_GRACE_MIN) || 0) * 60000;
+  return priceAt(ms) === p || priceTiers().some(t => t.from > 0 && ms >= t.from && ms < t.from + g && priceAt(t.from - 1) === p);
+}
+const PRICE = () => lockedPrice != null ? lockedPrice : priceAt(nowMs());
+const hhmm = ms => new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' });
+function renderPriceNote() {
+  const now = nowMs(), nt = nextTier(now), cur = priceAt(now);
+  $('evPrice').textContent = fmt(cur);
+  const n = $('priceNote');
+  if (nt) n.innerHTML = `⏰ ราคานี้ถึง ${hhmm(nt.from)} น. · ตั้งแต่ ${hhmm(nt.from)} น. ${fmt(nt.price)} ฿${nt.label ? ' (' + esc(nt.label) + ')' : ''}<br>`
+    + `<span style="font-weight:600">This price until ${hhmm(nt.from)} · from ${hhmm(nt.from)}: ${fmt(nt.price)} THB</span>`;
+  else { const t = priceTiers().filter(t => t.from > 0 && now >= t.from).pop();
+    n.innerHTML = t ? `ราคา${t.label ? ' ' + esc(t.label) : ''} ตั้งแต่ ${hhmm(t.from)} น. · ${t.label ? esc(t.label) + ' price' : 'Price'} from ${hhmm(t.from)}` : ''; }
+  n.classList.toggle('hidden', !n.innerHTML);
+}
+/** runs every few seconds: keeps step 1 on the current price; moves a waiting payment page to the new price after the grace */
+function priceTick() {
+  const now = nowMs();
+  renderPriceNote();
+  if (!$('step1').classList.contains('hidden')) { lockedPrice = null; setQty(qty); return; }
+  if (!$('step2').classList.contains('hidden') && lockedPrice != null && !oldPriceOk(lockedPrice, now)) {
+    const old = lockedPrice; lockedPrice = priceAt(now);
+    updatePay();
+    const c = $('priceChg');
+    c.innerHTML = `ราคาเปลี่ยนเป็น ${fmt(lockedPrice)} ฿/ท่าน แล้ว (เดิม ${fmt(old)} ฿) · QR ด้านล่างอัปเดตยอดใหม่แล้ว<br>`
+      + `<span style="font-weight:600">Price is now ${fmt(lockedPrice)} THB/person – the QR below has the new amount</span>`;
+    c.classList.remove('hidden');
+    if (vs && (vs.token || vs.mode === 'ocr') && !vs.manual) recheck();
+    updateSubmit();
+  }
+}
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 async function api(action, data) {
@@ -549,6 +598,7 @@ async function api(action, data) {
 /* ================= render config ================= */
 function render(c) {
   CFG = Object.assign({}, CFG, c);
+  if (c.SERVER_NOW && !TEST_CLOCK) skew = Number(c.SERVER_NOW) - Date.now();
   const name = String(CFG.EVENT_NAME || '');
   $('evName').textContent = name;
   if (CFG.TIME_EN) $('evTime').textContent = CFG.TIME_EN;
@@ -560,7 +610,7 @@ function render(c) {
   }).join('');
   $('evVenue').textContent = String(CFG.VENUE || '').replace(/^openface · /, '');
   $('mapLink').href = CFG.MAP_URL || '#';
-  $('evPrice').textContent = fmt(CFG.PRICE_PER_PERSON);
+  renderPriceNote();
   $('evIncludes').textContent = CFG.PRICE_INCLUDES || '';
   $('evDress').textContent = CFG.DRESS_CODE || CFG.THEME || '';
   $('bankName').textContent = CFG.BANK_NAME || '';
@@ -594,11 +644,12 @@ function maxQty() {
 function setQty(n) {
   qty = Math.min(maxQty(), Math.max(1, n));
   $('qtyVal').textContent = qty;
-  $('total').textContent = fmt(qty * CFG.PRICE_PER_PERSON);
+  $('total').textContent = fmt(qty * PRICE());
 }
 
 /* ================= navigation ================= */
 function go(n) {
+  if (n === 1) lockedPrice = null;
   [1, 2, 3].forEach(i => {
     $('step' + i).classList.toggle('hidden', i !== n);
     $('st' + i).className = 'step' + (i === n ? ' on' : i < n ? ' done' : '');
@@ -612,6 +663,7 @@ function toPayment() {
   if (!$('name').value.trim()) return e.textContent = 'กรุณากรอกชื่อ-นามสกุล';
   if (!/^\+?\d{9,12}$/.test(phone)) return e.textContent = 'เบอร์โทรไม่ถูกต้อง';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('email').value.trim())) return e.textContent = 'อีเมลไม่ถูกต้อง';
+  lockedPrice = priceAt(nowMs()); $('priceChg').classList.add('hidden');
   updatePay();
   go(2);
   if (usePrescreen()) OCR.warm();
@@ -619,7 +671,7 @@ function toPayment() {
   updateSubmit();
 }
 function updatePay() {
-  const amt = qty * CFG.PRICE_PER_PERSON;
+  const amt = qty * PRICE();
   $('payQty').textContent = qty; $('payAmt').textContent = fmt(amt);
   renderQR(amt);
 }
@@ -836,7 +888,7 @@ async function runPrescreen() {
     const text = await OCR.read(await ocrImage(slip.img));
     if (slip !== mine) return;                                   // guest picked another slip meanwhile
     slip.ocr = { text };
-    const res = SlipCheck.analyze(text, slip.qr, { qty, price: CFG.PRICE_PER_PERSON, cfg: prescreenCfg() });
+    const res = SlipCheck.analyze(text, slip.qr, { qty, price: PRICE(), cfg: prescreenCfg() });
     const dup = res.checks.find(c => c.key === 'duplicate');
     if (res.transRef) {
       try {
@@ -890,14 +942,14 @@ function attachedOnly(title) {
 async function runVerify() {
   if (!slip) return;
   showChecking(); $('slipThumb').src = slip.data;
-  const req = { qr: slip.qr || '', image: slip.qr ? '' : slip.data, mime: slip.mime, qty };
+  const req = { qr: slip.qr || '', image: slip.qr ? '' : slip.data, mime: slip.mime, qty, price: PRICE() };
   if (DEMO) return setTimeout(() => renderResult(demoVerify($('demoScenario').value)), 1400);
   try { renderResult(await api('verifySlip', req)); }
   catch (x) { renderResult({ status: 'unavailable', canManual: true, title: 'ระบบตรวจสลิปขัดข้องชั่วคราว', message: 'ไม่ต้องกังวล ส่งสลิปให้ทีมงานตรวจแทนได้เลยค่ะ' }); }
 }
 async function recheck() {
   if (vs && vs.mode === 'ocr' && slip && slip.ocr) {
-    const res = SlipCheck.analyze(slip.ocr.text, slip.qr, { qty, price: CFG.PRICE_PER_PERSON, cfg: prescreenCfg() });
+    const res = SlipCheck.analyze(slip.ocr.text, slip.qr, { qty, price: PRICE(), cfg: prescreenCfg() });
     const dup = res.checks.find(c => c.key === 'duplicate');
     if (slip.dup && dup.pending) Object.assign(dup, slip.dup, { pending: false });
     return renderPrescreen(res);
@@ -905,7 +957,7 @@ async function recheck() {
   if (!vs || !vs.token) return;
   showChecking();
   if (DEMO) return setTimeout(() => renderResult(demoEvaluate(demoSlip, qty)), 700);
-  try { renderResult(await api('recheckSlip', { token: vs.token, qty })); } catch (x) { runVerify(); }
+  try { renderResult(await api('recheckSlip', { token: vs.token, qty, price: PRICE() })); } catch (x) { runVerify(); }
 }
 /* "Email the team" button for slip problems – opens the guest's mail app with the details filled in */
 function helpMailBtn() {
@@ -913,7 +965,7 @@ function helpMailBtn() {
   const subject = 'ช่วยตรวจสลิป · ' + (CFG.EVENT_NAME || 'Halloween') + ' · ' + ($('name').value.trim() || 'ลงทะเบียน');
   const body = 'สวัสดีค่ะ/ครับ ทีมงาน\n\nระบบแจ้งว่าสลิปของฉันไม่ตรง รบกวนช่วยตรวจให้หน่อย\n\n'
     + 'ชื่อ: ' + $('name').value.trim() + '\nเบอร์โทร: ' + $('phone').value.trim() + '\nจำนวน: ' + qty + ' ท่าน ('
-    + fmt(qty * CFG.PRICE_PER_PERSON) + ' ฿)\n\n(กรุณาแนบรูปสลิปมากับอีเมลนี้ด้วย)';
+    + fmt(qty * PRICE()) + ' ฿)\n\n(กรุณาแนบรูปสลิปมากับอีเมลนี้ด้วย)';
   const href = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
   return `<a class="btn mailhelp" href="${esc(href)}"><span>อีเมลให้ทีมงานช่วย · Email us</span><small>${esc(to)}</small></a>`;
 }
@@ -942,7 +994,7 @@ function renderResult(r) {
       + (s && s.amount != null ? ` · อ่านได้ ${fmt(s.amount)} ฿` : '') + (s && s.time ? ` · ${s.time} น.` : '') + (s && s.senderBank ? ` · ${s.senderBank}` : '')
     : s ? `จากสลิป: ${s.senderName || '-'}${s.senderBank ? ' (' + s.senderBank + ')' : ''} → ${s.receiverName || '-'} · ${fmt(s.amount)} ฿ · ${s.time} น.` : '';
   const acts = [];
-  if (r.suggestQty) acts.push(`<button type="button" class="btn" data-act="qty" data-n="${r.suggestQty}">เปลี่ยนเป็น ${r.suggestQty} ท่าน (${fmt(r.suggestQty * CFG.PRICE_PER_PERSON)} ฿)</button>`);
+  if (r.suggestQty) acts.push(`<button type="button" class="btn" data-act="qty" data-n="${r.suggestQty}">เปลี่ยนเป็น ${r.suggestQty} ท่าน (${fmt(r.suggestQty * PRICE())} ฿)</button>`);
   if (r.retry) acts.push('<button type="button" class="btn" data-act="retry">ตรวจอีกครั้ง</button>');
   if (!good) acts.push('<button type="button" class="btn ghost" data-act="new">แนบสลิปใบใหม่</button>');
   if (r.canManual) acts.push(`<button type="button" class="btn ghost" data-act="manual">${r.mode === 'ocr' ? 'สลิปถูกต้อง ส่งให้ทีมงานตรวจ · My slip is correct' : 'ส่งให้ทีมงานตรวจแทน'}</button>`);
@@ -976,7 +1028,7 @@ function updateSubmit() {
 
 /* ---------- demo-only simulation (mirrors the server rules) ---------- */
 function demoVerify(sc) {
-  const p = CFG.PRICE_PER_PERSON, now = new Date();
+  const p = PRICE(), now = new Date();
   if (sc === 'noqr') return { status: 'noqr', canManual: true, title: 'อ่าน QR บนสลิปไม่ได้', message: 'กรุณาใช้รูปสลิปต้นฉบับที่บันทึกจากแอปธนาคาร (ไม่ครอป ไม่ถ่ายหน้าจอด้วยกล้อง) แล้วแนบใหม่อีกครั้ง' };
   if (sc === 'notfound') return { status: 'notfound', canManual: true, retry: true, title: 'ธนาคารยังไม่พบรายการนี้', message: 'ถ้าเพิ่งโอน อาจใช้เวลา 1–2 นาที กด "ตรวจอีกครั้ง" ได้เลย' };
   if (sc === 'down') return { status: 'unavailable', canManual: true, title: 'ระบบตรวจสลิปขัดข้องชั่วคราว', message: 'ไม่ต้องกังวล ส่งสลิปให้ทีมงานตรวจแทนได้เลยค่ะ' };
@@ -987,7 +1039,7 @@ function demoVerify(sc) {
   return demoEvaluate(demoSlip, qty);
 }
 function demoEvaluate(d, q) {
-  const p = CFG.PRICE_PER_PERSON, exp = q * p, amountOk = d.amount === exp;
+  const p = PRICE(), exp = q * p, amountOk = d.amount === exp;
   const sq = !amountOk && d.amount % p === 0 ? d.amount / p : null;
   const t = d.time, tStr = t.toLocaleString('th-TH-u-ca-gregory', { day: 'numeric', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   const timeOk = (Date.now() - t) < 48 * 3600000;
@@ -1018,7 +1070,7 @@ async function submitForm() {
   const payload = {
     name: $('name').value.trim(), phone: $('phone').value, email: $('email').value.trim(),
     line: $('line').value.trim(), qty, guests: $('guests').value.trim(), notes: $('notes').value.trim(),
-    parking: $('parking').value, ageOk: true, termsOk: true,
+    parking: $('parking').value, ageOk: true, termsOk: true, price: PRICE(),
     slipToken: vs.mode === 'ocr' || vs.manual ? '' : (vs.token || ''),
     manualReason: vs.manual ? (vs.mode === 'ocr' ? 'guest says slip is correct' : (vs.status || 'manual')) : '',
     precheck: vs.mode === 'ocr' ? { summary: SlipCheck.summary({ checks: vs.checks, slip: { amount: vs.slip.amount, time: vs.slip.time, bank: vs.slip.senderBank } }, vs.verdict, vs.manual), transRef: vs.transRef || '' }
@@ -1028,7 +1080,7 @@ async function submitForm() {
   $('loading').classList.remove('hidden'); $('submitBtn').disabled = true;
   try {
     const r = DEMO
-      ? await new Promise(res => setTimeout(() => res({ regId: 'DEMO-0000', qty, amount: qty * CFG.PRICE_PER_PERSON, status: 'Pending' }), 900))
+      ? await new Promise(res => setTimeout(() => res({ regId: 'DEMO-0000', qty, amount: qty * PRICE(), status: 'Pending' }), 900))
       : await api('submitRegistration', payload);
     $('regId').textContent = r.regId;
     const b = $('doneBadge');
@@ -1037,7 +1089,9 @@ async function submitForm() {
       $('doneNote').innerHTML = 'นี่คือการทดลองระบบเท่านั้น ไม่มีการบันทึกข้อมูลหรือยืนยันการชำระเงิน';
     } else {
       b.className = 'badge'; b.textContent = 'รอตรวจสอบการชำระเงิน · Pending check';
-      $('doneNote').innerHTML = `ทีมงานจะตรวจสลิปกับบัญชีธนาคาร แล้วส่งผลไปที่ <b>${esc(payload.email)}</b><br>`
+      const changed = Number(r.amount) !== qty * payload.price;
+      $('doneNote').innerHTML = (changed ? `<b style="color:var(--bad)">ราคาปรับเป็น ${fmt(r.amount / r.qty)} ฿/ท่าน ยอดของคุณคือ ${fmt(r.amount)} ฿ – ถ้าโอนไม่ครบ ทีมงานจะแจ้งทางอีเมลให้โอนส่วนที่ขาด</b><br>` : '')
+        + `ทีมงานจะตรวจสลิปกับบัญชีธนาคาร แล้วส่งผลไปที่ <b>${esc(payload.email)}</b><br>`
         + 'เมื่ออนุมัติแล้วจะได้ <b>รหัสเข้างาน</b> ทางอีเมล หรือดูเองได้ที่ "ตรวจสถานะ" ด้วยเบอร์โทรที่ลงทะเบียน<br>อย่าลืมแต่งชุด Korean Halloween และพกบัตรประชาชนมานะคะ';
     }
     $('stPhone').value = payload.phone;
@@ -1127,7 +1181,7 @@ $('reInput').addEventListener('change', async e => {
     let token = '';
     if (!DEMO && CFG.SLIP_CHECK_ON !== false) {
       try {
-        const v = await api('verifySlip', { qr, image: qr ? '' : data, mime: 'image/jpeg', qty: bk.qty });
+        const v = await api('verifySlip', { qr, image: qr ? '' : data, mime: 'image/jpeg', qty: bk.qty, bookedPrice: bk.qty ? Number(String(bk.amount).replace(/,/g, '')) / bk.qty : 0 });
         const dup = (v.checks || []).find(c => c.key === 'duplicate' && c.ok === false);
         if (dup) { btn.disabled = false; return say(dup.label + ' – กรุณาแนบสลิปของรายการนี้', true); }
         token = v.token || '';
@@ -1148,7 +1202,7 @@ $('reInput').addEventListener('change', async e => {
   }
 });
 function demoStatus(phone) {
-  const last = phone.slice(-1), base = { ref: 'DEMO-0001', name: 'ทดสอบ ร.', qty: 2, amount: 2 * CFG.PRICE_PER_PERSON, submitted: '14 Oct 2026 20:15' };
+  const last = phone.slice(-1), base = { ref: 'DEMO-0001', name: 'ทดสอบ ร.', qty: 2, amount: 2 * priceAt(nowMs()), submitted: '14 Oct 2026 20:15' };
   if (last === '1') return { bookings: [Object.assign(base, { status: 'Approved', entryCode: 'ANN-7KQ3' })] };
   if (last === '2') return { bookings: [Object.assign(base, { status: 'Problem', problem: { th: 'ยอดโอนไม่ครบตามจำนวนผู้เข้าร่วม', note: 'ยอดขาด 1,199 บาท', fix: 'โอนส่วนที่ขาดผ่าน QR เดิม แล้วแนบสลิปเพิ่มในหน้าตรวจสอบสถานะ', reupload: true } })] };
   if (last === '0') return { bookings: [] };
@@ -1198,6 +1252,7 @@ $('plus').onclick = () => setQty(qty + 1);
 $('next1').onclick = toPayment;
 $('saveQr').addEventListener('click', onSaveQr);
 $('back1').onclick = () => go(1);
+setInterval(priceTick, 5000);
 $('submitBtn').onclick = submitForm;
 $('again').onclick = () => location.reload();
 

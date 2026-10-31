@@ -95,6 +95,7 @@ The page footer shows e.g. `v2.1.0 · 14 Oct 2026 · LIVE · backend v2.1.0 ✓`
 |---|---|
 | v2.9.1 | Bolder status colours on the site and in the Sheet (amber Pending with pulsing dot, green Approved, red Problem, grey Cancelled) |
 | v2.9.2 | "Save QR" puts the image in Photos/Gallery: iPhone → share sheet → Save Image; Android Chrome → Download album; LINE/FB/IG in-app browsers → full-screen image to press-and-hold. Front-end only (backend stays v2.9.1) |
+| v2.10.0 | Walk-in price: 1,199 → **1,399 THB at 21:30 Bangkok, 31 Oct**, automatic on site + backend (`PRICE_TIERS`). Server clock wins; guests already on the payment QR keep 1,199 for 15 min (`PRICE_GRACE_MIN`), then the QR switches. A booking that sends an out-of-date price is saved at the right price with a ⚠ line in Auto Check. Editor self-test: `testPriceSwitch()`. Test the site at any time with `?demo=1&clock=2026-10-31T21:31:00%2B07:00` (demo only, nothing saved) |
 | v2.9.0 | Main contact everywhere is nojudgmentgathering@gmail.com (site, status page, slip hints, problem reasons, guest emails); LINE kept as a footer link |
 | v2.8.1 | Slip-problem help button emails nojudgmentgathering@gmail.com (prefilled) instead of LINE |
 | v2.8.0 | Animated "LET'S GET / FREE FLOW!" lines on the hero poster |

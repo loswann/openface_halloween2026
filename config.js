@@ -22,6 +22,8 @@ window.APP_CONFIG = {
     VENUE: '86/2 ถ.รามคำแหง 21 (ซ.นวศรี 15) วังทองหลาง กรุงเทพฯ',
     MAP_URL: 'https://share.google/kdPgH8cJINAYblTop',
     PRICE_PER_PERSON: 1199,
+    PRICE_TIERS: [{ FROM: '2026-10-31T21:30:00+07:00', PRICE: 1399, LABEL: 'Walk-in' }],
+    PRICE_GRACE_MIN: 15,
     PRICE_INCLUDES: 'DJ · Free-flow alcohol · Korean bites',
     DRESS_CODE: 'Everything Korean',
     MAX_PER_BOOKING: 50, CAPACITY: 0, SEATS_TAKEN: 0, CLOSED: false,
